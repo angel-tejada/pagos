@@ -19,7 +19,9 @@
     --safe-t:env(safe-area-inset-top); --safe-b:env(safe-area-inset-bottom);
   }
   *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-  html,body{height:100%;overscroll-behavior:none}
+  /* la página en sí nunca se desplaza: solo se desplazan las listas de adentro.
+     Esto evita que la app entera se corra hacia abajo. */
+  html,body{height:100%;overflow:hidden;overscroll-behavior:none}
   body{
     background:var(--bg);color:var(--txt);
     font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
@@ -350,7 +352,7 @@
     <label data-t="name">Nombre</label>
     <input type="text" id="p-name" data-tph="namePh" placeholder="Juan" autocomplete="off">
     <label data-t="noteOpt">Nota (opcional)</label>
-    <input type="text" id="p-note" maxlength="25" data-tph="personNotePh" placeholder="Teléfono, dirección…" autocomplete="off">
+    <input type="text" id="p-note" maxlength="25" oninput="capNote(this)" data-tph="personNotePh" placeholder="Teléfono, dirección…" autocomplete="off">
     <div class="btns">
       <button class="btn btn-no" data-t="cancel" onclick="closeAll()">Cancelar</button>
       <button class="btn btn-go" data-t="save" onclick="savePerson()">Guardar</button>
@@ -529,7 +531,15 @@ function show(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
   document.getElementById(id).classList.add('on');
 }
-function closeAll(){document.querySelectorAll('.sheet').forEach(s=>s.classList.remove('on'));}
+function closeAll(){
+  document.querySelectorAll('.sheet').forEach(s=>s.classList.remove('on'));
+  resetShift();
+}
+/* si el teclado del teléfono corrió la pantalla, la devuelve a su lugar */
+function resetShift(){
+  try{window.scrollTo(0,0);}catch(e){}
+  if(document.scrollingElement) document.scrollingElement.scrollTop=0;
+}
 function toast(msg){
   const el=document.getElementById('toast');
   el.textContent=msg; el.classList.add('on');
@@ -643,6 +653,10 @@ function openPerson(p){
   document.getElementById('p-note').value=p&&p.note?p.note:'';
   document.getElementById('sh-person').classList.add('on');
   setTimeout(()=>document.getElementById('p-name').focus(),150);
+}
+/* tope duro: la nota nunca pasa de 25 letras, ni escribiendo ni pegando */
+function capNote(el){
+  if(el.value.length>25) el.value=el.value.slice(0,25);
 }
 function savePerson(){
   const n=document.getElementById('p-name').value.trim();
@@ -810,6 +824,8 @@ function restore(e){
 document.querySelectorAll('.sheet').forEach(s=>{
   s.addEventListener('click',ev=>{if(ev.target===s) closeAll();});
 });
+/* al cerrar el teclado, la pantalla vuelve a su sitio */
+document.addEventListener('focusout',()=>setTimeout(resetShift,60));
 
 load(); applyLang(); render();
 </script>
