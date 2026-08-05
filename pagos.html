@@ -352,7 +352,7 @@
     <label data-t="name">Nombre</label>
     <input type="text" id="p-name" data-tph="namePh" placeholder="Juan" autocomplete="off">
     <label data-t="noteOpt">Nota (opcional)</label>
-    <input type="text" id="p-note" maxlength="25" oninput="capNote(this)" data-tph="personNotePh" placeholder="Teléfono, dirección…" autocomplete="off">
+    <input type="text" id="p-note" maxlength="40" oninput="capNote(this)" data-tph="personNotePh" placeholder="Teléfono, dirección…" autocomplete="off">
     <div class="btns">
       <button class="btn btn-no" data-t="cancel" onclick="closeAll()">Cancelar</button>
       <button class="btn btn-go" data-t="save" onclick="savePerson()">Guardar</button>
@@ -432,9 +432,10 @@ const T={
     savedGave:m=>'Anotado: le diste '+m, savedGot:m=>'Anotado: te pagó '+m,
     months:['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'],
     /* export */
-    exTitle:'QUIÉN ME DEBE', exMadeOn:'Hecho el ', exOwes:'Me debe: ',
+    exTitle:'Lista de pagos', exOwes:'Me debe ',
     exSettled:'Ya no me debe nada', exNone:'(nada anotado)',
-    exTotal:'TOTAL QUE ME DEBEN: ', exPeople:'Personas en la lista: ',
+    exOn:'el ', exAt:' a las ',
+    exTotal:'Total que me deben: ', exPeople:'Personas en la lista: ',
     exNobody:'Todavía no hay nadie en la lista.'
   },
   en:{
@@ -476,9 +477,10 @@ const T={
     savedGave:m=>'Written down: you gave '+m, savedGot:m=>'Written down: they paid '+m,
     months:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
     /* export */
-    exTitle:'WHO OWES ME', exMadeOn:'Made on ', exOwes:'Owes me: ',
+    exTitle:'Payment list', exOwes:'Owes me ',
     exSettled:'Owes me nothing', exNone:'(nothing written down)',
-    exTotal:'TOTAL OWED TO ME: ', exPeople:'People on the list: ',
+    exOn:'on ', exAt:' at ',
+    exTotal:'Total owed to me: ', exPeople:'People on the list: ',
     exNobody:'Nobody on the list yet.'
   }
 };
@@ -654,14 +656,14 @@ function openPerson(p){
   document.getElementById('sh-person').classList.add('on');
   setTimeout(()=>document.getElementById('p-name').focus(),150);
 }
-/* tope duro: la nota nunca pasa de 25 letras, ni escribiendo ni pegando */
+/* tope duro: la nota nunca pasa de 40 letras, ni escribiendo ni pegando */
 function capNote(el){
-  if(el.value.length>25) el.value=el.value.slice(0,25);
+  if(el.value.length>40) el.value=el.value.slice(0,40);
 }
 function savePerson(){
   const n=document.getElementById('p-name').value.trim();
   if(!n){toast(t('needName'));return;}
-  const note=document.getElementById('p-note').value.trim().slice(0,25);  /* máximo 25 letras */
+  const note=document.getElementById('p-note').value.trim().slice(0,40);  /* máximo 40 letras */
   const wasEdit=editId;
   if(wasEdit){
     const p=db.people.find(x=>x.id===wasEdit);
@@ -762,12 +764,11 @@ function backup(){
   db.lastBackup=today(); db.sinceBackup=0; save();
   closeAll(); toast(t('backupHint'));
 }
+/* Texto sencillo, en frases normales. Sin rayas ni columnas. */
 function exportText(){
-  const L='------------------------------------';
-  const D='====================================';
   const out=[];
   out.push(t('exTitle'));
-  out.push(t('exMadeOn')+fdate(today()));
+  out.push(fdate(today()));
   out.push('');
   const people=[...db.people].sort((a,b)=>balance(b)-balance(a));
   if(!people.length){
@@ -775,29 +776,22 @@ function exportText(){
   }else{
     people.forEach(p=>{
       const b=balance(p);
-      out.push(L);
-      out.push(p.name.toUpperCase());
-      if(p.note) out.push('('+p.note+')');
+      out.push(p.name);
+      if(p.note) out.push(p.note);
       out.push(b>0 ? t('exOwes')+money(b)
              : b<0 ? t('overpaidBy')(money(b))
              : (p.movs.length?t('exSettled'):t('noMovs')));
-      out.push('');
-      const ms=[...p.movs].sort((a,b2)=>a.date.localeCompare(b2.date));
-      if(!ms.length){
-        out.push('   '+t('exNone'));
-      }else{
-        ms.forEach(m=>{
-          const sign=(m.kind==='up'?'+':'-')+money(m.amt);
-          const what=m.kind==='up'?t('gaveLong'):t('gotLong');
-          out.push('   '+sign.padEnd(13,' ')+fdate(m.date).padEnd(15,' ')+what+(m.note?' ('+m.note+')':''));
+      [...p.movs]
+        .sort((a,b2)=>b2.date.localeCompare(a.date))
+        .forEach(m=>{
+          const what=m.kind==='up'?t('borrowed'):t('paidBtn');
+          const when=t('exOn')+fdate(m.date)+(m.ts?t('exAt')+ftime(m.ts):'');
+          out.push('   '+what+' '+money(m.amt)+' '+when);
         });
-      }
       out.push('');
     });
-    out.push(D);
     out.push(t('exTotal')+money(db.people.reduce((s,p)=>s+Math.max(0,balance(p)),0)));
     out.push(t('exPeople')+db.people.length);
-    out.push(D);
   }
   download(out.join('\r\n')+'\r\n','pagos-lista-'+today()+'.txt','text/plain;charset=utf-8');
   closeAll(); toast(t('exportHint'));
