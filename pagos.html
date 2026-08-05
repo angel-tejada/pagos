@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Pagos">
+<meta name="theme-color" content="#12161C">
+<title>Pagos</title>
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' fill='%2312161C'/%3E%3Ctext x='90' y='122' font-family='Helvetica' font-size='100' font-weight='bold' fill='%232DD4A7' text-anchor='middle'%3E%24%3C/text%3E%3C/svg%3E">
+<style>
+  :root{
+    --bg:#12161C; --card:#1B212A; --card2:#232B36; --line:#2E3844;
+    --txt:#F2F5F8; --dim:#93A0B0; --accent:#2DD4A7; --danger:#FF6B6B;
+    --safe-t:env(safe-area-inset-top); --safe-b:env(safe-area-inset-bottom);
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;overscroll-behavior:none}
+  body{
+    background:var(--bg);color:var(--txt);
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+    font-size:17px;line-height:1.4;-webkit-font-smoothing:antialiased;
+  }
+  .screen{display:none;flex-direction:column;height:100vh;height:100dvh}
+  .screen.on{display:flex}
+
+  header{
+    padding:calc(var(--safe-t) + 14px) 20px 14px;
+    display:flex;align-items:center;gap:14px;flex-shrink:0;
+    border-bottom:1px solid var(--line);
+  }
+  h1{font-size:30px;font-weight:800;letter-spacing:-.5px;flex:1}
+  h2{font-size:22px;font-weight:700;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .ico{
+    width:42px;height:42px;border-radius:12px;background:var(--card2);
+    display:flex;align-items:center;justify-content:center;
+    font-size:20px;flex-shrink:0;border:none;color:var(--txt);cursor:pointer;
+  }
+  .ico:active{background:var(--line)}
+  .ico.danger{color:var(--danger)}
+
+  .scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:120px}
+
+  .row{
+    display:flex;align-items:center;gap:14px;padding:16px 20px;
+    border-bottom:1px solid var(--line);cursor:pointer;
+  }
+  .row:active{background:var(--card)}
+  .av{
+    width:46px;height:46px;border-radius:23px;background:var(--accent);
+    color:#0A1A15;display:flex;align-items:center;justify-content:center;
+    font-size:20px;font-weight:800;flex-shrink:0;
+  }
+  .row-mid{flex:1;min-width:0}
+  .row-name{font-size:18px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .row-sub{font-size:14px;color:var(--dim);margin-top:2px}
+  .row-amt{font-size:19px;font-weight:700;color:var(--accent);flex-shrink:0}
+  .row-amt.zero{color:var(--dim)}
+
+  .total{
+    position:fixed;left:0;right:0;bottom:0;
+    padding:16px 20px calc(var(--safe-b) + 16px);
+    background:var(--card);border-top:1px solid var(--line);
+    display:flex;justify-content:space-between;align-items:baseline;
+  }
+  .total-lbl{font-size:15px;color:var(--dim);font-weight:600}
+  .total-amt{font-size:26px;font-weight:800;color:var(--accent)}
+
+  .fab{
+    position:fixed;right:20px;bottom:calc(var(--safe-b) + 88px);
+    width:62px;height:62px;border-radius:20px;background:var(--accent);
+    color:#0A1A15;font-size:34px;font-weight:300;border:none;
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 6px 20px rgba(45,212,167,.3);cursor:pointer;z-index:5;
+  }
+  .fab:active{transform:scale(.94)}
+
+  .hero{padding:26px 20px;text-align:center;border-bottom:1px solid var(--line)}
+  .hero-lbl{font-size:14px;color:var(--dim);font-weight:600;text-transform:uppercase;letter-spacing:1px}
+  .hero-amt{font-size:46px;font-weight:800;color:var(--accent);margin-top:6px;letter-spacing:-1px}
+  .hero-sub{font-size:15px;color:var(--dim);margin-top:8px}
+
+  .sect{padding:20px 20px 8px;font-size:14px;color:var(--dim);font-weight:700;text-transform:uppercase;letter-spacing:1px}
+
+  .empty{padding:60px 30px;text-align:center;color:var(--dim);font-size:16px;line-height:1.6}
+
+  .mv{display:flex;align-items:center;gap:14px;padding:15px 20px;border-bottom:1px solid var(--line)}
+  .mv-mid{flex:1;min-width:0}
+  .mv-note{font-size:17px;font-weight:600}
+  .mv-date{font-size:14px;color:var(--dim);margin-top:2px}
+  .mv-amt{font-size:18px;font-weight:700;flex-shrink:0}
+  .mv-amt.up{color:var(--danger)}
+  .mv-amt.down{color:var(--accent)}
+  .mv-del{
+    width:36px;height:36px;border-radius:10px;background:transparent;border:none;
+    color:var(--dim);font-size:19px;flex-shrink:0;cursor:pointer;
+  }
+  .mv-del:active{background:var(--card2)}
+
+  .sheet{
+    position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:50;
+    display:none;align-items:flex-end;
+  }
+  .sheet.on{display:flex}
+  .sheet-in{
+    width:100%;background:var(--card);border-radius:22px 22px 0 0;
+    padding:24px 20px calc(var(--safe-b) + 24px);max-height:92vh;overflow-y:auto;
+  }
+  .sheet-h{font-size:22px;font-weight:700;margin-bottom:20px}
+  label{display:block;font-size:14px;color:var(--dim);font-weight:600;margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px}
+  input,select,textarea{
+    width:100%;padding:16px;background:var(--card2);border:1px solid var(--line);
+    border-radius:14px;color:var(--txt);font-size:18px;font-family:inherit;
+    margin-bottom:18px;-webkit-appearance:none;
+  }
+  input:focus,select,textarea:focus{outline:none;border-color:var(--accent)}
+  .seg{display:flex;gap:10px;margin-bottom:18px}
+  .seg button{
+    flex:1;padding:15px;border-radius:14px;border:1px solid var(--line);
+    background:var(--card2);color:var(--dim);font-size:16px;font-weight:700;
+    font-family:inherit;cursor:pointer;
+  }
+  .seg button.on{background:var(--accent);color:#0A1A15;border-color:var(--accent)}
+  .btns{display:flex;gap:12px;margin-top:6px}
+  .btn{
+    flex:1;padding:17px;border-radius:14px;border:none;font-size:17px;
+    font-weight:700;font-family:inherit;cursor:pointer;
+  }
+  .btn-go{background:var(--accent);color:#0A1A15}
+  .btn-no{background:var(--card2);color:var(--txt)}
+  .btn:active{opacity:.75}
+
+  .menu-item{
+    display:flex;align-items:center;gap:14px;padding:18px 4px;
+    border-bottom:1px solid var(--line);font-size:17px;cursor:pointer;
+  }
+  .menu-item:last-child{border-bottom:none}
+  .menu-item span:first-child{font-size:22px;width:30px}
+
+  .toast{
+    position:fixed;left:20px;right:20px;bottom:calc(var(--safe-b) + 100px);
+    background:var(--accent);color:#0A1A15;padding:16px;border-radius:14px;
+    font-weight:700;text-align:center;z-index:100;opacity:0;pointer-events:none;
+    transition:opacity .25s;
+  }
+  .toast.on{opacity:1}
+
+  .warn{
+    background:rgba(255,107,107,.12);border:1px solid rgba(255,107,107,.3);
+    color:#FFB3B3;padding:14px;border-radius:12px;font-size:14px;
+    margin-bottom:18px;line-height:1.5;
+  }
+</style>
+</head>
+<body>
+
+<!-- LISTA -->
+<div class="screen on" id="s-list">
+  <header>
+    <h1>Deudores</h1>
+    <button class="ico" onclick="openMenu()">⋯</button>
+  </header>
+  <div class="scroll" id="list"></div>
+  <div class="total">
+    <span class="total-lbl">Total por cobrar</span>
+    <span class="total-amt" id="grand">$0.00</span>
+  </div>
+  <button class="fab" onclick="openPerson()">+</button>
+</div>
+
+<!-- DETALLE -->
+<div class="screen" id="s-det">
+  <header>
+    <button class="ico" onclick="show('s-list');render()">‹</button>
+    <h2 id="d-name">Nombre</h2>
+    <button class="ico" onclick="openPerson(cur)">✎</button>
+    <button class="ico danger" onclick="delPerson()">🗑</button>
+  </header>
+  <div class="scroll">
+    <div class="hero">
+      <div class="hero-lbl">Debe</div>
+      <div class="hero-amt" id="d-bal">$0.00</div>
+      <div class="hero-sub" id="d-note"></div>
+    </div>
+    <div class="sect">Movimientos</div>
+    <div id="movs"></div>
+  </div>
+  <button class="fab" onclick="openMov()">+</button>
+</div>
+
+<!-- SHEET: PERSONA -->
+<div class="sheet" id="sh-person">
+  <div class="sheet-in">
+    <div class="sheet-h" id="p-title">Nuevo deudor</div>
+    <label>Nombre</label>
+    <input type="text" id="p-name" placeholder="Juan" autocomplete="off">
+    <label>Nota (opcional)</label>
+    <input type="text" id="p-note" placeholder="Teléfono, dirección…" autocomplete="off">
+    <div class="btns">
+      <button class="btn btn-no" onclick="closeAll()">Cancelar</button>
+      <button class="btn btn-go" onclick="savePerson()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- SHEET: MOVIMIENTO -->
+<div class="sheet" id="sh-mov">
+  <div class="sheet-in">
+    <div class="sheet-h">Nuevo movimiento</div>
+    <div class="seg">
+      <button id="seg-up" class="on" onclick="setKind('up')">Prestó</button>
+      <button id="seg-down" onclick="setKind('down')">Pagó</button>
+    </div>
+    <label>Monto</label>
+    <input type="text" inputmode="decimal" id="m-amt" placeholder="0.00" autocomplete="off">
+    <label>Fecha</label>
+    <input type="date" id="m-date">
+    <label>Nota (opcional)</label>
+    <input type="text" id="m-note" placeholder="Efectivo, Zelle…" autocomplete="off">
+    <div class="btns">
+      <button class="btn btn-no" onclick="closeAll()">Cancelar</button>
+      <button class="btn btn-go" onclick="saveMov()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- SHEET: MENU -->
+<div class="sheet" id="sh-menu">
+  <div class="sheet-in">
+    <div class="sheet-h">Opciones</div>
+    <div class="warn" id="bk-warn"></div>
+    <div class="menu-item" onclick="backup()"><span>💾</span><span>Guardar copia de seguridad</span></div>
+    <div class="menu-item" onclick="document.getElementById('file').click()"><span>📂</span><span>Restaurar desde copia</span></div>
+    <div class="btns" style="margin-top:20px">
+      <button class="btn btn-no" onclick="closeAll()">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<input type="file" id="file" accept=".json,application/json" style="display:none" onchange="restore(event)">
+<div class="toast" id="toast"></div>
+
+<script>
+const KEY='pagos_v1';
+let db={people:[],lastBackup:null,sinceBackup:0};
+let cur=null, editId=null, kind='up';
+
+function load(){
+  try{const r=localStorage.getItem(KEY); if(r) db=JSON.parse(r);}catch(e){}
+  if(!db.people) db.people=[];
+  if(db.sinceBackup==null) db.sinceBackup=0;
+}
+function save(){
+  try{localStorage.setItem(KEY,JSON.stringify(db));}
+  catch(e){toast('No se pudo guardar');}
+}
+function money(n){
+  return '$'+Math.abs(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+function balance(p){
+  return p.movs.reduce((s,m)=>s+(m.kind==='up'?m.amt:-m.amt),0);
+}
+function fdate(iso){
+  const [y,m,d]=iso.split('-').map(Number);
+  const ms=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  return d+' '+ms[m-1]+' '+y;
+}
+function today(){
+  const d=new Date();
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+function show(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
+  document.getElementById(id).classList.add('on');
+}
+function closeAll(){document.querySelectorAll('.sheet').forEach(s=>s.classList.remove('on'));}
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('on');
+  setTimeout(()=>t.classList.remove('on'),2200);
+}
+
+function render(){
+  const list=document.getElementById('list');
+  const sorted=[...db.people].sort((a,b)=>balance(b)-balance(a));
+  if(!sorted.length){
+    list.innerHTML='<div class="empty">Todavía no hay deudores.<br>Toca el botón + para agregar uno.</div>';
+  }else{
+    list.innerHTML=sorted.map(p=>{
+      const b=balance(p);
+      const last=p.movs.length?p.movs[p.movs.length-1].date:null;
+      return `<div class="row" onclick="openDetail('${p.id}')">
+        <div class="av">${p.name.charAt(0).toUpperCase()}</div>
+        <div class="row-mid">
+          <div class="row-name">${esc(p.name)}</div>
+          <div class="row-sub">${last?fdate(last):'Sin movimientos'}</div>
+        </div>
+        <div class="row-amt ${b<=0?'zero':''}">${money(b)}</div>
+      </div>`;
+    }).join('');
+  }
+  document.getElementById('grand').textContent=money(db.people.reduce((s,p)=>s+Math.max(0,balance(p)),0));
+}
+
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+
+function openDetail(id){
+  cur=db.people.find(p=>p.id===id); if(!cur) return;
+  document.getElementById('d-name').textContent=cur.name;
+  document.getElementById('d-bal').textContent=money(balance(cur));
+  document.getElementById('d-note').textContent=cur.note||'';
+  const box=document.getElementById('movs');
+  const ms=[...cur.movs].sort((a,b)=>b.date.localeCompare(a.date));
+  box.innerHTML=ms.length?ms.map(m=>`
+    <div class="mv">
+      <div class="mv-mid">
+        <div class="mv-note">${m.kind==='up'?'Prestó':'Pagó'}${m.note?' · '+esc(m.note):''}</div>
+        <div class="mv-date">${fdate(m.date)}</div>
+      </div>
+      <div class="mv-amt ${m.kind}">${m.kind==='up'?'+':'−'}${money(m.amt)}</div>
+      <button class="mv-del" onclick="delMov('${m.id}')">×</button>
+    </div>`).join('')
+    :'<div class="empty">Sin movimientos todavía.</div>';
+  show('s-det');
+}
+
+function openPerson(p){
+  editId=p?p.id:null;
+  document.getElementById('p-title').textContent=p?'Editar deudor':'Nuevo deudor';
+  document.getElementById('p-name').value=p?p.name:'';
+  document.getElementById('p-note').value=p&&p.note?p.note:'';
+  document.getElementById('sh-person').classList.add('on');
+  setTimeout(()=>document.getElementById('p-name').focus(),150);
+}
+function savePerson(){
+  const n=document.getElementById('p-name').value.trim();
+  if(!n){toast('Escribe un nombre');return;}
+  const note=document.getElementById('p-note').value.trim();
+  if(editId){
+    const p=db.people.find(x=>x.id===editId);
+    p.name=n; p.note=note;
+    document.getElementById('d-name').textContent=n;
+    document.getElementById('d-note').textContent=note;
+  }else{
+    db.people.push({id:String(Date.now()),name:n,note:note,movs:[]});
+  }
+  save(); closeAll(); render();
+  if(editId&&cur) openDetail(editId);
+  editId=null;
+}
+function delPerson(){
+  if(!cur) return;
+  if(!confirm('¿Borrar a '+cur.name+' y todos sus movimientos?')) return;
+  db.people=db.people.filter(p=>p.id!==cur.id);
+  save(); cur=null; show('s-list'); render();
+}
+
+function setKind(k){
+  kind=k;
+  document.getElementById('seg-up').classList.toggle('on',k==='up');
+  document.getElementById('seg-down').classList.toggle('on',k==='down');
+}
+function openMov(){
+  setKind('up');
+  document.getElementById('m-amt').value='';
+  document.getElementById('m-note').value='';
+  document.getElementById('m-date').value=today();
+  document.getElementById('sh-mov').classList.add('on');
+  setTimeout(()=>document.getElementById('m-amt').focus(),150);
+}
+function saveMov(){
+  const raw=document.getElementById('m-amt').value.replace(/[^0-9.]/g,'');
+  const amt=Math.round(parseFloat(raw)*100)/100;
+  if(!amt||amt<=0){toast('Escribe un monto');return;}
+  cur.movs.push({
+    id:String(Date.now()),kind:kind,amt:amt,
+    date:document.getElementById('m-date').value||today(),
+    note:document.getElementById('m-note').value.trim()
+  });
+  db.sinceBackup++;
+  save(); closeAll(); openDetail(cur.id);
+  if(db.sinceBackup>=10) setTimeout(()=>toast('Recuerda guardar una copia'),600);
+}
+function delMov(id){
+  if(!confirm('¿Borrar este movimiento?')) return;
+  cur.movs=cur.movs.filter(m=>m.id!==id);
+  save(); openDetail(cur.id);
+}
+
+function openMenu(){
+  const w=document.getElementById('bk-warn');
+  w.textContent=db.lastBackup
+    ? 'Última copia: '+fdate(db.lastBackup)+'. Movimientos nuevos desde entonces: '+db.sinceBackup+'.'
+    : 'Todavía no has guardado ninguna copia. Los datos viven solo en este teléfono.';
+  document.getElementById('sh-menu').classList.add('on');
+}
+function backup(){
+  const blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download='pagos-'+today()+'.json';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+  db.lastBackup=today(); db.sinceBackup=0; save();
+  closeAll(); toast('Elige "Guardar en Archivos" → iCloud Drive');
+}
+function restore(e){
+  const f=e.target.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=()=>{
+    try{
+      const d=JSON.parse(r.result);
+      if(!d.people) throw 0;
+      if(!confirm('Esto reemplaza todos los datos actuales. ¿Continuar?')) return;
+      db=d; if(db.sinceBackup==null) db.sinceBackup=0;
+      save(); closeAll(); show('s-list'); render(); toast('Datos restaurados');
+    }catch(err){toast('Archivo no válido');}
+  };
+  r.readAsText(f);
+  e.target.value='';
+}
+
+document.querySelectorAll('.sheet').forEach(s=>{
+  s.addEventListener('click',ev=>{if(ev.target===s) closeAll();});
+});
+
+load(); render();
+</script>
+</body>
+</html>
