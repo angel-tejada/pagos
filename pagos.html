@@ -42,7 +42,12 @@
   }
   .topsum-lbl{font-size:25px;color:var(--dim);font-weight:800;letter-spacing:-1.1px}
   .topsum-amt{font-size:27px;font-weight:800;color:var(--paid);letter-spacing:-1.2px;line-height:1.1}
-  h2{font-size:15px;font-weight:700;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .d-who{flex:1;min-width:0}
+  h2{font-size:15px;font-weight:700;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .d-note{
+    font-size:11px;color:var(--dim);margin-top:1px;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  }
   .ico{
     width:44px;height:44px;border-radius:13px;background:var(--card2);
     display:flex;align-items:center;justify-content:center;
@@ -276,7 +281,10 @@
 <div class="screen" id="s-det">
   <header>
     <button class="ico" onclick="show('s-list');render()">‹</button>
-    <h2 id="d-name">—</h2>
+    <div class="d-who">
+      <h2 id="d-name">—</h2>
+      <div class="d-note" id="d-note"></div>
+    </div>
     <button class="ico" onclick="openPerson(cur)">✎</button>
     <button class="ico danger" onclick="delPerson()">🗑</button>
   </header>
@@ -284,7 +292,7 @@
     <div class="hero">
       <div class="hero-lbl" data-t="owesMeNow">Me debe ahora</div>
       <div class="hero-amt" id="d-bal">$0.00</div>
-      <div class="hero-sub" id="d-note"></div>
+      <div class="hero-sub" id="d-sub"></div>
     </div>
     <div class="divider"></div>
     <div class="sect" data-t="history">Todo lo que ha pasado</div>
@@ -342,7 +350,7 @@
     <label data-t="name">Nombre</label>
     <input type="text" id="p-name" data-tph="namePh" placeholder="Juan" autocomplete="off">
     <label data-t="noteOpt">Nota (opcional)</label>
-    <input type="text" id="p-note" data-tph="personNotePh" placeholder="Teléfono, dirección…" autocomplete="off">
+    <input type="text" id="p-note" maxlength="25" data-tph="personNotePh" placeholder="Teléfono, dirección…" autocomplete="off">
     <div class="btns">
       <button class="btn btn-no" data-t="cancel" onclick="closeAll()">Cancelar</button>
       <button class="btn btn-go" data-t="save" onclick="savePerson()">Guardar</button>
@@ -603,10 +611,9 @@ function openDetail(id){
   bal.classList.toggle('zero',b===0);
   bal.classList.toggle('over',b<0);
   document.querySelector('#s-det .hero-lbl').textContent=b<0?t('overpaid'):t('owesMeNow');
-  const bits=[];
-  if(b===0&&cur.movs.length) bits.push(t('exSettled'));
-  if(cur.note) bits.push(cur.note);
-  document.getElementById('d-note').textContent=bits.join(' · ');
+  /* la nota va debajo del nombre, arriba */
+  document.getElementById('d-note').textContent=cur.note||'';
+  document.getElementById('d-sub').textContent=(b===0&&cur.movs.length)?t('exSettled'):'';
   const box=document.getElementById('movs');
   /* lo más nuevo arriba: por fecha y, si es la misma, por hora de captura */
   const ms=[...cur.movs].sort((a,b2)=>{
@@ -640,7 +647,7 @@ function openPerson(p){
 function savePerson(){
   const n=document.getElementById('p-name').value.trim();
   if(!n){toast(t('needName'));return;}
-  const note=document.getElementById('p-note').value.trim();
+  const note=document.getElementById('p-note').value.trim().slice(0,25);  /* máximo 25 letras */
   const wasEdit=editId;
   if(wasEdit){
     const p=db.people.find(x=>x.id===wasEdit);
