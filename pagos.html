@@ -157,6 +157,11 @@
     display:none;align-items:flex-end;
   }
   .sheet.on{display:flex}
+  /* caja centrada arriba: no la tapa el teclado del teléfono */
+  .sheet.mid{align-items:flex-start;justify-content:center;padding:calc(var(--safe-t) + 64px) 16px 16px}
+  .sheet.mid .sheet-in{
+    border-radius:18px;max-width:420px;padding:18px 16px;max-height:none;
+  }
   .sheet-in{
     width:100%;background:var(--card);border-radius:20px 20px 0 0;
     padding:16px 14px calc(var(--safe-b) + 14px);max-height:96vh;overflow-y:auto;
@@ -337,7 +342,7 @@
 </div>
 
 <!-- HOJA: PERSONA -->
-<div class="sheet" id="sh-person">
+<div class="sheet mid" id="sh-person">
   <div class="sheet-in">
     <div class="sheet-h" id="p-title">Agregar persona</div>
     <label data-t="name">Nombre</label>
