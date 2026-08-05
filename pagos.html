@@ -11,8 +11,8 @@
 <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' fill='%230E1116'/%3E%3Ctext x='90' y='122' font-family='Helvetica' font-size='100' font-weight='bold' fill='%232DD4A7' text-anchor='middle'%3E%24%3C/text%3E%3C/svg%3E">
 <style>
   :root{
-    --bg:#0E1116; --card:#181D25; --card2:#222933; --line:#333D4A;
-    --txt:#FFFFFF; --dim:#9AA7B6;
+    --bg:#0E1116; --card:#181D25; --card2:#222933; --line:#2B3541;
+    --txt:#FFFFFF; --dim:#8E9BAB;
     --paid:#2DD4A7; --paid-ink:#06231B;
     --lent:#FF5F5F; --lent-ink:#2A0A0A;
     --accent:#2DD4A7;
@@ -25,15 +25,14 @@
     font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
     font-size:17px;line-height:1.35;-webkit-font-smoothing:antialiased;
   }
-  .screen{display:none;flex-direction:column;height:100vh;height:100dvh}
+  .screen{display:none;flex-direction:column;height:100vh;height:100dvh;overflow:hidden}
   .screen.on{display:flex}
 
   header{
-    padding:calc(var(--safe-t) + 12px) 16px 12px;
+    padding:calc(var(--safe-t) + 14px) 16px 14px;
     display:flex;align-items:center;gap:10px;flex-shrink:0;
-    border-bottom:1px solid var(--line);
   }
-  h1{font-size:30px;font-weight:800;letter-spacing:-.5px;flex:1}
+  h1{font-size:27px;font-weight:800;letter-spacing:-.5px;flex:1;line-height:1.15}
   h2{font-size:21px;font-weight:700;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .ico{
     width:56px;height:56px;border-radius:16px;background:var(--card2);
@@ -43,84 +42,83 @@
   .ico:active{background:var(--line)}
   .ico.danger{color:var(--lent)}
 
-  .searchwrap{padding:12px 16px;border-bottom:1px solid var(--line);display:none}
+  .searchwrap{padding:0 16px 14px;display:none;flex-shrink:0}
   .searchwrap.on{display:block}
   .searchwrap input{margin:0}
 
-  .scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:130px}
+  .scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:110px}
 
-  .row{
-    display:flex;align-items:center;gap:14px;padding:14px 12px 14px 16px;
-    border-bottom:1px solid var(--line);
+  /* ---- lista de personas ---- */
+  .sect{
+    padding:30px 20px 10px;font-size:13px;color:var(--dim);
+    font-weight:800;text-transform:uppercase;letter-spacing:1.2px;
   }
-  .row-tap{display:flex;align-items:center;gap:14px;flex:1;min-width:0;cursor:pointer;padding:4px 0}
-  .row-tap:active{opacity:.6}
-  .av{
-    width:52px;height:52px;border-radius:26px;background:var(--card2);
-    color:var(--txt);display:flex;align-items:center;justify-content:center;
-    font-size:22px;font-weight:800;flex-shrink:0;
+  .card{
+    margin:0 12px 12px;background:var(--card);border-radius:20px;
+    display:flex;align-items:center;padding:6px 6px 6px 18px;
   }
-  .row.top .av{background:var(--paid);color:var(--paid-ink)}
-  .row.top{background:linear-gradient(90deg,rgba(45,212,167,.07),transparent)}
-  .row-mid{flex:1;min-width:0}
-  .row-name{font-size:16px;font-weight:600;color:var(--dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .row-amt{font-size:32px;font-weight:800;color:var(--paid);letter-spacing:-1px;margin-top:1px}
-  .row-sub{font-size:13px;color:var(--dim);margin-top:2px}
-  .row.top .row-amt{font-size:38px}
-  .row.clear .av{opacity:.45}
-  .row.clear .row-amt{font-size:22px;color:var(--dim)}
+  .card.top{border-left:5px solid var(--paid);padding-left:13px}
+  .card-tap{flex:1;min-width:0;cursor:pointer;padding:16px 8px 16px 0}
+  .card-tap:active{opacity:.55}
+  .c-name{font-size:17px;font-weight:600;color:var(--dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .c-amt{font-size:36px;font-weight:800;color:var(--paid);letter-spacing:-1.5px;line-height:1.2;margin-top:2px}
+  .card.clear .c-amt{font-size:24px;color:var(--dim)}
+  .c-sub{font-size:13px;color:var(--dim);margin-top:4px}
   .badge{
-    display:inline-flex;align-items:center;gap:5px;font-size:13px;font-weight:700;
-    color:var(--dim);background:var(--card2);padding:4px 10px;border-radius:20px;margin-top:4px;
+    display:inline-block;font-size:13px;font-weight:700;color:var(--dim);
+    background:var(--card2);padding:5px 12px;border-radius:20px;margin-top:6px;
   }
   .plus{
-    width:60px;height:60px;border-radius:18px;background:var(--card2);
-    border:1px solid var(--line);color:var(--txt);font-size:32px;font-weight:300;
+    width:64px;height:64px;border-radius:18px;background:var(--card2);
+    border:none;color:var(--txt);font-size:32px;font-weight:300;
     display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;
   }
   .plus:active{background:var(--line)}
 
-  .total{
-    position:fixed;left:0;right:0;bottom:0;
-    padding:14px 20px calc(var(--safe-b) + 14px);
-    background:var(--card);border-top:1px solid var(--line);
-    display:flex;justify-content:space-between;align-items:center;z-index:4;
+  .empty{padding:70px 34px;text-align:center;color:var(--dim);font-size:16px;line-height:1.7}
+
+  /* ---- barra inferior fija (en flujo, pegada abajo) ---- */
+  .footbar{
+    flex-shrink:0;background:var(--card);border-top:1px solid var(--line);
+    padding:16px 20px calc(var(--safe-b) + 10px);
   }
-  .total-lbl{font-size:14px;color:var(--dim);font-weight:600;text-transform:uppercase;letter-spacing:.5px}
-  .total-amt{font-size:32px;font-weight:800;color:var(--paid);letter-spacing:-1px}
+  .total{display:flex;justify-content:space-between;align-items:center;gap:12px}
+  .total-lbl{font-size:14px;color:var(--dim);font-weight:700;line-height:1.25}
+  .total-amt{font-size:34px;font-weight:800;color:var(--paid);letter-spacing:-1.5px;flex-shrink:0}
 
   .fab{
-    position:fixed;right:16px;bottom:calc(var(--safe-b) + 96px);
+    position:absolute;right:16px;bottom:16px;
     width:64px;height:64px;border-radius:20px;background:var(--card2);
     border:1px solid var(--line);
     color:var(--txt);font-size:34px;font-weight:300;
     display:flex;align-items:center;justify-content:center;
-    box-shadow:0 6px 20px rgba(0,0,0,.5);cursor:pointer;z-index:5;
+    box-shadow:0 6px 24px rgba(0,0,0,.6);cursor:pointer;z-index:5;
   }
   .fab:active{transform:scale(.94)}
+  .fabhost{position:relative;flex:1;min-height:0;display:flex;flex-direction:column}
 
-  .hero{padding:22px 20px;text-align:center;border-bottom:1px solid var(--line)}
-  .hero-lbl{font-size:14px;color:var(--dim);font-weight:700;text-transform:uppercase;letter-spacing:1px}
-  .hero-amt{font-size:56px;font-weight:800;color:var(--paid);margin-top:4px;letter-spacing:-2px;line-height:1.05}
+  /* ---- detalle ---- */
+  .hero{padding:34px 20px 38px;text-align:center}
+  .hero-lbl{font-size:14px;color:var(--dim);font-weight:700;text-transform:uppercase;letter-spacing:1.2px}
+  .hero-amt{font-size:60px;font-weight:800;color:var(--paid);margin-top:8px;letter-spacing:-2.5px;line-height:1.05}
   .hero-amt.zero{color:var(--dim)}
-  .hero-sub{font-size:15px;color:var(--dim);margin-top:6px}
+  .hero-sub{font-size:15px;color:var(--dim);margin-top:12px;line-height:1.5}
+  .divider{height:10px;background:var(--card);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
 
-  .sect{padding:22px 16px 8px;font-size:13px;color:var(--dim);font-weight:800;text-transform:uppercase;letter-spacing:1.2px}
-
-  .empty{padding:60px 30px;text-align:center;color:var(--dim);font-size:16px;line-height:1.6}
-
-  .mv{display:flex;align-items:center;gap:12px;padding:14px 12px 14px 16px;border-bottom:1px solid var(--line)}
+  .mv{display:flex;align-items:center;gap:14px;padding:18px 10px 18px 20px}
+  .mv+.mv{border-top:1px solid var(--line)}
   .tag{
-    width:44px;height:44px;border-radius:14px;flex-shrink:0;
-    display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800;
+    width:46px;height:46px;border-radius:15px;flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;
   }
-  .tag.up{background:rgba(255,95,95,.16);color:var(--lent)}
-  .tag.down{background:rgba(45,212,167,.16);color:var(--paid)}
+  .tag.up{background:rgba(255,95,95,.18);color:var(--lent)}
+  .tag.down{background:rgba(45,212,167,.18);color:var(--paid)}
   .mv-mid{flex:1;min-width:0}
-  .mv-kind{font-size:15px;font-weight:700}
+  .mv-kind{font-size:16px;font-weight:700}
   .mv-kind.up{color:var(--lent)}
   .mv-kind.down{color:var(--paid)}
-  .mv-date{font-size:14px;color:var(--dim);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .mv-eff{font-size:13px;color:var(--dim);margin-top:3px}
+  .mv-date{font-size:13px;color:var(--dim);margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .mv-amt{font-size:24px;font-weight:800;flex-shrink:0;letter-spacing:-.5px}
   .mv-amt.up{color:var(--lent)}
   .mv-amt.down{color:var(--paid)}
@@ -130,24 +128,22 @@
   }
   .mv-del:active{background:var(--card2)}
 
-  .actbar{
-    position:fixed;left:0;right:0;bottom:0;z-index:5;
-    padding:12px 16px calc(var(--safe-b) + 12px);
-    background:var(--card);border-top:1px solid var(--line);
-    display:flex;gap:12px;
-  }
+  /* ---- botones de acción ---- */
+  .acts{display:flex;gap:12px}
   .act{
-    flex:1;min-height:66px;border-radius:18px;border:none;cursor:pointer;
-    font-family:inherit;font-size:19px;font-weight:800;letter-spacing:.3px;
-    display:flex;align-items:center;justify-content:center;gap:8px;
+    flex:1;min-height:78px;border-radius:18px;border:none;cursor:pointer;
+    font-family:inherit;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;gap:3px;padding:8px 6px;
   }
   .act:active{opacity:.75}
-  .act .arrow{font-size:22px}
+  .act b{font-size:18px;font-weight:800;letter-spacing:.2px}
+  .act i{font-size:12px;font-weight:700;font-style:normal;opacity:.72;letter-spacing:.2px}
   .act-lent{background:var(--lent);color:var(--lent-ink)}
   .act-paid{background:var(--paid);color:var(--paid-ink)}
 
+  /* ---- hojas ---- */
   .sheet{
-    position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:50;
+    position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:50;
     display:none;align-items:flex-end;
   }
   .sheet.on{display:flex}
@@ -155,17 +151,17 @@
     width:100%;background:var(--card);border-radius:24px 24px 0 0;
     padding:20px 16px calc(var(--safe-b) + 16px);max-height:96vh;overflow-y:auto;
   }
-  .sheet-h{font-size:21px;font-weight:800;margin-bottom:16px}
-  .sheet-top{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+  .sheet-h{font-size:21px;font-weight:800;margin-bottom:18px}
+  .sheet-top{display:flex;align-items:center;gap:10px;margin-bottom:6px}
   .sheet-top .sheet-h{flex:1;margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   label{display:block;font-size:13px;color:var(--dim);font-weight:700;margin-bottom:8px;text-transform:uppercase;letter-spacing:.6px}
   input{
     width:100%;padding:16px;background:var(--card2);border:1px solid var(--line);
     border-radius:14px;color:var(--txt);font-size:18px;font-family:inherit;
-    margin-bottom:18px;-webkit-appearance:none;
+    margin-bottom:20px;-webkit-appearance:none;
   }
   input:focus{outline:none;border-color:var(--accent)}
-  .btns{display:flex;gap:12px;margin-top:6px}
+  .btns{display:flex;gap:12px;margin-top:8px}
   .btn{
     flex:1;min-height:60px;border-radius:16px;border:none;font-size:17px;
     font-weight:700;font-family:inherit;cursor:pointer;
@@ -174,16 +170,13 @@
   .btn-no{background:var(--card2);color:var(--txt)}
   .btn:active{opacity:.75}
 
-  /* keypad sheet */
-  .padamt{
-    text-align:center;font-size:56px;font-weight:800;letter-spacing:-2px;
-    padding:10px 0 4px;line-height:1.1;
-  }
+  /* ---- teclado ---- */
+  .padamt{text-align:center;font-size:58px;font-weight:800;letter-spacing:-2.5px;padding:12px 0 6px;line-height:1.1}
   .padamt.empty{color:var(--dim)}
-  .padmeta{display:flex;gap:10px;margin:8px 0 14px}
+  .padmeta{display:flex;gap:10px;margin:10px 0 16px}
   .chip{
-    flex:1;position:relative;min-height:50px;border-radius:14px;background:var(--card2);
-    border:1px solid var(--line);color:var(--txt);font-size:15px;font-weight:600;
+    flex:1;position:relative;min-height:52px;border-radius:14px;background:var(--card2);
+    border:none;color:var(--txt);font-size:15px;font-weight:600;
     font-family:inherit;display:flex;align-items:center;justify-content:center;
     gap:6px;cursor:pointer;overflow:hidden;padding:0 8px;
   }
@@ -192,30 +185,33 @@
     position:absolute;inset:0;width:100%;height:100%;opacity:0;margin:0;
     border:none;padding:0;background:transparent;
   }
-  .pad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+  .pad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
   .key{
-    min-height:62px;border-radius:16px;background:var(--card2);border:1px solid var(--line);
+    min-height:62px;border-radius:16px;background:var(--card2);border:none;
     color:var(--txt);font-size:28px;font-weight:600;font-family:inherit;cursor:pointer;
   }
   .key:active{background:var(--line)}
-  .key.wide{grid-column:span 1}
 
+  /* ---- menú ---- */
   .menu-item{
-    display:flex;align-items:center;gap:14px;padding:20px 4px;
-    border-bottom:1px solid var(--line);font-size:17px;cursor:pointer;
+    display:flex;align-items:center;gap:16px;padding:18px 4px;
+    border-bottom:1px solid var(--line);cursor:pointer;
   }
   .menu-item:active{opacity:.6}
-  .menu-item span:first-child{font-size:22px;width:30px}
-  .langrow{display:flex;gap:10px;padding:16px 0;border-bottom:1px solid var(--line)}
+  .menu-ico{font-size:24px;width:32px;text-align:center;flex-shrink:0}
+  .menu-txt{flex:1;min-width:0}
+  .menu-t{display:block;font-size:17px;font-weight:600}
+  .menu-d{display:block;font-size:13px;color:var(--dim);margin-top:3px;line-height:1.4}
+  .langrow{display:flex;gap:10px;padding:4px 0 18px;border-bottom:1px solid var(--line)}
   .langrow button{
-    flex:1;min-height:56px;border-radius:14px;border:1px solid var(--line);
+    flex:1;min-height:56px;border-radius:14px;border:none;
     background:var(--card2);color:var(--dim);font-size:16px;font-weight:700;
     font-family:inherit;cursor:pointer;
   }
-  .langrow button.on{background:var(--accent);color:var(--paid-ink);border-color:var(--accent)}
+  .langrow button.on{background:var(--accent);color:var(--paid-ink)}
 
   .toast{
-    position:fixed;left:16px;right:16px;bottom:calc(var(--safe-b) + 110px);
+    position:fixed;left:16px;right:16px;bottom:calc(var(--safe-b) + 116px);
     background:var(--txt);color:var(--bg);padding:18px;border-radius:16px;
     font-weight:700;text-align:center;z-index:100;opacity:0;pointer-events:none;
     transition:opacity .25s;font-size:17px;
@@ -225,7 +221,7 @@
   .warn{
     background:rgba(255,95,95,.12);border:1px solid rgba(255,95,95,.3);
     color:#FFB3B3;padding:14px;border-radius:12px;font-size:14px;
-    margin-bottom:6px;line-height:1.5;
+    margin-top:18px;line-height:1.5;
   }
 </style>
 </head>
@@ -234,18 +230,22 @@
 <!-- LISTA -->
 <div class="screen on" id="s-list">
   <header>
-    <h1 data-t="debtors">Deudores</h1>
+    <h1 data-t="whoOwes">Quién me debe</h1>
     <button class="ico" onclick="openMenu()">⋯</button>
   </header>
   <div class="searchwrap" id="searchwrap">
-    <input type="text" id="search" data-tph="search" placeholder="Buscar…" autocomplete="off" oninput="render()">
+    <input type="text" id="search" data-tph="search" placeholder="Buscar por nombre…" autocomplete="off" oninput="render()">
   </div>
-  <div class="scroll" id="list"></div>
-  <div class="total">
-    <span class="total-lbl" data-t="totalOwed">Total por cobrar</span>
-    <span class="total-amt" id="grand">$0.00</span>
+  <div class="fabhost">
+    <div class="scroll" id="list"></div>
+    <button class="fab" onclick="openPerson()">＋</button>
   </div>
-  <button class="fab" onclick="openPerson()">＋</button>
+  <div class="footbar">
+    <div class="total">
+      <span class="total-lbl" data-t="totalOwed">Suma de todo lo que me deben</span>
+      <span class="total-amt" id="grand">$0.00</span>
+    </div>
+  </div>
 </div>
 
 <!-- DETALLE -->
@@ -258,20 +258,27 @@
   </header>
   <div class="scroll">
     <div class="hero">
-      <div class="hero-lbl" data-t="owes">Debe</div>
+      <div class="hero-lbl" data-t="owesMeNow">Me debe ahora</div>
       <div class="hero-amt" id="d-bal">$0.00</div>
       <div class="hero-sub" id="d-note"></div>
     </div>
-    <div class="sect" data-t="activity">Movimientos</div>
+    <div class="divider"></div>
+    <div class="sect" data-t="history">Todo lo que ha pasado</div>
     <div id="movs"></div>
   </div>
-  <div class="actbar">
-    <button class="act act-lent" onclick="openPad(cur.id,'up')"><span class="arrow">↑</span><span data-t="lent">Prestó</span></button>
-    <button class="act act-paid" onclick="openPad(cur.id,'down')"><span class="arrow">↓</span><span data-t="paid">Pagó</span></button>
+  <div class="footbar">
+    <div class="acts">
+      <button class="act act-lent" onclick="openPad(cur.id,'up')">
+        <b data-t="gaveShort">Le di dinero</b><i data-t="gaveEffect">Sube lo que debe</i>
+      </button>
+      <button class="act act-paid" onclick="openPad(cur.id,'down')">
+        <b data-t="gotShort">Me pagó</b><i data-t="gotEffect">Baja lo que debe</i>
+      </button>
+    </div>
   </div>
 </div>
 
-<!-- SHEET: TECLADO / MONTO -->
+<!-- HOJA: TECLADO -->
 <div class="sheet" id="sh-pad">
   <div class="sheet-in">
     <div class="sheet-top">
@@ -301,17 +308,21 @@
       <button class="key" onclick="padKey('0')">0</button>
       <button class="key" onclick="padKey('back')">⌫</button>
     </div>
-    <div class="btns">
-      <button class="act act-lent" onclick="savePad('up')"><span class="arrow">↑</span><span data-t="lent">Prestó</span></button>
-      <button class="act act-paid" onclick="savePad('down')"><span class="arrow">↓</span><span data-t="paid">Pagó</span></button>
+    <div class="acts">
+      <button class="act act-lent" id="pad-lent" onclick="savePad('up')">
+        <b data-t="gaveShort">Le di dinero</b><i data-t="gaveEffect">Sube lo que debe</i>
+      </button>
+      <button class="act act-paid" id="pad-paid" onclick="savePad('down')">
+        <b data-t="gotShort">Me pagó</b><i data-t="gotEffect">Baja lo que debe</i>
+      </button>
     </div>
   </div>
 </div>
 
-<!-- SHEET: PERSONA -->
+<!-- HOJA: PERSONA -->
 <div class="sheet" id="sh-person">
   <div class="sheet-in">
-    <div class="sheet-h" id="p-title">Nuevo deudor</div>
+    <div class="sheet-h" id="p-title">Agregar persona</div>
     <label data-t="name">Nombre</label>
     <input type="text" id="p-name" data-tph="namePh" placeholder="Juan" autocomplete="off">
     <label data-t="noteOpt">Nota (opcional)</label>
@@ -323,7 +334,7 @@
   </div>
 </div>
 
-<!-- SHEET: MENU -->
+<!-- HOJA: MENU -->
 <div class="sheet" id="sh-menu">
   <div class="sheet-in">
     <div class="sheet-h" data-t="options">Opciones</div>
@@ -331,10 +342,20 @@
       <button id="lang-es" onclick="setLang('es')">Español</button>
       <button id="lang-en" onclick="setLang('en')">English</button>
     </div>
-    <div class="menu-item" onclick="backup()"><span>💾</span><span data-t="saveBackup">Guardar copia de seguridad</span></div>
-    <div class="menu-item" onclick="document.getElementById('file').click()"><span>📂</span><span data-t="restoreBackup">Restaurar desde copia</span></div>
-    <div class="warn" id="bk-warn" style="margin-top:16px"></div>
-    <div class="btns" style="margin-top:14px">
+    <div class="menu-item" onclick="backup()">
+      <span class="menu-ico">💾</span>
+      <span class="menu-txt"><span class="menu-t" data-t="mBackup">Copia de seguridad</span><span class="menu-d" data-t="mBackupD">Archivo para volver a cargar en la app</span></span>
+    </div>
+    <div class="menu-item" onclick="exportText()">
+      <span class="menu-ico">📄</span>
+      <span class="menu-txt"><span class="menu-t" data-t="mExport">Exportar lista</span><span class="menu-d" data-t="mExportD">Texto para leer, imprimir o enviar</span></span>
+    </div>
+    <div class="menu-item" onclick="document.getElementById('file').click()">
+      <span class="menu-ico">📂</span>
+      <span class="menu-txt"><span class="menu-t" data-t="mRestore">Restaurar desde copia</span><span class="menu-d" data-t="mRestoreD">Reemplaza todo con un archivo de copia</span></span>
+    </div>
+    <div class="warn" id="bk-warn"></div>
+    <div class="btns" style="margin-top:16px">
       <button class="btn btn-no" data-t="close" onclick="closeAll()">Cerrar</button>
     </div>
   </div>
@@ -347,60 +368,90 @@
 /* ---------- TEXTOS / STRINGS ---------- */
 const T={
   es:{
-    debtors:'Deudores', totalOwed:'Total por cobrar', search:'Buscar…',
-    owing:'Deben', settled:'Al día', settledBadge:'Al día',
-    emptyList:'Todavía no hay deudores.<br>Toca ＋ para agregar uno.',
+    whoOwes:'Quién me debe',
+    totalOwed:'Suma de todo lo que me deben',
+    search:'Buscar por nombre…',
+    owing:'Todavía me deben', settled:'Ya no me deben nada',
+    settledBadge:'Pagó todo',
+    emptyList:'Todavía no hay nadie en la lista.<br>Toca ＋ para agregar a alguien.',
     noResults:'Nadie con ese nombre.',
-    noMovs:'Sin movimientos', owes:'Debe', activity:'Movimientos',
-    emptyMovs:'Sin movimientos todavía.',
-    lent:'Prestó', paid:'Pagó',
-    newPerson:'Nuevo deudor', editPerson:'Editar deudor',
+    noMovs:'Sin nada anotado', lastMov:d=>'Último apunte: '+d,
+    owesMeNow:'Me debe ahora',
+    history:'Todo lo que ha pasado',
+    emptyMovs:'Todavía no has anotado nada de esta persona.',
+    gaveShort:'Le di dinero', gaveEffect:'Sube lo que debe',
+    gotShort:'Me pagó', gotEffect:'Baja lo que debe',
+    gaveLong:'Le di dinero', gotLong:'Me pagó',
+    newPerson:'Agregar persona', editPerson:'Cambiar datos',
     name:'Nombre', namePh:'Juan',
     noteOpt:'Nota (opcional)', personNotePh:'Teléfono, dirección…',
     addNote:'Nota', movNotePh:'Efectivo, Zelle…',
     today:'hoy', cancel:'Cancelar', save:'Guardar', close:'Cerrar',
-    options:'Opciones', language:'Idioma',
-    saveBackup:'Guardar copia de seguridad', restoreBackup:'Restaurar desde copia',
-    noBackupYet:'Todavía no has guardado ninguna copia. Los datos viven solo en este teléfono.',
-    lastBackup:(d,n)=>'Última copia: '+d+'. Movimientos nuevos desde entonces: '+n+'.',
-    confirmDelPerson:n=>'¿Borrar a '+n+' y todos sus movimientos?',
-    confirmDelMov:'¿Borrar este movimiento?',
-    confirmRestore:'Esto reemplaza todos los datos actuales. ¿Continuar?',
-    needName:'Escribe un nombre', needAmount:'Escribe un monto',
-    saveFail:'No se pudo guardar', restored:'Datos restaurados',
-    badFile:'Archivo no válido',
+    options:'Opciones',
+    mBackup:'Copia de seguridad', mBackupD:'Archivo para volver a cargar en la app',
+    mExport:'Exportar lista', mExportD:'Texto para leer, imprimir o enviar',
+    mRestore:'Restaurar desde copia', mRestoreD:'Reemplaza todo con un archivo de copia',
+    noBackupYet:'Todavía no has guardado ninguna copia. Todo vive solo en este teléfono.',
+    lastBackup:(d,n)=>'Última copia: '+d+'. Cosas anotadas desde entonces: '+n+'.',
+    confirmDelPerson:n=>'¿Borrar a '+n+' y todo lo anotado de esta persona?',
+    confirmDelMov:'¿Borrar este apunte?',
+    confirmRestore:'Esto reemplaza todo lo que tienes ahora. ¿Seguir?',
+    needName:'Escribe un nombre', needAmount:'Escribe cuánto',
+    saveFail:'No se pudo guardar', restored:'Todo quedó restaurado',
+    badFile:'Ese archivo no sirve',
     backupHint:'Elige "Guardar en Archivos" → iCloud Drive',
-    rememberBackup:'Recuerda guardar una copia',
-    savedLent:m=>'Prestó '+m, savedPaid:m=>'Pagó '+m,
-    months:['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic']
+    exportHint:'Elige "Guardar en Archivos" o compártelo',
+    rememberBackup:'Acuérdate de guardar una copia',
+    savedGave:m=>'Anotado: le diste '+m, savedGot:m=>'Anotado: te pagó '+m,
+    months:['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'],
+    /* export */
+    exTitle:'QUIÉN ME DEBE', exMadeOn:'Hecho el ', exOwes:'Me debe: ',
+    exSettled:'Ya no me debe nada', exNone:'(nada anotado)',
+    exTotal:'TOTAL QUE ME DEBEN: ', exPeople:'Personas en la lista: ',
+    exNobody:'Todavía no hay nadie en la lista.'
   },
   en:{
-    debtors:'Debtors', totalOwed:'Total owed to you', search:'Search…',
-    owing:'Owing', settled:'Settled up', settledBadge:'Settled',
-    emptyList:'No debtors yet.<br>Tap ＋ to add one.',
+    whoOwes:'Who owes me',
+    totalOwed:'Everything owed to me',
+    search:'Search by name…',
+    owing:'Still owe me', settled:'All paid up',
+    settledBadge:'Paid in full',
+    emptyList:'Nobody on the list yet.<br>Tap ＋ to add someone.',
     noResults:'Nobody by that name.',
-    noMovs:'No activity', owes:'Owes', activity:'Activity',
-    emptyMovs:'No activity yet.',
-    lent:'Lent', paid:'Paid',
-    newPerson:'New debtor', editPerson:'Edit debtor',
+    noMovs:'Nothing written down', lastMov:d=>'Last entry: '+d,
+    owesMeNow:'Owes me right now',
+    history:'Everything that happened',
+    emptyMovs:'Nothing written down for this person yet.',
+    gaveShort:'I gave money', gaveEffect:'Owes me more',
+    gotShort:'They paid me', gotEffect:'Owes me less',
+    gaveLong:'I gave money', gotLong:'They paid me',
+    newPerson:'Add person', editPerson:'Change details',
     name:'Name', namePh:'John',
     noteOpt:'Note (optional)', personNotePh:'Phone, address…',
     addNote:'Note', movNotePh:'Cash, Zelle…',
     today:'today', cancel:'Cancel', save:'Save', close:'Close',
-    options:'Options', language:'Language',
-    saveBackup:'Save backup', restoreBackup:'Restore from backup',
-    noBackupYet:'You have not saved a backup yet. The data lives only on this phone.',
-    lastBackup:(d,n)=>'Last backup: '+d+'. New entries since then: '+n+'.',
-    confirmDelPerson:n=>'Delete '+n+' and all their activity?',
+    options:'Options',
+    mBackup:'Backup file', mBackupD:'File to load back into the app',
+    mExport:'Export list', mExportD:'Plain text to read, print or send',
+    mRestore:'Restore from backup', mRestoreD:'Replaces everything with a backup file',
+    noBackupYet:'You have not saved a backup yet. Everything lives only on this phone.',
+    lastBackup:(d,n)=>'Last backup: '+d+'. Entries added since then: '+n+'.',
+    confirmDelPerson:n=>'Delete '+n+' and everything written down for them?',
     confirmDelMov:'Delete this entry?',
-    confirmRestore:'This replaces all current data. Continue?',
-    needName:'Enter a name', needAmount:'Enter an amount',
-    saveFail:'Could not save', restored:'Data restored',
-    badFile:'Invalid file',
+    confirmRestore:'This replaces everything you have now. Continue?',
+    needName:'Enter a name', needAmount:'Enter how much',
+    saveFail:'Could not save', restored:'Everything was restored',
+    badFile:'That file does not work',
     backupHint:'Choose "Save to Files" → iCloud Drive',
+    exportHint:'Choose "Save to Files" or share it',
     rememberBackup:'Remember to save a backup',
-    savedLent:m=>'Lent '+m, savedPaid:m=>'Paid '+m,
-    months:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+    savedGave:m=>'Written down: you gave '+m, savedGot:m=>'Written down: they paid '+m,
+    months:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
+    /* export */
+    exTitle:'WHO OWES ME', exMadeOn:'Made on ', exOwes:'Owes me: ',
+    exSettled:'Owes me nothing', exNone:'(nothing written down)',
+    exTotal:'TOTAL OWED TO ME: ', exPeople:'People on the list: ',
+    exNobody:'Nobody on the list yet.'
   }
 };
 function t(k){return T[db.lang||'es'][k];}
@@ -443,7 +494,7 @@ function closeAll(){document.querySelectorAll('.sheet').forEach(s=>s.classList.r
 function toast(msg){
   const el=document.getElementById('toast');
   el.textContent=msg; el.classList.add('on');
-  setTimeout(()=>el.classList.remove('on'),2200);
+  setTimeout(()=>el.classList.remove('on'),2400);
 }
 function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 
@@ -480,30 +531,29 @@ function render(){
   }else{
     if(owing.length){
       html+='<div class="sect">'+t('owing')+'</div>';
-      html+=owing.map((p,i)=>rowHtml(p,i===0&&!q)).join('');
+      html+=owing.map((p,i)=>cardHtml(p,i===0&&!q,false)).join('');
     }
     if(clear.length){
       html+='<div class="sect">'+t('settled')+'</div>';
-      html+=clear.map(p=>rowHtml(p,false,true)).join('');
+      html+=clear.map(p=>cardHtml(p,false,true)).join('');
     }
   }
   list.innerHTML=html;
   document.getElementById('grand').textContent=money(db.people.reduce((s,p)=>s+Math.max(0,balance(p)),0));
 }
-function rowHtml(p,isTop,isClear){
+function cardHtml(p,isTop,isClear){
   const b=balance(p);
   const last=p.movs.length?p.movs[p.movs.length-1].date:null;
   const foot=isClear
-    ? '<div class="badge">✓ '+t('settledBadge')+'</div>'
-    : '<div class="row-sub">'+(last?fdate(last):t('noMovs'))+'</div>';
-  return `<div class="row ${isTop?'top':''} ${isClear?'clear':''}">
-    <div class="row-tap" onclick="openDetail('${p.id}')">
-      <div class="av">${esc(p.name.charAt(0).toUpperCase())}</div>
-      <div class="row-mid">
-        <div class="row-name">${esc(p.name)}</div>
-        <div class="row-amt">${money(b)}</div>
-        ${foot}
-      </div>
+    ? (p.movs.length
+        ? '<div class="badge">✓ '+t('settledBadge')+'</div>'
+        : '<div class="badge">'+t('noMovs')+'</div>')
+    : '<div class="c-sub">'+(last?t('lastMov')(fdate(last)):t('noMovs'))+'</div>';
+  return `<div class="card ${isTop?'top':''} ${isClear?'clear':''}">
+    <div class="card-tap" onclick="openDetail('${p.id}')">
+      <div class="c-name">${esc(p.name)}</div>
+      <div class="c-amt">${money(b)}</div>
+      ${foot}
     </div>
     <button class="plus" onclick="openPad('${p.id}')">＋</button>
   </div>`;
@@ -517,17 +567,21 @@ function openDetail(id){
   const bal=document.getElementById('d-bal');
   bal.textContent=money(b);
   bal.classList.toggle('zero',b<=0);
-  document.getElementById('d-note').textContent=cur.note||'';
+  const bits=[];
+  if(b<=0&&cur.movs.length) bits.push(t('exSettled'));
+  if(cur.note) bits.push(cur.note);
+  document.getElementById('d-note').textContent=bits.join(' · ');
   const box=document.getElementById('movs');
   const ms=[...cur.movs].sort((a,b2)=>b2.date.localeCompare(a.date));
   box.innerHTML=ms.length?ms.map(m=>`
     <div class="mv">
       <div class="tag ${m.kind}">${m.kind==='up'?'↑':'↓'}</div>
       <div class="mv-mid">
-        <div class="mv-kind ${m.kind}">${m.kind==='up'?t('lent'):t('paid')}</div>
+        <div class="mv-kind ${m.kind}">${m.kind==='up'?t('gaveLong'):t('gotLong')}</div>
+        <div class="mv-eff">${m.kind==='up'?t('gaveEffect'):t('gotEffect')}</div>
         <div class="mv-date">${fdate(m.date)}${m.note?' · '+esc(m.note):''}</div>
       </div>
-      <div class="mv-amt ${m.kind}">${money(m.amt)}</div>
+      <div class="mv-amt ${m.kind}">${m.kind==='up'?'+':'−'}${money(m.amt)}</div>
       <button class="mv-del" onclick="delMov('${m.id}')">×</button>
     </div>`).join('')
     :'<div class="empty">'+t('emptyMovs')+'</div>';
@@ -565,10 +619,13 @@ function delPerson(){
   save(); cur=null; show('s-list'); render();
 }
 
-/* ---------- TECLADO / MONTO ---------- */
-function openPad(id){
+/* ---------- TECLADO ---------- */
+function openPad(id,kind){
   padPerson=db.people.find(p=>p.id===id); if(!padPerson) return;
   padVal='';
+  /* si ya se eligió la acción, solo se muestra ese botón */
+  document.getElementById('pad-lent').style.display=(kind==='down')?'none':'';
+  document.getElementById('pad-paid').style.display=(kind==='up')?'none':'';
   document.getElementById('pad-who').textContent=padPerson.name;
   document.getElementById('pad-date').value=today();
   document.getElementById('pad-datetxt').textContent=t('today');
@@ -618,8 +675,8 @@ function savePad(kind){
   db.sinceBackup++;
   save(); closeAll(); render();
   if(cur&&cur.id===padPerson.id&&document.getElementById('s-det').classList.contains('on')) openDetail(cur.id);
-  toast(kind==='up'?t('savedLent')(money(amt)):t('savedPaid')(money(amt)));
-  if(db.sinceBackup>=10) setTimeout(()=>toast(t('rememberBackup')),2400);
+  toast(kind==='up'?t('savedGave')(money(amt)):t('savedGot')(money(amt)));
+  if(db.sinceBackup>=10) setTimeout(()=>toast(t('rememberBackup')),2600);
 }
 function delMov(id){
   if(!confirm(t('confirmDelMov'))) return;
@@ -627,21 +684,62 @@ function delMov(id){
   save(); openDetail(cur.id); render();
 }
 
-/* ---------- MENU / COPIAS ---------- */
+/* ---------- MENU / ARCHIVOS ---------- */
 function openMenu(){
   const w=document.getElementById('bk-warn');
   w.textContent=db.lastBackup ? t('lastBackup')(fdate(db.lastBackup),db.sinceBackup) : t('noBackupYet');
   document.getElementById('sh-menu').classList.add('on');
 }
-function backup(){
-  const blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'});
+function download(text,filename,mime){
+  const blob=new Blob([text],{type:mime});
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');
-  a.href=url; a.download='pagos-'+today()+'.json';
+  a.href=url; a.download=filename;
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+function backup(){
+  download(JSON.stringify(db,null,2),'pagos-copia-'+today()+'.json','application/json');
   db.lastBackup=today(); db.sinceBackup=0; save();
   closeAll(); toast(t('backupHint'));
+}
+function exportText(){
+  const L='------------------------------------';
+  const D='====================================';
+  const out=[];
+  out.push(t('exTitle'));
+  out.push(t('exMadeOn')+fdate(today()));
+  out.push('');
+  const people=[...db.people].sort((a,b)=>balance(b)-balance(a));
+  if(!people.length){
+    out.push(t('exNobody'));
+  }else{
+    people.forEach(p=>{
+      const b=balance(p);
+      out.push(L);
+      out.push(p.name.toUpperCase());
+      if(p.note) out.push('('+p.note+')');
+      out.push(b>0 ? t('exOwes')+money(b) : (p.movs.length?t('exSettled'):t('noMovs')));
+      out.push('');
+      const ms=[...p.movs].sort((a,b2)=>a.date.localeCompare(b2.date));
+      if(!ms.length){
+        out.push('   '+t('exNone'));
+      }else{
+        ms.forEach(m=>{
+          const sign=(m.kind==='up'?'+':'-')+money(m.amt);
+          const what=m.kind==='up'?t('gaveLong'):t('gotLong');
+          out.push('   '+sign.padEnd(13,' ')+fdate(m.date).padEnd(15,' ')+what+(m.note?' ('+m.note+')':''));
+        });
+      }
+      out.push('');
+    });
+    out.push(D);
+    out.push(t('exTotal')+money(db.people.reduce((s,p)=>s+Math.max(0,balance(p)),0)));
+    out.push(t('exPeople')+db.people.length);
+    out.push(D);
+  }
+  download(out.join('\r\n')+'\r\n','pagos-lista-'+today()+'.txt','text/plain;charset=utf-8');
+  closeAll(); toast(t('exportHint'));
 }
 function restore(e){
   const f=e.target.files[0]; if(!f) return;
