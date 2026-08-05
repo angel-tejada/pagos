@@ -23,7 +23,7 @@
   body{
     background:var(--bg);color:var(--txt);
     font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
-    font-size:15px;line-height:1.35;-webkit-font-smoothing:antialiased;
+    font-size:14px;line-height:1.35;-webkit-font-smoothing:antialiased;
   }
   .screen{display:none;flex-direction:column;height:100vh;height:100dvh;overflow:hidden}
   .screen.on{display:flex}
@@ -33,29 +33,30 @@
     display:flex;align-items:center;gap:10px;flex-shrink:0;
   }
   .topsum{
-    flex:1;min-width:0;display:flex;align-items:baseline;justify-content:flex-end;
-    gap:8px;flex-wrap:wrap;
+    display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;justify-content:flex-end;
+    margin-left:auto;min-width:0;
+    border:1px solid var(--line);border-radius:13px;padding:6px 12px;
   }
-  .topsum-lbl{font-size:28px;color:var(--dim);font-weight:800;letter-spacing:-1.1px}
-  .topsum-amt{font-size:30px;font-weight:800;color:var(--paid);letter-spacing:-1.2px;line-height:1.1}
-  h2{font-size:17px;font-weight:700;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .topsum-lbl{font-size:25px;color:var(--dim);font-weight:800;letter-spacing:-1.1px}
+  .topsum-amt{font-size:27px;font-weight:800;color:var(--paid);letter-spacing:-1.2px;line-height:1.1}
+  h2{font-size:15px;font-weight:700;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .ico{
     width:44px;height:44px;border-radius:13px;background:var(--card2);
     display:flex;align-items:center;justify-content:center;
-    font-size:19px;flex-shrink:0;border:none;color:var(--txt);cursor:pointer;
+    font-size:17px;flex-shrink:0;border:1px solid var(--line);color:var(--txt);cursor:pointer;
   }
   .ico:active{background:var(--line)}
   .ico.danger{color:var(--lent)}
 
   .searchwrap{padding:0 14px 10px;display:none;flex-shrink:0}
   .searchwrap.on{display:block}
-  .searchwrap input{margin:0;padding:11px 14px;font-size:15px}
+  .searchwrap input{margin:0;padding:11px 14px;font-size:14px}
 
   .scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:96px}
 
   /* ---- lista de personas ---- */
   .sect{
-    padding:14px 16px 8px;font-size:11px;color:var(--dim);
+    padding:14px 16px 8px;font-size:10px;color:var(--dim);
     font-weight:800;text-transform:uppercase;letter-spacing:1.1px;
   }
   .card{
@@ -67,24 +68,24 @@
   .card.over .strip{background:var(--lent)}
   .card-tap{flex:1;min-width:0;cursor:pointer;padding:10px 8px 10px 13px}
   .card-tap:active{opacity:.55}
-  .c-name{font-size:14px;font-weight:600;color:var(--dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .c-amt{font-size:24px;font-weight:800;color:var(--paid);letter-spacing:-.8px;line-height:1.15;margin-top:1px}
-  .card.clear .c-amt{font-size:18px;color:var(--dim)}
+  .c-name{font-size:13px;font-weight:600;color:var(--dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .c-amt{font-size:22px;font-weight:800;color:var(--paid);letter-spacing:-.8px;line-height:1.15;margin-top:1px}
+  .card.clear .c-amt{font-size:16px;color:var(--dim)}
   .card.over .c-amt{color:var(--lent)}
-  .c-sub{font-size:11px;color:var(--dim);margin-top:2px}
+  .c-sub{font-size:10px;color:var(--dim);margin-top:2px}
   .badge{
-    display:inline-block;font-size:11px;font-weight:700;color:var(--dim);
+    display:inline-block;font-size:10px;font-weight:700;color:var(--dim);
     background:var(--card2);padding:3px 9px;border-radius:20px;margin-top:4px;
   }
   .card.over .badge{color:var(--lent);background:rgba(255,95,95,.14)}
   .plus{
     width:46px;height:46px;border-radius:13px;background:var(--card2);
-    border:none;color:var(--txt);font-size:24px;font-weight:300;
+    border:none;color:var(--txt);font-size:22px;font-weight:300;
     display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;
   }
   .plus:active{background:var(--line)}
 
-  .empty{padding:50px 30px;text-align:center;color:var(--dim);font-size:14px;line-height:1.7}
+  .empty{padding:50px 30px;text-align:center;color:var(--dim);font-size:13px;line-height:1.7}
 
   .footbar{
     flex-shrink:0;background:var(--card);border-top:1px solid var(--line);
@@ -95,7 +96,7 @@
     position:absolute;right:14px;bottom:14px;
     width:54px;height:54px;border-radius:17px;background:var(--card2);
     border:1px solid var(--line);
-    color:var(--txt);font-size:27px;font-weight:300;
+    color:var(--txt);font-size:24px;font-weight:300;
     display:flex;align-items:center;justify-content:center;
     box-shadow:0 6px 20px rgba(0,0,0,.6);cursor:pointer;z-index:5;
   }
@@ -103,34 +104,34 @@
   .fabhost{position:relative;flex:1;min-height:0;display:flex;flex-direction:column}
 
   /* ---- detalle ---- */
-  .hero{padding:22px 18px 26px;text-align:center}
-  .hero-lbl{font-size:11px;color:var(--dim);font-weight:800;text-transform:uppercase;letter-spacing:1.1px}
-  .hero-amt{font-size:42px;font-weight:800;color:var(--paid);margin-top:5px;letter-spacing:-1.8px;line-height:1.05}
+  .hero{padding:8px 18px 22px;text-align:center}
+  .hero-lbl{font-size:10px;color:var(--dim);font-weight:800;text-transform:uppercase;letter-spacing:1.1px}
+  .hero-amt{font-size:38px;font-weight:800;color:var(--paid);margin-top:5px;letter-spacing:-1.8px;line-height:1.05}
   .hero-amt.zero{color:var(--dim)}
   .hero-amt.over{color:var(--lent)}
-  .hero-sub{font-size:13px;color:var(--dim);margin-top:8px;line-height:1.5}
+  .hero-sub{font-size:12px;color:var(--dim);margin-top:8px;line-height:1.5}
   .divider{height:8px;background:var(--card);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
 
   .mv{display:flex;align-items:center;gap:11px;padding:11px 6px 11px 16px}
   .mv+.mv{border-top:1px solid var(--line)}
   .tag{
     width:34px;height:34px;border-radius:11px;flex-shrink:0;
-    display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;
+    display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;
   }
   .tag.up{background:rgba(255,95,95,.18);color:var(--lent)}
   .tag.down{background:rgba(45,212,167,.18);color:var(--paid)}
   .mv-mid{flex:1;min-width:0}
-  .mv-kind{font-size:14px;font-weight:700}
+  .mv-kind{font-size:13px;font-weight:700}
   .mv-kind.up{color:var(--lent)}
   .mv-kind.down{color:var(--paid)}
-  .mv-eff{font-size:11px;color:var(--dim);margin-top:1px}
-  .mv-date{font-size:11px;color:var(--dim);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .mv-amt{font-size:18px;font-weight:800;flex-shrink:0;letter-spacing:-.4px}
+  .mv-eff{font-size:10px;color:var(--dim);margin-top:1px}
+  .mv-date{font-size:10px;color:var(--dim);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .mv-amt{font-size:16px;font-weight:800;flex-shrink:0;letter-spacing:-.4px}
   .mv-amt.up{color:var(--lent)}
   .mv-amt.down{color:var(--paid)}
   .mv-del{
     width:40px;height:40px;border-radius:12px;background:transparent;border:none;
-    color:var(--dim);font-size:19px;flex-shrink:0;cursor:pointer;
+    color:var(--dim);font-size:17px;flex-shrink:0;cursor:pointer;
   }
   .mv-del:active{background:var(--card2)}
 
@@ -142,8 +143,8 @@
     align-items:center;justify-content:center;gap:2px;padding:6px 5px;
   }
   .act:active{opacity:.75}
-  .act b{font-size:15px;font-weight:800;letter-spacing:.2px}
-  .act i{font-size:10px;font-weight:700;font-style:normal;opacity:.72;letter-spacing:.2px}
+  .act b{font-size:14px;font-weight:800;letter-spacing:.2px}
+  .act i{font-size:9px;font-weight:700;font-style:normal;opacity:.72;letter-spacing:.2px}
   .act-lent{background:var(--lent);color:var(--lent-ink)}
   .act-paid{background:var(--paid);color:var(--paid-ink)}
 
@@ -157,19 +158,19 @@
     width:100%;background:var(--card);border-radius:20px 20px 0 0;
     padding:16px 14px calc(var(--safe-b) + 14px);max-height:96vh;overflow-y:auto;
   }
-  .sheet-h{font-size:17px;font-weight:800;margin-bottom:14px}
+  .sheet-h{font-size:15px;font-weight:800;margin-bottom:14px}
   .sheet-top{display:flex;align-items:center;gap:10px;margin-bottom:4px}
   .sheet-top .sheet-h{flex:1;margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  label{display:block;font-size:11px;color:var(--dim);font-weight:800;margin-bottom:6px;text-transform:uppercase;letter-spacing:.8px}
+  label{display:block;font-size:10px;color:var(--dim);font-weight:800;margin-bottom:6px;text-transform:uppercase;letter-spacing:.8px}
   input{
     width:100%;padding:13px 14px;background:var(--card2);border:1px solid var(--line);
-    border-radius:12px;color:var(--txt);font-size:16px;font-family:inherit;
+    border-radius:12px;color:var(--txt);font-size:14px;font-family:inherit;
     margin-bottom:16px;-webkit-appearance:none;
   }
   input:focus{outline:none;border-color:var(--accent)}
   .btns{display:flex;gap:10px;margin-top:6px}
   .btn{
-    flex:1;min-height:50px;border-radius:14px;border:none;font-size:15px;
+    flex:1;min-height:50px;border-radius:14px;border:none;font-size:14px;
     font-weight:700;font-family:inherit;cursor:pointer;
   }
   .btn-go{background:var(--accent);color:var(--paid-ink)}
@@ -177,12 +178,12 @@
   .btn:active{opacity:.75}
 
   /* ---- teclado ---- */
-  .padamt{text-align:center;font-size:44px;font-weight:800;letter-spacing:-1.8px;padding:8px 0 4px;line-height:1.1}
+  .padamt{text-align:center;font-size:40px;font-weight:800;letter-spacing:-1.8px;padding:8px 0 4px;line-height:1.1}
   .padamt.empty{color:var(--dim)}
-  .padmeta{display:flex;gap:10px;margin:8px 0 12px}
+  .padmeta{display:flex;flex-direction:column;gap:8px;margin:8px 0 12px}
   .chip{
     flex:1;position:relative;min-height:44px;border-radius:12px;background:var(--card2);
-    border:none;color:var(--txt);font-size:13px;font-weight:600;
+    border:none;color:var(--txt);font-size:12px;font-weight:600;
     font-family:inherit;display:flex;align-items:center;justify-content:center;
     gap:6px;cursor:pointer;overflow:hidden;padding:0 8px;
   }
@@ -194,7 +195,7 @@
   .pad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
   .key{
     min-height:52px;border-radius:13px;background:var(--card2);border:none;
-    color:var(--txt);font-size:23px;font-weight:600;font-family:inherit;cursor:pointer;
+    color:var(--txt);font-size:21px;font-weight:600;font-family:inherit;cursor:pointer;
   }
   .key:active{background:var(--line)}
 
@@ -204,14 +205,14 @@
     border-bottom:1px solid var(--line);cursor:pointer;
   }
   .menu-item:active{opacity:.6}
-  .menu-ico{font-size:19px;width:26px;text-align:center;flex-shrink:0}
+  .menu-ico{font-size:17px;width:26px;text-align:center;flex-shrink:0}
   .menu-txt{flex:1;min-width:0}
-  .menu-t{display:block;font-size:15px;font-weight:600}
-  .menu-d{display:block;font-size:11px;color:var(--dim);margin-top:2px;line-height:1.4}
+  .menu-t{display:block;font-size:14px;font-weight:600}
+  .menu-d{display:block;font-size:10px;color:var(--dim);margin-top:2px;line-height:1.4}
   .langrow{display:flex;gap:10px;padding:2px 0 14px;border-bottom:1px solid var(--line)}
   .langrow button{
     flex:1;min-height:46px;border-radius:12px;border:none;
-    background:var(--card2);color:var(--dim);font-size:14px;font-weight:700;
+    background:var(--card2);color:var(--dim);font-size:13px;font-weight:700;
     font-family:inherit;cursor:pointer;
   }
   .langrow button.on{background:var(--accent);color:var(--paid-ink)}
@@ -220,13 +221,13 @@
     position:fixed;left:14px;right:14px;bottom:calc(var(--safe-b) + 96px);
     background:var(--txt);color:var(--bg);padding:14px;border-radius:13px;
     font-weight:700;text-align:center;z-index:100;opacity:0;pointer-events:none;
-    transition:opacity .25s;font-size:15px;
+    transition:opacity .25s;font-size:14px;
   }
   .toast.on{opacity:1}
 
   .warn{
     background:rgba(255,95,95,.12);border:1px solid rgba(255,95,95,.3);
-    color:#FFB3B3;padding:11px;border-radius:10px;font-size:12px;
+    color:#FFB3B3;padding:11px;border-radius:10px;font-size:11px;
     margin-top:14px;line-height:1.5;
   }
 </style>
@@ -601,8 +602,7 @@ function openDetail(id){
     <div class="mv">
       <div class="tag ${m.kind}">${m.kind==='up'?'↑':'↓'}</div>
       <div class="mv-mid">
-        <div class="mv-kind ${m.kind}">${m.kind==='up'?t('gaveLong'):t('gotLong')}</div>
-        <div class="mv-eff">${m.kind==='up'?t('gaveEffect'):t('gotEffect')}</div>
+        <div class="mv-kind ${m.kind}">${m.kind==='up'?t('borrowed'):t('paidBtn')}</div>
         <div class="mv-date">${fwhen(m)}${m.note?' · '+esc(m.note):''}</div>
       </div>
       <div class="mv-amt ${m.kind}">${m.kind==='up'?'+':'−'}${money(m.amt)}</div>
