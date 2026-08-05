@@ -313,10 +313,10 @@
     </div>
     <div class="acts">
       <button class="act act-lent" id="pad-lent" onclick="savePad('up')">
-        <b data-t="gaveShort">Le di dinero</b><i data-t="gaveEffect">Sube lo que debe</i>
+        <b data-t="borrowed">Prestado</b>
       </button>
       <button class="act act-paid" id="pad-paid" onclick="savePad('down')">
-        <b data-t="gotShort">Me pagó</b><i data-t="gotEffect">Baja lo que debe</i>
+        <b data-t="paidBtn">Pagado</b>
       </button>
     </div>
   </div>
@@ -380,7 +380,8 @@ const T={
     noResults:'Nadie con ese nombre.',
     noMovs:'Sin nada anotado', lastMov:d=>'Último apunte: '+d,
     owesMeNow:'Me debe ahora',
-    history:'Todo lo que ha pasado',
+    history:'Historial de pagos',
+    borrowed:'Prestado', paidBtn:'Pagado',
     emptyMovs:'Todavía no has anotado nada de esta persona.',
     gaveShort:'Le di dinero', gaveEffect:'Sube lo que debe',
     gotShort:'Me pagó', gotEffect:'Baja lo que debe',
@@ -423,7 +424,8 @@ const T={
     noResults:'Nobody by that name.',
     noMovs:'Nothing written down', lastMov:d=>'Last entry: '+d,
     owesMeNow:'Owes me right now',
-    history:'Everything that happened',
+    history:'Payment History',
+    borrowed:'Borrowed', paidBtn:'Paid',
     emptyMovs:'Nothing written down for this person yet.',
     gaveShort:'I gave money', gaveEffect:'Owes me more',
     gotShort:'They paid me', gotEffect:'Owes me less',
