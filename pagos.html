@@ -158,9 +158,10 @@
   }
   .sheet.on{display:flex}
   /* caja centrada arriba: no la tapa el teclado del teléfono */
-  .sheet.mid{align-items:flex-start;justify-content:center;padding:calc(var(--safe-t) + 64px) 16px 16px}
+  .sheet.mid{align-items:center;justify-content:center;padding:16px}
   .sheet.mid .sheet-in{
     border-radius:18px;max-width:420px;padding:18px 16px;max-height:none;
+    margin-bottom:20vh;   /* centrada, pero por encima del teclado */
   }
   .sheet-in{
     width:100%;background:var(--card);border-radius:20px 20px 0 0;
