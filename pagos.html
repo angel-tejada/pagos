@@ -32,12 +32,12 @@
     padding:calc(var(--safe-t) + 12px) 14px 12px;
     display:flex;align-items:center;gap:10px;flex-shrink:0;
   }
-  .topsum{flex:1;min-width:0}
-  .topsum-lbl{
-    font-size:11px;color:var(--dim);font-weight:800;
-    text-transform:uppercase;letter-spacing:1.1px;
+  .topsum{
+    flex:1;min-width:0;display:flex;align-items:baseline;justify-content:flex-end;
+    gap:8px;flex-wrap:wrap;
   }
-  .topsum-amt{font-size:40px;font-weight:800;color:var(--paid);letter-spacing:-1.8px;line-height:1.1;margin-top:2px}
+  .topsum-lbl{font-size:12px;color:var(--dim);font-weight:700}
+  .topsum-amt{font-size:30px;font-weight:800;color:var(--paid);letter-spacing:-1.2px;line-height:1.1}
   h2{font-size:17px;font-weight:700;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .ico{
     width:44px;height:44px;border-radius:13px;background:var(--card2);
@@ -236,11 +236,11 @@
 <!-- LISTA -->
 <div class="screen on" id="s-list">
   <header>
-    <div class="topsum">
-      <div class="topsum-lbl" data-t="totalOwed">Total que me deben</div>
-      <div class="topsum-amt" id="grand">$0.00</div>
-    </div>
     <button class="ico" onclick="openMenu()">⋯</button>
+    <div class="topsum">
+      <span class="topsum-lbl" data-t="totalOwed">Total que me deben:</span>
+      <span class="topsum-amt" id="grand">$0.00</span>
+    </div>
   </header>
   <div class="searchwrap" id="searchwrap">
     <input type="text" id="search" data-tph="search" placeholder="Buscar por nombre…" autocomplete="off" oninput="render()">
@@ -371,7 +371,7 @@
 /* ---------- TEXTOS / STRINGS ---------- */
 const T={
   es:{
-    totalOwed:'Total que me deben',
+    totalOwed:'Total que me deben:',
     search:'Buscar por nombre…',
     owing:'Todavía me deben', settled:'Ya no me deben nada',
     settledBadge:'Pagó todo',
@@ -414,7 +414,7 @@ const T={
     exNobody:'Todavía no hay nadie en la lista.'
   },
   en:{
-    totalOwed:'Total owed',
+    totalOwed:'Total Owed:',
     search:'Search by name…',
     owing:'Still owe me', settled:'All paid up',
     settledBadge:'Paid in full',
