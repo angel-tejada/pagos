@@ -161,7 +161,8 @@
   .sheet.mid{align-items:center;justify-content:center;padding:16px}
   .sheet.mid .sheet-in{
     border-radius:18px;max-width:420px;padding:18px 16px;max-height:none;
-    margin-bottom:20vh;   /* centrada, pero por encima del teclado */
+    /* bien por encima del teclado: así el teléfono no la mueve al escribir */
+    margin-bottom:32vh;
   }
   .sheet-in{
     width:100%;background:var(--card);border-radius:20px 20px 0 0;
@@ -309,14 +310,6 @@
       <button class="ico" onclick="closeAll()">✕</button>
     </div>
     <div class="padamt empty" id="pad-amt">$0</div>
-    <div class="padmeta">
-      <div class="chip" id="pad-datechip">
-        <span id="pad-datetxt">hoy</span>
-        <input type="date" id="pad-date" onchange="padDateChanged()">
-      </div>
-      <button class="chip" id="pad-notebtn" onclick="toggleNote()">＋ <span data-t="addNote">Nota</span></button>
-      <input type="text" id="pad-note" data-tph="movNotePh" placeholder="Efectivo, Zelle…" autocomplete="off" style="display:none">
-    </div>
     <div class="pad" id="pad-keys">
       <button class="key" data-k="1">1</button>
       <button class="key" data-k="2">2</button>
@@ -611,8 +604,7 @@ function openDetail(id){
   bal.classList.toggle('over',b<0);
   document.querySelector('#s-det .hero-lbl').textContent=b<0?t('overpaid'):t('owesMeNow');
   const bits=[];
-  if(b<0) bits.push(t('overpaidBy')(money(b)));
-  else if(b===0&&cur.movs.length) bits.push(t('exSettled'));
+  if(b===0&&cur.movs.length) bits.push(t('exSettled'));
   if(cur.note) bits.push(cur.note);
   document.getElementById('d-note').textContent=bits.join(' · ');
   const box=document.getElementById('movs');
@@ -675,11 +667,6 @@ function openPad(id,kind){
   document.getElementById('pad-lent').style.display=(kind==='down')?'none':'';
   document.getElementById('pad-paid').style.display=(kind==='up')?'none':'';
   document.getElementById('pad-who').textContent=padPerson.name;
-  document.getElementById('pad-date').value=today();
-  document.getElementById('pad-datetxt').textContent=t('today');
-  const note=document.getElementById('pad-note');
-  note.value=''; note.style.display='none';
-  document.getElementById('pad-notebtn').style.display='';
   padDraw();
   document.getElementById('sh-pad').classList.add('on');
 }
@@ -714,24 +701,14 @@ function padKey(k){
   }
   padDraw();
 }
-function padDateChanged(){
-  const v=document.getElementById('pad-date').value;
-  document.getElementById('pad-datetxt').textContent=(!v||v===today())?t('today'):fdate(v);
-}
-function toggleNote(){
-  const n=document.getElementById('pad-note');
-  n.style.display='';
-  document.getElementById('pad-notebtn').style.display='none';
-  setTimeout(()=>n.focus(),50);
-}
 function savePad(kind){
   const amt=Math.round(parseFloat(padVal||'0')*100)/100;
   if(!amt||amt<=0||isNaN(amt)){toast(t('needAmount'));return;}
   padPerson.movs.push({
     id:String(Date.now()),kind:kind,amt:amt,
     ts:Date.now(),
-    date:document.getElementById('pad-date').value||today(),
-    note:document.getElementById('pad-note').value.trim()
+    date:today(),
+    note:''
   });
   db.sinceBackup++;
   save(); closeAll(); render();
