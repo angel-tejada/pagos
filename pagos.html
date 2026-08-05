@@ -352,7 +352,7 @@
     <label data-t="name">Nombre</label>
     <input type="text" id="p-name" data-tph="namePh" placeholder="Juan" autocomplete="off">
     <label data-t="noteOpt">Nota (opcional)</label>
-    <input type="text" id="p-note" maxlength="40" oninput="capNote(this)" data-tph="personNotePh" placeholder="Teléfono, dirección…" autocomplete="off">
+    <input type="text" id="p-note" maxlength="33" oninput="capNote(this)" data-tph="personNotePh" placeholder="Teléfono, dirección…" autocomplete="off">
     <div class="btns">
       <button class="btn btn-no" data-t="cancel" onclick="closeAll()">Cancelar</button>
       <button class="btn btn-go" data-t="save" onclick="savePerson()">Guardar</button>
@@ -656,14 +656,14 @@ function openPerson(p){
   document.getElementById('sh-person').classList.add('on');
   setTimeout(()=>document.getElementById('p-name').focus(),150);
 }
-/* tope duro: la nota nunca pasa de 40 letras, ni escribiendo ni pegando */
+/* tope duro: la nota nunca pasa de 33 letras, ni escribiendo ni pegando */
 function capNote(el){
-  if(el.value.length>40) el.value=el.value.slice(0,40);
+  if(el.value.length>33) el.value=el.value.slice(0,33);
 }
 function savePerson(){
   const n=document.getElementById('p-name').value.trim();
   if(!n){toast(t('needName'));return;}
-  const note=document.getElementById('p-note').value.trim().slice(0,40);  /* máximo 40 letras */
+  const note=document.getElementById('p-note').value.trim().slice(0,33);  /* máximo 33 letras */
   const wasEdit=editId;
   if(wasEdit){
     const p=db.people.find(x=>x.id===wasEdit);
