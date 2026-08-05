@@ -36,7 +36,7 @@
     flex:1;min-width:0;display:flex;align-items:baseline;justify-content:flex-end;
     gap:8px;flex-wrap:wrap;
   }
-  .topsum-lbl{font-size:12px;color:var(--dim);font-weight:700}
+  .topsum-lbl{font-size:28px;color:var(--dim);font-weight:800;letter-spacing:-1.1px}
   .topsum-amt{font-size:30px;font-weight:800;color:var(--paid);letter-spacing:-1.2px;line-height:1.1}
   h2{font-size:17px;font-weight:700;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .ico{
@@ -238,7 +238,7 @@
   <header>
     <button class="ico" onclick="openMenu()">⋯</button>
     <div class="topsum">
-      <span class="topsum-lbl" data-t="totalOwed">Total que me deben:</span>
+      <span class="topsum-lbl" data-t="totalOwed">Total:</span>
       <span class="topsum-amt" id="grand">$0.00</span>
     </div>
   </header>
@@ -371,7 +371,7 @@
 /* ---------- TEXTOS / STRINGS ---------- */
 const T={
   es:{
-    totalOwed:'Total que me deben:',
+    totalOwed:'Total:',
     search:'Buscar por nombre…',
     owing:'Todavía me deben', settled:'Ya no me deben nada',
     settledBadge:'Pagó todo',
@@ -414,7 +414,7 @@ const T={
     exNobody:'Todavía no hay nadie en la lista.'
   },
   en:{
-    totalOwed:'Total Owed:',
+    totalOwed:'Total:',
     search:'Search by name…',
     owing:'Still owe me', settled:'All paid up',
     settledBadge:'Paid in full',
@@ -484,6 +484,19 @@ function balance(p){
 function fdate(iso){
   const [y,m,d]=iso.split('-').map(Number);
   return db.lang==='en' ? t('months')[m-1]+' '+d+', '+y : d+' '+t('months')[m-1]+' '+y;
+}
+/* hora del este, 12 horas con AM/PM */
+function ftime(ts){
+  try{
+    return new Date(ts).toLocaleString('en-US',
+      {timeZone:'America/New_York',hour:'numeric',minute:'2-digit',hour12:true});
+  }catch(e){return '';}
+}
+/* fecha, y la hora exacta si el apunte la tiene guardada */
+function fwhen(m){
+  const d=fdate(m.date);
+  const h=m.ts?ftime(m.ts):'';
+  return h?d+' · '+h:d;
 }
 function today(){
   const d=new Date();
@@ -588,7 +601,7 @@ function openDetail(id){
       <div class="mv-mid">
         <div class="mv-kind ${m.kind}">${m.kind==='up'?t('gaveLong'):t('gotLong')}</div>
         <div class="mv-eff">${m.kind==='up'?t('gaveEffect'):t('gotEffect')}</div>
-        <div class="mv-date">${fdate(m.date)}${m.note?' · '+esc(m.note):''}</div>
+        <div class="mv-date">${fwhen(m)}${m.note?' · '+esc(m.note):''}</div>
       </div>
       <div class="mv-amt ${m.kind}">${m.kind==='up'?'+':'−'}${money(m.amt)}</div>
       <button class="mv-del" onclick="delMov('${m.id}')">×</button>
@@ -678,6 +691,7 @@ function savePad(kind){
   if(!amt||amt<=0||isNaN(amt)){toast(t('needAmount'));return;}
   padPerson.movs.push({
     id:String(Date.now()),kind:kind,amt:amt,
+    ts:Date.now(),
     date:document.getElementById('pad-date').value||today(),
     note:document.getElementById('pad-note').value.trim()
   });
