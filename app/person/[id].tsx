@@ -3,7 +3,7 @@ import { ActionSheetIOS, Alert, Platform, Pressable, ScrollView, StyleSheet, Tex
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '../../src/components/ui';
-import { shareBalanceMessage } from '../../src/data/files';
+import { shareBalanceMessage, sharePersonPdf } from '../../src/data/files';
 import { formatEntryDate, formatMoney } from '../../src/data/format';
 import { getBalanceCents, useData, type Entry, type Person } from '../../src/data/store';
 import { useLang } from '../../src/i18n';
@@ -81,6 +81,10 @@ export default function PersonScreen() {
     void shareBalanceMessage(person, data, t, lang).catch(() => Alert.alert(t.shareFailed));
   };
 
+  const sharePdf = () => {
+    void sharePersonPdf(person, data, t, lang).catch(() => Alert.alert(t.shareFailed));
+  };
+
   return (
     <SafeAreaView edges={['top']} style={styles.screen}>
       <View style={styles.header}>
@@ -96,7 +100,10 @@ export default function PersonScreen() {
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <Text style={styles.balance}>{formatMoney(getBalanceCents(data, person.id), person.currency, lang)}</Text>
 
-        <Button label={t.sendBalance} tone="secondary" style={styles.sendButton} onPress={sendBalance} />
+        <View style={styles.shareRow}>
+          <Button label={t.sendBalance} style={styles.shareButton} onPress={sendBalance} />
+          <Button label={t.sharePdf} tone="secondary" style={styles.shareButton} onPress={sharePdf} />
+        </View>
 
         <View style={styles.historySection}>
           <Text style={styles.sectionTitle}>{t.history}</Text>
@@ -160,7 +167,8 @@ const makeStyles = (c: Palette) => StyleSheet.create({
   more: { width: 36, color: c.accent, fontSize: 16, fontWeight: '800', textAlign: 'right', letterSpacing: -1 },
   content: { paddingHorizontal: layout.screenPadding, paddingTop: 38, paddingBottom: 40 },
   balance: { color: c.text, fontSize: 58, fontWeight: '600', letterSpacing: -2, textAlign: 'center' },
-  sendButton: { marginTop: 26 },
+  shareRow: { flexDirection: 'row', gap: 10, marginTop: 26 },
+  shareButton: { flex: 1 },
   historySection: { marginTop: 58 },
   sectionTitle: { color: c.text, fontSize: type.title, fontWeight: '700', marginLeft: 10, marginBottom: 12 },
   historyList: { gap: 9 },

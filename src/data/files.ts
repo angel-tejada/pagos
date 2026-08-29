@@ -1,4 +1,5 @@
 import * as DocumentPicker from 'expo-document-picker';
+import * as Print from 'expo-print';
 import { Share } from 'react-native';
 import { File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
@@ -40,6 +41,72 @@ export async function shareBalanceMessage(
     formatMoney(lentCents - paidCents, person.currency, lang),
   );
   await Share.share({ message }, { subject: t.sendBalanceTitle });
+}
+
+/** Escapes user-entered text before it goes into the PDF's HTML. */
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+/**
+ * The long-form companion to shareBalanceMessage: one person's balance and full
+ * history as a PDF, rendered on device and handed to the share sheet.
+ */
+export async function sharePersonPdf(
+  person: Person,
+  data: AppData,
+  t: Strings,
+  lang: Lang,
+): Promise<void> {
+  let lentCents = 0;
+  let paidCents = 0;
+  const entries = data.entries
+    .filter((entry) => entry.personId === person.id)
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  for (const entry of entries) {
+    if (entry.kind === 'debt') lentCents += entry.amountCents;
+    else paidCents += entry.amountCents;
+  }
+
+  const rows = entries.length
+    ? entries
+        .map((entry) => `<tr><td>${escapeHtml(entry.kind === 'debt' ? t.borrowed : t.paidBtn)}</td>` +
+          `<td>${escapeHtml(formatEntryDate(entry, lang))}</td>` +
+          `<td>${escapeHtml(entry.note)}</td>` +
+          `<td class="amt">${entry.kind === 'debt' ? '+' : '−'}${escapeHtml(formatMoney(entry.amountCents, person.currency, lang))}</td></tr>`)
+        .join('')
+    : `<tr><td colspan="4">${escapeHtml(t.pdfNoEntries)}</td></tr>`;
+
+  const html = `<!doctype html><html><head><meta charset="utf-8" />
+<style>
+  body { font-family: -apple-system, Helvetica, Arial, sans-serif; color: #111; padding: 40px; }
+  h1 { font-size: 30px; margin: 0 0 4px; }
+  .date { color: #666; font-size: 14px; margin-bottom: 26px; }
+  .balance { font-size: 40px; font-weight: 700; margin: 0 0 6px; }
+  .totals { color: #444; font-size: 15px; margin-bottom: 30px; }
+  h2 { font-size: 19px; margin: 0 0 10px; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th { text-align: left; color: #666; font-weight: 600; border-bottom: 1px solid #ccc; padding: 8px 6px; }
+  td { padding: 8px 6px; border-bottom: 1px solid #eee; }
+  .amt { text-align: right; white-space: nowrap; }
+  footer { margin-top: 40px; color: #999; font-size: 12px; text-align: center; }
+</style></head><body>
+  <h1>${escapeHtml(person.name)}</h1>
+  <div class="date">${escapeHtml(formatDate(new Date(), lang))}</div>
+  <div class="balance">${escapeHtml(formatMoney(lentCents - paidCents, person.currency, lang))}</div>
+  <div class="totals">${escapeHtml(t.pdfLent)}: ${escapeHtml(formatMoney(lentCents, person.currency, lang))} &nbsp;·&nbsp; ${escapeHtml(t.pdfPaid)}: ${escapeHtml(formatMoney(paidCents, person.currency, lang))}</div>
+  <h2>${escapeHtml(t.pdfHistory)}</h2>
+  <table><tbody>${rows}</tbody></table>
+  <footer>Pagos</footer>
+</body></html>`;
+
+  const { uri } = await Print.printToFileAsync({ html });
+  if (!(await Sharing.isAvailableAsync())) throw new Error('Sharing is unavailable');
+  await Sharing.shareAsync(uri, { mimeType: 'application/pdf', dialogTitle: 'Pagos', UTI: 'com.adobe.pdf' });
 }
 
 export async function shareBackup(data: AppData): Promise<void> {

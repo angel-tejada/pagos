@@ -33,6 +33,12 @@ export const es = {
 
   /* ---- enviar saldo ---- */
   sendBalance: 'Enviar saldo',
+  sharePdf: 'Compartir PDF',
+  pdfBalance: 'Saldo',
+  pdfLent: 'Prestado',
+  pdfPaid: 'Pagado',
+  pdfHistory: 'Historial',
+  pdfNoEntries: 'Sin movimientos.',
   sendBalanceTitle: 'Enviar saldo',
   balanceMessage: (name: string, date: string, lent: string, paid: string, balance: string) =>
     'Hola ' + name + ' — resumen al ' + date + ': prestado ' + lent + ', pagado ' + paid + ', saldo ' + balance,
@@ -190,6 +196,12 @@ export const en: Strings = {
 
   /* ---- send balance ---- */
   sendBalance: 'Send balance',
+  sharePdf: 'Share PDF',
+  pdfBalance: 'Balance',
+  pdfLent: 'Lent',
+  pdfPaid: 'Paid',
+  pdfHistory: 'History',
+  pdfNoEntries: 'No entries.',
   sendBalanceTitle: 'Send balance',
   balanceMessage: (name: string, date: string, lent: string, paid: string, balance: string) =>
     'Hi ' + name + ' — summary as of ' + date + ': lent ' + lent + ', paid ' + paid + ', balance ' + balance,
