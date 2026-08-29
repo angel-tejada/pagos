@@ -31,6 +31,13 @@ export const es = {
   freeLimitEmpty: (max: number) => 'Gratis hasta ' + max + ' personas.',
   freeLimitCount: (n: number, max: number) => n + ' de ' + max + ' personas',
 
+  /* ---- enviar saldo ---- */
+  sendBalance: 'Enviar saldo',
+  sendBalanceTitle: 'Enviar saldo',
+  balanceMessage: (name: string, date: string, lent: string, paid: string, balance: string) =>
+    'Hola ' + name + ' — resumen al ' + date + ': prestado ' + lent + ', pagado ' + paid + ', saldo ' + balance,
+  shareFailed: 'No se pudo compartir.',
+
   /* ---- detalle ---- */
   owesMeNow: 'Me debe ahora',
   history: 'Historial de pagos',
@@ -173,6 +180,13 @@ export const en: Strings = {
   /* ---- free limit ---- */
   freeLimitEmpty: (max: number) => 'Free for up to ' + max + ' people.',
   freeLimitCount: (n: number, max: number) => n + ' of ' + max + ' people',
+
+  /* ---- send balance ---- */
+  sendBalance: 'Send balance',
+  sendBalanceTitle: 'Send balance',
+  balanceMessage: (name: string, date: string, lent: string, paid: string, balance: string) =>
+    'Hi ' + name + ' — summary as of ' + date + ': lent ' + lent + ', paid ' + paid + ', balance ' + balance,
+  shareFailed: 'Could not share.',
 
   /* ---- detail ---- */
   owesMeNow: 'Owes me right now',

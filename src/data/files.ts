@@ -1,9 +1,10 @@
 import * as DocumentPicker from 'expo-document-picker';
+import { Share } from 'react-native';
 import { File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 
 import type { Lang, Strings } from '../i18n';
-import { formatDate, formatEntryDate, formatMoney } from './format';
+import { formatDate, formatEntryDate, formatMoney, formatShortDate } from './format';
 import {
   DATA_SCHEMA_VERSION,
   getBalanceCents,
@@ -12,6 +13,34 @@ import {
   type Entry,
   type Person,
 } from './store';
+
+/**
+ * Puts a short, neutral balance summary into the iOS share sheet.
+ * The user edits and sends it themselves — nothing is sent automatically,
+ * and the other person is never notified by this app.
+ */
+export async function shareBalanceMessage(
+  person: Person,
+  data: AppData,
+  t: Strings,
+  lang: Lang,
+): Promise<void> {
+  let lentCents = 0;
+  let paidCents = 0;
+  for (const entry of data.entries) {
+    if (entry.personId !== person.id) continue;
+    if (entry.kind === 'debt') lentCents += entry.amountCents;
+    else paidCents += entry.amountCents;
+  }
+  const message = t.balanceMessage(
+    person.name,
+    formatShortDate(new Date(), lang),
+    formatMoney(lentCents, person.currency, lang),
+    formatMoney(paidCents, person.currency, lang),
+    formatMoney(lentCents - paidCents, person.currency, lang),
+  );
+  await Share.share({ message }, { subject: t.sendBalanceTitle });
+}
 
 export async function shareBackup(data: AppData): Promise<void> {
   const now = new Date();

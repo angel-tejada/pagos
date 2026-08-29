@@ -35,3 +35,11 @@ export function parseAmountToCents(value: string): number | null {
   const cents = Number(whole) * 100 + Number(decimal.padEnd(2, '0'));
   return Number.isSafeInteger(cents) && cents > 0 ? cents : null;
 }
+
+/** Short numeric date for the shareable balance message: "29/08" in es, "08/29" in en.
+ *  Built by hand — ICU drops the leading zero for a bare day/month skeleton. */
+export function formatShortDate(value: Date, lang: 'es' | 'en'): string {
+  const day = String(value.getDate()).padStart(2, '0');
+  const month = String(value.getMonth() + 1).padStart(2, '0');
+  return lang === 'es' ? `${day}/${month}` : `${month}/${day}`;
+}
