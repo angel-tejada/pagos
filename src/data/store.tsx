@@ -63,18 +63,12 @@ type DataValue = {
   markBackupComplete: () => void;
 };
 
-const SEED_DATA: AppData = {
+/** A new install starts empty. Shipping sample people would show a real user
+ *  debts that do not exist. */
+const EMPTY_DATA: AppData = {
   schemaVersion: DATA_SCHEMA_VERSION,
-  people: [
-    { id: '1', name: 'Juan', currency: 'USD', createdAt: '2026-08-11T17:00:00.000Z' },
-    { id: '2', name: 'María', currency: 'USD', createdAt: '2026-08-11T17:05:00.000Z' },
-  ],
-  entries: [
-    { id: 'seed-1', personId: '1', kind: 'payment', amountCents: 5000, note: 'Zelle', dueDate: null, createdAt: '2026-08-11T17:00:00.000Z' },
-    { id: 'seed-2', personId: '1', kind: 'debt', amountCents: 20000, note: 'Cash', dueDate: null, createdAt: '2026-08-11T17:01:00.000Z' },
-    { id: 'seed-3', personId: '1', kind: 'payment', amountCents: 3000, note: 'Cash', dueDate: null, createdAt: '2026-08-11T17:02:00.000Z' },
-    { id: 'seed-4', personId: '2', kind: 'debt', amountCents: 4550, note: '', dueDate: null, createdAt: '2026-08-11T17:05:00.000Z' },
-  ],
+  people: [],
+  entries: [],
   lastBackupAt: null,
   entriesSinceBackup: 0,
 };
@@ -82,7 +76,7 @@ const SEED_DATA: AppData = {
 const DataContext = createContext<DataValue | null>(null);
 
 export function DataProvider({ children }: { children: ReactNode }) {
-  const [data, setData] = useState<AppData>(SEED_DATA);
+  const [data, setData] = useState<AppData>(EMPTY_DATA);
   const [hydrated, setHydrated] = useState(false);
   const dataRef = useRef(data);
   const writeQueue = useRef(Promise.resolve());
@@ -107,7 +101,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
             setData(restored);
           }
         } else {
-          writeQueue.current = AsyncStorage.setItem(DATA_STORAGE_KEY, JSON.stringify(SEED_DATA));
+          writeQueue.current = AsyncStorage.setItem(DATA_STORAGE_KEY, JSON.stringify(EMPTY_DATA));
         }
       })
       .catch(() => undefined)

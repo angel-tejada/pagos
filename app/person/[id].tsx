@@ -105,7 +105,7 @@ export default function PersonScreen() {
           ) : (
             <View style={styles.historyList}>
               {entries.map((entry) => (
-                <HistoryRow key={entry.id} entry={entry} person={person} onPress={() => confirmDeleteEntry(entry)} />
+                <HistoryRow key={entry.id} entry={entry} person={person} onDelete={() => confirmDeleteEntry(entry)} />
               ))}
             </View>
           )}
@@ -120,12 +120,12 @@ export default function PersonScreen() {
   );
 }
 
-function HistoryRow({ entry, person, onPress }: { entry: Entry; person: Person; onPress: () => void }) {
+function HistoryRow({ entry, person, onDelete }: { entry: Entry; person: Person; onDelete: () => void }) {
   const styles = useStyles(makeStyles);
   const { t, lang } = useLang();
   const isDebt = entry.kind === 'debt';
   return (
-    <Pressable onPress={onPress} style={({ pressed }) => [styles.historyRow, pressed && styles.pressed]}>
+    <View style={styles.historyRow}>
       <View style={[styles.entryMark, !isDebt && styles.entryMarkPaid]}>
         <Text style={styles.entryArrow}>{isDebt ? '↑' : '↓'}</Text>
       </View>
@@ -133,10 +133,21 @@ function HistoryRow({ entry, person, onPress }: { entry: Entry; person: Person; 
         <Text style={styles.entryTitle}>{isDebt ? t.borrowed : t.paidBtn}</Text>
         <Text style={styles.entryMeta}>{formatEntryDate(entry, lang)}{entry.note ? ` · ${entry.note}` : ''}</Text>
       </View>
-      <Text style={[styles.entryAmount, !isDebt && styles.entryAmountPaid]}>
-        {isDebt ? '+' : '−'}{formatMoney(entry.amountCents, person.currency, lang)}
-      </Text>
-    </Pressable>
+      <View style={styles.entryRight}>
+        <Text style={[styles.entryAmount, !isDebt && styles.entryAmountPaid]}>
+          {isDebt ? '+' : '−'}{formatMoney(entry.amountCents, person.currency, lang)}
+        </Text>
+        {/* A labelled control, not a swipe: swiping is a steering gesture with
+            no affordance, which is exactly wrong for the target user. */}
+        <Pressable
+          accessibilityLabel={t.delete}
+          hitSlop={12}
+          onPress={onDelete}
+          style={({ pressed }) => [styles.deleteControl, pressed && styles.pressed]}>
+          <Text style={styles.deleteText}>{t.delete}</Text>
+        </Pressable>
+      </View>
+    </View>
   );
 }
 
@@ -153,14 +164,17 @@ const makeStyles = (c: Palette) => StyleSheet.create({
   historySection: { marginTop: 58 },
   sectionTitle: { color: c.text, fontSize: type.title, fontWeight: '700', marginLeft: 10, marginBottom: 12 },
   historyList: { gap: 9 },
-  historyRow: { height: 82, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 14, backgroundColor: c.surface, borderRadius: radius.md },
+  historyRow: { minHeight: 92, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 14, backgroundColor: c.surface, borderRadius: radius.md },
   entryMark: { width: 38, height: 38, borderRadius: 19, backgroundColor: c.accent, alignItems: 'center', justifyContent: 'center' },
   entryMarkPaid: { backgroundColor: c.neutralMark },
   entryArrow: { color: c.text, fontSize: 19, fontWeight: '800' },
   entryCopy: { flex: 1, gap: 4 },
   entryTitle: { color: c.text, fontSize: 17, fontWeight: '600' },
   entryMeta: { color: c.textSecondary, fontSize: 12 },
+  entryRight: { alignItems: 'flex-end', gap: 2 },
   entryAmount: { color: c.accent, fontSize: 18, fontWeight: '700' },
+  deleteControl: { minHeight: 28, justifyContent: 'center', paddingHorizontal: 2 },
+  deleteText: { color: c.textSecondary, fontSize: type.label, fontWeight: '600' },
   entryAmountPaid: { color: c.textSecondary },
   empty: { color: c.textMuted, fontSize: type.body, textAlign: 'center', paddingTop: 80 },
   actionBar: { flexDirection: 'row', gap: 10, paddingHorizontal: layout.screenPadding, paddingTop: 16, paddingBottom: 16, backgroundColor: c.bar },
