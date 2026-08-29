@@ -3,6 +3,8 @@ import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+// Registers the local-notification handler at startup.
+import '../src/data/reminders';
 import { LangProvider } from '../src/i18n';
 import { DataProvider } from '../src/data/store';
 import { ThemeContextProvider, useResolvedPalette } from '../src/theme';

@@ -20,7 +20,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button, FieldLabel, InitialAvatar } from '../src/components/ui';
-import { currencySymbol, formatDate, parseAmountToCents } from '../src/data/format';
+import { currencySymbol, formatDate, formatMoney, parseAmountToCents } from '../src/data/format';
+import { scheduleDueReminder } from '../src/data/reminders';
 import { CURRENCIES, useData, type CurrencyCode, type Person } from '../src/data/store';
 import { useLang } from '../src/i18n';
 import { layout, radius, type, useColors, useStyles, type Palette } from '../src/theme';
@@ -107,7 +108,7 @@ export default function EntryScreen() {
     ]);
   };
 
-  const submit = () => {
+  const submit = async () => {
     const amountCents = parseAmountToCents(amount);
     if (!amountCents) {
       Alert.alert(t.needAmount);
@@ -117,6 +118,20 @@ export default function EntryScreen() {
       Alert.alert(t.personRequired);
       return;
     }
+
+    // The reminder is scheduled before saving so the entry can store its id and
+    // cancel it later. A refused permission is not a reason to lose the entry.
+    let notificationId: string | undefined;
+    if (hasDueDate) {
+      const when = new Date(dateOnlyIso(dueDate));
+      notificationId = await scheduleDueReminder(
+        t.reminderTitle,
+        t.reminderBody(selectedPerson.name, formatMoney(amountCents, currency, lang)),
+        when,
+      );
+      if (!notificationId && when.getTime() > Date.now()) Alert.alert(t.reminderDenied);
+    }
+
     const personId = addEntry({
       kind: isPayment ? 'payment' : 'debt',
       amountCents,
@@ -126,6 +141,7 @@ export default function EntryScreen() {
       personId: selectedPerson.id,
       personName: selectedPerson.name,
       sourceContactId: selectedPerson.sourceContactId,
+      notificationId,
     });
     router.replace(`/person/${personId}`);
   };
@@ -222,7 +238,7 @@ export default function EntryScreen() {
         </ScrollView>
 
         <SafeAreaView edges={['bottom']} style={styles.footer}>
-          <Button label={isPayment ? t.addPayment : t.addDebt} onPress={submit} />
+          <Button label={isPayment ? t.addPayment : t.addDebt} onPress={() => void submit()} />
         </SafeAreaView>
       </KeyboardAvoidingView>
 
