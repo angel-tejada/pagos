@@ -6,7 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { OptionsSheet } from '../src/components/OptionsSheet';
 import { BottomNav, Button, IconButton } from '../src/components/ui';
 import { formatMoney } from '../src/data/format';
-import { getBalanceCents, useData, type Person } from '../src/data/store';
+import { FREE_PERSON_LIMIT, getBalanceCents, useData, type Person } from '../src/data/store';
 import { useLang } from '../src/i18n';
 import { colors, layout, radius, spacing, type } from '../src/theme';
 
@@ -94,6 +94,12 @@ export default function HomeScreen() {
         </ScrollView>
       )}
 
+      <Text style={styles.limitNote}>
+        {data.people.length === 0
+          ? t.freeLimitEmpty(FREE_PERSON_LIMIT)
+          : t.freeLimitCount(data.people.length, FREE_PERSON_LIMIT)}
+      </Text>
+
       <BottomNav active="home" />
       <OptionsSheet visible={optionsOpen} onClose={() => setOptionsOpen(false)} />
     </SafeAreaView>
@@ -129,5 +135,6 @@ const styles = StyleSheet.create({
   debtMarkInner: { width: 76, height: 76, borderRadius: 38, borderWidth: 6, borderColor: '#303034', alignItems: 'center', justifyContent: 'center' },
   debtMarkText: { color: '#303034', fontSize: 48, fontWeight: '800' },
   emptyButton: { minHeight: 52, width: 138, borderRadius: 26, marginTop: 45 },
+  limitNote: { color: colors.textMuted, fontSize: type.caption, textAlign: 'center', paddingBottom: 10 },
   pressed: { opacity: 0.64 },
 });

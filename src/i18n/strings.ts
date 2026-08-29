@@ -27,6 +27,10 @@ export const es = {
   noMovs: 'Sin nada anotado',
   lastMov: (d: string) => 'Último apunte: ' + d,
 
+  /* ---- limite gratis ---- */
+  freeLimitEmpty: (max: number) => 'Gratis hasta ' + max + ' personas.',
+  freeLimitCount: (n: number, max: number) => n + ' de ' + max + ' personas',
+
   /* ---- detalle ---- */
   owesMeNow: 'Me debe ahora',
   history: 'Historial de pagos',
@@ -165,6 +169,10 @@ export const en: Strings = {
   noResults: 'Nobody by that name.',
   noMovs: 'Nothing written down',
   lastMov: (d: string) => 'Last entry: ' + d,
+
+  /* ---- free limit ---- */
+  freeLimitEmpty: (max: number) => 'Free for up to ' + max + ' people.',
+  freeLimitCount: (n: number, max: number) => n + ' of ' + max + ' people',
 
   /* ---- detail ---- */
   owesMeNow: 'Owes me right now',

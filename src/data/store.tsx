@@ -6,6 +6,10 @@ export const DATA_SCHEMA_VERSION = 1 as const;
 export const DATA_STORAGE_KEY = 'pagos_native_v1';
 export const CURRENCIES = ['USD', 'DOP', 'EUR'] as const;
 
+/** Free tier caps how many people you can track — never how often you can log.
+ *  A scope limit, not a rate limit. See CLAUDE.md monetization rules. */
+export const FREE_PERSON_LIMIT = 12;
+
 export type CurrencyCode = (typeof CURRENCIES)[number];
 export type EntryKind = 'debt' | 'payment';
 
