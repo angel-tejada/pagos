@@ -8,10 +8,11 @@ import { BottomNav, Button, IconButton } from '../src/components/ui';
 import { formatMoney } from '../src/data/format';
 import { FREE_PERSON_LIMIT, getBalanceCents, useData, type Person } from '../src/data/store';
 import { useLang } from '../src/i18n';
-import { layout, radius, spacing, type, useColors, useStyles, type Palette } from '../src/theme';
+import { balanceColor, layout, radius, spacing, type, useColors, useStyles, type Palette } from '../src/theme';
 
 export default function HomeScreen() {
   const styles = useStyles(makeStyles);
+  const c = useColors();
   const { t, lang } = useLang();
   const { data, renamePerson, deletePerson } = useData();
   const router = useRouter();
@@ -70,7 +71,9 @@ export default function HomeScreen() {
         </View>
       ) : (
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-          <Text style={styles.total}>{formatMoney(total, people[0]?.person.currency ?? 'USD', lang)}</Text>
+          <Text style={[styles.total, { color: balanceColor(total, c) }]}>
+            {formatMoney(total, people[0]?.person.currency ?? 'USD', lang)}
+          </Text>
 
           <View style={styles.debtsSection}>
             <Text style={styles.sectionTitle}>{t.activeBalances}</Text>
@@ -79,7 +82,9 @@ export default function HomeScreen() {
                 <View key={person.id} style={styles.debtCard}>
                   <Pressable onPress={() => router.push(`/person/${person.id}`)} style={({ pressed }) => [styles.debtCopy, pressed && styles.pressed]}>
                     <Text style={styles.personName}>{person.name}</Text>
-                    <Text style={styles.personAmount}>{formatMoney(balance, person.currency, lang)}</Text>
+                    <Text style={[styles.personAmount, { color: balanceColor(balance, c) }]}>
+                      {formatMoney(balance, person.currency, lang)}
+                    </Text>
                   </Pressable>
                   <Pressable
                     accessibilityLabel={t.moreActions}
@@ -122,14 +127,14 @@ const makeStyles = (c: Palette) => StyleSheet.create({
   settingsGlyph: { width: 32, color: c.accent, fontSize: 29, fontWeight: '700', lineHeight: 33, textAlign: 'center' },
   brand: { color: c.text, fontSize: type.screenTitle, fontWeight: '500' },
   content: { paddingHorizontal: layout.screenPadding, paddingTop: 38, paddingBottom: spacing.xxxl },
-  total: { color: c.text, fontSize: type.heroAmount, fontWeight: '600', letterSpacing: -2.2, textAlign: 'center' },
+  total: { fontSize: type.heroAmount, fontWeight: '600', letterSpacing: -2.2, textAlign: 'center' },
   debtsSection: { marginTop: 100 },
   sectionTitle: { color: c.text, fontSize: type.title, fontWeight: '700', marginLeft: 10, marginBottom: 12 },
   list: { gap: 10 },
   debtCard: { width: '100%', height: 98, flexDirection: 'row', alignItems: 'center', backgroundColor: c.surface, borderRadius: radius.md, paddingHorizontal: 23, overflow: 'hidden' },
   debtCopy: { flex: 1, alignSelf: 'stretch', justifyContent: 'center' },
   personName: { color: c.text, fontSize: 18, fontWeight: '500', marginBottom: 4 },
-  personAmount: { color: c.accent, fontSize: type.amount, fontWeight: '600', letterSpacing: -0.4 },
+  personAmount: { fontSize: type.amount, fontWeight: '600', letterSpacing: -0.4 },
   moreCircle: { width: 29, height: 29, borderRadius: 15, backgroundColor: c.chip, alignItems: 'center', justifyContent: 'center' },
   moreDots: { color: c.chipInk, fontSize: 12, fontWeight: '800', letterSpacing: -1, marginTop: -4 },
   emptyHome: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingBottom: 68 },

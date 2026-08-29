@@ -16,6 +16,8 @@ export type Palette = {
   accent: string;
   accentPressed: string;
   accentSoft: string;
+  /** Text/glyph colour on top of an accent fill. */
+  accentInk: string;
   up: string;
   upStrong: string;
   upSoft: string;
@@ -67,12 +69,13 @@ export const darkColors: Palette = {
   accent: '#FF375F',
   accentPressed: '#E72F55',
   accentSoft: '#3A111D',
-  up: '#FF375F',
-  upStrong: '#FF375F',
-  upSoft: '#3A111D',
+  accentInk: '#000000',
+  up: '#30D158',
+  upStrong: '#30D158',
+  upSoft: '#10301A',
   upInk: '#000000',
-  down: '#FF6670',
-  downSoft: '#3A171B',
+  down: '#FF453A',
+  downSoft: '#3A1512',
   downInk: '#000000',
   overlay: 'rgba(0, 0, 0, 0.68)',
   white08: 'rgba(255, 255, 255, 0.08)',
@@ -112,15 +115,16 @@ export const lightColors: Palette = {
   text: '#000000',
   textSecondary: '#55555C',
   textMuted: '#77777E',
-  accent: '#C8102E',
-  accentPressed: '#A50D26',
-  accentSoft: '#FBE7EB',
-  up: '#C8102E',
-  upStrong: '#C8102E',
-  upSoft: '#FBE7EB',
+  accent: '#C2185B',
+  accentPressed: '#A31549',
+  accentSoft: '#FCE8F0',
+  accentInk: '#FFFFFF',
+  up: '#1B7F3B',
+  upStrong: '#1B7F3B',
+  upSoft: '#E7F4EC',
   upInk: '#FFFFFF',
-  down: '#B3202B',
-  downSoft: '#FBE9EA',
+  down: '#B3261E',
+  downSoft: '#FBEAE8',
   downInk: '#FFFFFF',
   overlay: 'rgba(0, 0, 0, 0.32)',
   white08: 'rgba(0, 0, 0, 0.05)',
@@ -157,6 +161,19 @@ export function useResolvedPalette(): { palette: Palette; scheme: ThemeName } {
     () => ({ palette: scheme === 'light' ? lightColors : darkColors, scheme }),
     [scheme],
   );
+}
+
+/**
+ * Green when they owe you more, red when they have paid you back, muted at
+ * zero — zero is the app's happy moment, not an alarm.
+ *
+ * Colour is never the only signal: history rows also carry the word
+ * (Prestado / Pagado) and a + or - sign.
+ */
+export function balanceColor(cents: number, c: Palette): string {
+  if (cents > 0) return c.up;
+  if (cents < 0) return c.down;
+  return c.textSecondary;
 }
 
 export function useColors(): Palette {

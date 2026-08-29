@@ -400,7 +400,7 @@ const makeStyles = (c: Palette) => StyleSheet.create({
   currencySign: { color: c.accent, fontSize: type.bodyLarge, fontWeight: '700' },
   personField: { height: layout.controlHeight, flexDirection: 'row', alignItems: 'center', gap: 11, paddingHorizontal: 12, backgroundColor: c.surface, borderRadius: radius.md },
   personPlus: { width: 29, height: 29, borderRadius: 15, backgroundColor: c.accent, alignItems: 'center', justifyContent: 'center' },
-  personPlusText: { color: c.bg, fontSize: 21, fontWeight: '600', lineHeight: 24 },
+  personPlusText: { color: c.accentInk, fontSize: 21, fontWeight: '600', lineHeight: 24 },
   personText: { flex: 1, color: c.accent, fontSize: type.bodyLarge, fontWeight: '500' },
   dueField: { height: layout.controlHeight, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: c.surface, borderRadius: radius.md, paddingLeft: 18, paddingRight: 22 },
   dateText: { color: c.text, fontSize: type.body, fontWeight: '500', marginLeft: 7 },

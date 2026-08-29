@@ -6,10 +6,11 @@ import { BottomNav, EmptyState, InitialAvatar } from '../src/components/ui';
 import { formatMoney } from '../src/data/format';
 import { getBalanceCents, useData } from '../src/data/store';
 import { useLang } from '../src/i18n';
-import { layout, radius, type, useStyles, type Palette } from '../src/theme';
+import { balanceColor, layout, radius, type, useColors, useStyles, type Palette } from '../src/theme';
 
 export default function PeopleScreen() {
   const styles = useStyles(makeStyles);
+  const c = useColors();
   const { t, lang } = useLang();
   const { data } = useData();
   const router = useRouter();
@@ -33,7 +34,9 @@ export default function PeopleScreen() {
               <InitialAvatar name={person.name} size={48} />
               <View style={styles.personCopy}>
                 <Text style={styles.personName}>{person.name}</Text>
-                <Text style={styles.amount}>{formatMoney(getBalanceCents(data, person.id), person.currency, lang)}</Text>
+                <Text style={[styles.amount, { color: balanceColor(getBalanceCents(data, person.id), c) }]}>
+                  {formatMoney(getBalanceCents(data, person.id), person.currency, lang)}
+                </Text>
               </View>
             </Pressable>
           ))}
@@ -53,6 +56,6 @@ const makeStyles = (c: Palette) => StyleSheet.create({
   personRow: { width: '100%', height: 91, flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 19, backgroundColor: c.surface, borderRadius: radius.md, overflow: 'hidden' },
   personCopy: { gap: 4 },
   personName: { color: c.text, fontSize: 22, fontWeight: '700' },
-  amount: { color: c.textSecondary, fontSize: 18, fontWeight: '400' },
+  amount: { fontSize: 18, fontWeight: '600' },
   pressed: { opacity: 0.64 },
 });

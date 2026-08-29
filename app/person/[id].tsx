@@ -7,10 +7,11 @@ import { shareBalanceMessage, sharePersonPdf } from '../../src/data/files';
 import { formatEntryDate, formatMoney } from '../../src/data/format';
 import { getBalanceCents, useData, type Entry, type Person } from '../../src/data/store';
 import { useLang } from '../../src/i18n';
-import { layout, radius, type, useStyles, type Palette } from '../../src/theme';
+import { balanceColor, layout, radius, type, useColors, useStyles, type Palette } from '../../src/theme';
 
 export default function PersonScreen() {
   const styles = useStyles(makeStyles);
+  const c = useColors();
   const { id = '' } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { t, lang } = useLang();
@@ -98,7 +99,9 @@ export default function PersonScreen() {
       </View>
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <Text style={styles.balance}>{formatMoney(getBalanceCents(data, person.id), person.currency, lang)}</Text>
+        <Text style={[styles.balance, { color: balanceColor(getBalanceCents(data, person.id), c) }]}>
+          {formatMoney(getBalanceCents(data, person.id), person.currency, lang)}
+        </Text>
 
         <View style={styles.shareRow}>
           <Button label={t.sendBalance} style={styles.shareButton} onPress={sendBalance} />
@@ -134,7 +137,7 @@ function HistoryRow({ entry, person, onDelete }: { entry: Entry; person: Person;
   return (
     <View style={styles.historyRow}>
       <View style={[styles.entryMark, !isDebt && styles.entryMarkPaid]}>
-        <Text style={styles.entryArrow}>{isDebt ? '↑' : '↓'}</Text>
+        <Text style={[styles.entryArrow, !isDebt && styles.entryArrowPaid]}>{isDebt ? '↑' : '↓'}</Text>
       </View>
       <View style={styles.entryCopy}>
         <Text style={styles.entryTitle}>{isDebt ? t.borrowed : t.paidBtn}</Text>
@@ -166,24 +169,25 @@ const makeStyles = (c: Palette) => StyleSheet.create({
   name: { color: c.text, fontSize: type.screenTitle, fontWeight: '700' },
   more: { width: 36, color: c.accent, fontSize: 16, fontWeight: '800', textAlign: 'right', letterSpacing: -1 },
   content: { paddingHorizontal: layout.screenPadding, paddingTop: 38, paddingBottom: 40 },
-  balance: { color: c.text, fontSize: 58, fontWeight: '600', letterSpacing: -2, textAlign: 'center' },
+  balance: { fontSize: 58, fontWeight: '600', letterSpacing: -2, textAlign: 'center' },
   shareRow: { flexDirection: 'row', gap: 10, marginTop: 26 },
   shareButton: { flex: 1 },
   historySection: { marginTop: 58 },
   sectionTitle: { color: c.text, fontSize: type.title, fontWeight: '700', marginLeft: 10, marginBottom: 12 },
   historyList: { gap: 9 },
   historyRow: { minHeight: 92, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 14, backgroundColor: c.surface, borderRadius: radius.md },
-  entryMark: { width: 38, height: 38, borderRadius: 19, backgroundColor: c.accent, alignItems: 'center', justifyContent: 'center' },
-  entryMarkPaid: { backgroundColor: c.neutralMark },
-  entryArrow: { color: c.text, fontSize: 19, fontWeight: '800' },
+  entryMark: { width: 38, height: 38, borderRadius: 19, backgroundColor: c.up, alignItems: 'center', justifyContent: 'center' },
+  entryMarkPaid: { backgroundColor: c.down },
+  entryArrow: { color: c.upInk, fontSize: 19, fontWeight: '800' },
+  entryArrowPaid: { color: c.downInk },
   entryCopy: { flex: 1, gap: 4 },
   entryTitle: { color: c.text, fontSize: 17, fontWeight: '600' },
   entryMeta: { color: c.textSecondary, fontSize: 12 },
   entryRight: { alignItems: 'flex-end', gap: 2 },
-  entryAmount: { color: c.accent, fontSize: 18, fontWeight: '700' },
+  entryAmount: { color: c.up, fontSize: 18, fontWeight: '700' },
   deleteControl: { minHeight: 28, justifyContent: 'center', paddingHorizontal: 2 },
   deleteText: { color: c.textSecondary, fontSize: type.label, fontWeight: '600' },
-  entryAmountPaid: { color: c.textSecondary },
+  entryAmountPaid: { color: c.down },
   empty: { color: c.textMuted, fontSize: type.body, textAlign: 'center', paddingTop: 80 },
   actionBar: { flexDirection: 'row', gap: 10, paddingHorizontal: layout.screenPadding, paddingTop: 16, paddingBottom: 16, backgroundColor: c.bar },
   actionButton: { flex: 1 },
