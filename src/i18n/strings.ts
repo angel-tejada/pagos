@@ -121,7 +121,9 @@ export const es = {
   mRestoreD: 'Reemplaza todo con un archivo de copia',
   noBackupYet: 'Todavía no has guardado ninguna copia. Todo vive solo en este teléfono.',
   localOnlyTitle: 'Tus datos se quedan aquí',
-  localOnlyBody: 'Pagos guarda todo solamente en este teléfono.',
+  localOnlyBody: 'Pagos guarda todo solamente en este teléfono. Se incluye en la copia de seguridad de tu iPhone.',
+  restoreConfirm: 'Esto reemplaza todo lo que tienes ahora. ¿Seguir?',
+  restoreFailed: 'No se pudo leer ese archivo.',
   backupFailed: 'No se pudo compartir la copia de seguridad.',
   exportFailed: 'No se pudo compartir la lista.',
   lastBackup: (d: string, n: number) =>
@@ -273,7 +275,9 @@ export const en: Strings = {
   mRestoreD: 'Replaces everything with a backup file',
   noBackupYet: 'You have not saved a backup yet. Everything lives only on this phone.',
   localOnlyTitle: 'Your data stays here',
-  localOnlyBody: 'Pagos stores everything only on this phone.',
+  localOnlyBody: 'Pagos stores everything only on this phone. It is included in your iPhone backup.',
+  restoreConfirm: 'This replaces everything you have now. Continue?',
+  restoreFailed: 'Could not read that file.',
   backupFailed: 'The backup file could not be shared.',
   exportFailed: 'The list could not be shared.',
   lastBackup: (d: string, n: number) =>

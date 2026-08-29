@@ -1,6 +1,8 @@
-import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { pickRestoreFile, shareBackup } from '../data/files';
+import { useData } from '../data/store';
 import { useLang } from '../i18n';
 import { radius, spacing, type, useStyles, type Palette } from '../theme';
 import { Button } from './ui';
@@ -8,6 +10,33 @@ import { Button } from './ui';
 export function OptionsSheet({ visible, onClose }: { visible: boolean; onClose: () => void }) {
   const styles = useStyles(makeStyles);
   const { t, lang, setLang } = useLang();
+  const { data, restoreData, markBackupComplete } = useData();
+
+  const runBackup = () => {
+    void shareBackup(data)
+      .then(markBackupComplete)
+      .catch(() => Alert.alert(t.backupFailed));
+  };
+
+  const runRestore = () => {
+    void pickRestoreFile()
+      .then((restored) => {
+        if (!restored) return;
+        Alert.alert(t.mRestore, t.restoreConfirm, [
+          { text: t.cancel, style: 'cancel' },
+          {
+            text: t.confirm,
+            style: 'destructive',
+            onPress: () => {
+              restoreData(restored);
+              onClose();
+              Alert.alert(t.restored);
+            },
+          },
+        ]);
+      })
+      .catch(() => Alert.alert(t.restoreFailed));
+  };
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose} statusBarTranslucent>
@@ -24,9 +53,8 @@ export function OptionsSheet({ visible, onClose }: { visible: boolean; onClose: 
           </View>
 
           <View style={styles.actions}>
-            <ActionRow glyph="↓" title={t.mBackup} detail={t.mBackupD} />
-            <ActionRow glyph="↗" title={t.mExport} detail={t.mExportD} />
-            <ActionRow glyph="↑" title={t.mRestore} detail={t.mRestoreD} last />
+            <ActionRow glyph="↓" title={t.mBackup} detail={t.mBackupD} onPress={runBackup} />
+            <ActionRow glyph="↑" title={t.mRestore} detail={t.mRestoreD} onPress={runRestore} last />
           </View>
 
           <View style={styles.notice}>
@@ -50,10 +78,22 @@ function LanguageButton({ label, active, onPress }: { label: string; active: boo
   );
 }
 
-function ActionRow({ glyph, title, detail, last = false }: { glyph: string; title: string; detail: string; last?: boolean }) {
+function ActionRow({
+  glyph,
+  title,
+  detail,
+  onPress,
+  last = false,
+}: {
+  glyph: string;
+  title: string;
+  detail: string;
+  onPress: () => void;
+  last?: boolean;
+}) {
   const styles = useStyles(makeStyles);
   return (
-    <Pressable style={({ pressed }) => [styles.actionRow, !last && styles.actionBorder, pressed && styles.pressed]}>
+    <Pressable onPress={onPress} style={({ pressed }) => [styles.actionRow, !last && styles.actionBorder, pressed && styles.pressed]}>
       <View style={styles.actionIcon}><Text style={styles.actionGlyph}>{glyph}</Text></View>
       <View style={styles.actionCopy}>
         <Text style={styles.actionTitle}>{title}</Text>
