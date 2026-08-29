@@ -20,7 +20,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button, FieldLabel, InitialAvatar } from '../src/components/ui';
-import { formatDate, parseAmountToCents } from '../src/data/format';
+import { currencySymbol, formatDate, parseAmountToCents } from '../src/data/format';
 import { CURRENCIES, useData, type CurrencyCode, type Person } from '../src/data/store';
 import { useLang } from '../src/i18n';
 import { layout, radius, type, useColors, useStyles, type Palette } from '../src/theme';
@@ -384,12 +384,6 @@ function normalizeName(name: string): string {
 
 function dateOnlyIso(date: Date): string {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate(), 12).toISOString();
-}
-
-function currencySymbol(currency: CurrencyCode): string {
-  if (currency === 'EUR') return '€';
-  if (currency === 'DOP') return 'RD$';
-  return '$';
 }
 
 const makeStyles = (c: Palette) => StyleSheet.create({

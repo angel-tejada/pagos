@@ -1,12 +1,33 @@
 import type { CurrencyCode, Entry } from './store';
 
+const SYMBOLS: Record<CurrencyCode, string> = { USD: '$', DOP: 'RD$', EUR: '€' };
+
+export function currencySymbol(currency: CurrencyCode): string {
+  return SYMBOLS[currency];
+}
+
+/**
+ * Formats integer cents for display.
+ *
+ * Grouping and decimal separators follow the language, not the device locale:
+ * Spanish reads `1.234,56` and English reads `1,234.56`. This is done by hand
+ * rather than through Intl because Hermes on device and Node on the build
+ * machine disagree, and because Spanish CLDR drops the grouping separator for
+ * four-digit numbers — which is not what we want here.
+ */
 export function formatMoney(cents: number, currency: CurrencyCode, lang: 'es' | 'en'): string {
-  return new Intl.NumberFormat(lang === 'es' ? 'es-US' : 'en-US', {
-    style: 'currency',
-    currency,
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(cents / 100);
+  const negative = cents < 0;
+  const absolute = Math.abs(Math.trunc(cents));
+  const whole = Math.floor(absolute / 100);
+  const fraction = absolute % 100;
+
+  const groupSeparator = lang === 'es' ? '.' : ',';
+  const decimalSeparator = lang === 'es' ? ',' : '.';
+
+  const grouped = String(whole).replace(/\B(?=(\d{3})+(?!\d))/g, groupSeparator);
+  const decimals = String(fraction).padStart(2, '0');
+
+  return `${negative ? '-' : ''}${SYMBOLS[currency]}${grouped}${decimalSeparator}${decimals}`;
 }
 
 export function formatDate(value: string | Date, lang: 'es' | 'en'): string {
@@ -28,11 +49,30 @@ export function formatEntryDate(entry: Entry, lang: 'es' | 'en'): string {
   }).format(new Date(entry.createdAt));
 }
 
+/**
+ * Reads a typed amount into integer cents. Accepts either separator style, so a
+ * Spanish speaker typing `1.234,56` and an English speaker typing `1,234.56`
+ * both work regardless of the app language.
+ */
 export function parseAmountToCents(value: string): number | null {
-  const normalized = value.trim().replace(/[$,\s]/g, '');
-  if (!/^\d+(?:\.\d{0,2})?$/.test(normalized)) return null;
-  const [whole, decimal = ''] = normalized.split('.');
-  const cents = Number(whole) * 100 + Number(decimal.padEnd(2, '0'));
+  let normalized = value.trim().replace(/[$€\s]/g, '').replace(/RD/gi, '');
+  if (!normalized) return null;
+
+  const lastComma = normalized.lastIndexOf(',');
+  const lastDot = normalized.lastIndexOf('.');
+  const decimalAt = Math.max(lastComma, lastDot);
+  const trailing = decimalAt === -1 ? '' : normalized.slice(decimalAt + 1);
+
+  // A trailing group of exactly 3 digits is a thousands group, not a decimal.
+  const hasDecimal = decimalAt !== -1 && trailing.length > 0 && trailing.length <= 2;
+
+  const wholePart = (hasDecimal ? normalized.slice(0, decimalAt) : normalized).replace(/[.,]/g, '');
+  const decimalPart = hasDecimal ? trailing : '';
+
+  if (!/^\d+$/.test(wholePart)) return null;
+  if (decimalPart && !/^\d{1,2}$/.test(decimalPart)) return null;
+
+  const cents = Number(wholePart) * 100 + Number(decimalPart.padEnd(2, '0') || '0');
   return Number.isSafeInteger(cents) && cents > 0 ? cents : null;
 }
 
