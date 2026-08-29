@@ -44,7 +44,6 @@ export default function EntryScreen() {
   const [hasDueDate, setHasDueDate] = useState(false);
   const [dueDate, setDueDate] = useState(new Date());
   const [note, setNote] = useState('');
-  const [personSheetOpen, setPersonSheetOpen] = useState(false);
   const [existingSheetOpen, setExistingSheetOpen] = useState(false);
   const [manualSheetOpen, setManualSheetOpen] = useState(false);
 
@@ -71,7 +70,7 @@ export default function EntryScreen() {
   };
 
   const openPhoneBook = async () => {
-    setPersonSheetOpen(false);
+    setManualSheetOpen(false);
     try {
       const permission = await requestPermissionsAsync();
       if (permission.status !== 'granted') {
@@ -173,7 +172,7 @@ export default function EntryScreen() {
 
           <View>
             <FieldLabel>{t.person}</FieldLabel>
-            <Pressable onPress={() => setPersonSheetOpen(true)} style={({ pressed }) => [styles.personField, pressed && styles.pressed]}>
+            <Pressable onPress={() => setManualSheetOpen(true)} style={({ pressed }) => [styles.personField, pressed && styles.pressed]}>
               <View style={styles.personPlus}><Text style={styles.personPlusText}>＋</Text></View>
               <Text style={styles.personText}>{selectedPerson?.name ?? t.person}</Text>
             </Pressable>
@@ -227,61 +226,18 @@ export default function EntryScreen() {
         </SafeAreaView>
       </KeyboardAvoidingView>
 
-      <PersonActionSheet
-        visible={personSheetOpen}
-        onClose={() => setPersonSheetOpen(false)}
-        onPhoneBook={openPhoneBook}
+      <ManualNameSheet
+        visible={manualSheetOpen}
+        hasExisting={data.people.length > 0}
+        onClose={() => setManualSheetOpen(false)}
+        onConfirm={(name) => selectPerson({ name })}
         onExisting={() => {
-          setPersonSheetOpen(false);
+          setManualSheetOpen(false);
           setExistingSheetOpen(true);
         }}
-        onManual={() => {
-          setPersonSheetOpen(false);
-          setManualSheetOpen(true);
-        }}
+        onPhoneBook={openPhoneBook}
       />
-      <ExistingPeopleSheet
-        visible={existingSheetOpen}
-        people={data.people}
-        onClose={() => setExistingSheetOpen(false)}
-        onSelect={(person) => selectPerson({ id: person.id, name: person.name, sourceContactId: person.sourceContactId })}
-      />
-      <ManualNameSheet visible={manualSheetOpen} onClose={() => setManualSheetOpen(false)} onConfirm={(name) => selectPerson({ name })} />
     </SafeAreaView>
-  );
-}
-
-function PersonActionSheet({
-  visible,
-  onClose,
-  onPhoneBook,
-  onExisting,
-  onManual,
-}: {
-  visible: boolean;
-  onClose: () => void;
-  onPhoneBook: () => void;
-  onExisting: () => void;
-  onManual: () => void;
-}) {
-  const styles = useStyles(makeStyles);
-  const { t } = useLang();
-  return (
-    <Modal transparent visible={visible} animationType="fade" onRequestClose={onClose} statusBarTranslucent>
-      <View style={styles.modalRoot}>
-        <Pressable accessibilityLabel={t.close} style={styles.backdrop} onPress={onClose} />
-        <SafeAreaView edges={['bottom']} style={styles.actionSheetSafe}>
-          <View style={styles.actionGroup}>
-            <SheetRow label={t.phoneBook} onPress={onPhoneBook} />
-            <SheetRow label={t.fromExisting} onPress={onExisting} />
-            <SheetRow label={t.enterManually} onPress={onManual} last />
-          </View>
-          <Pressable onPress={onClose} style={({ pressed }) => [styles.cancelRow, pressed && styles.pressed]}>
-            <Text style={styles.cancelRowText}>{t.cancel}</Text>
-          </Pressable>
-        </SafeAreaView>
-      </View>
-    </Modal>
   );
 }
 
@@ -323,7 +279,21 @@ function ExistingPeopleSheet({
   );
 }
 
-function ManualNameSheet({ visible, onClose, onConfirm }: { visible: boolean; onClose: () => void; onConfirm: (name: string) => void }) {
+function ManualNameSheet({
+  visible,
+  hasExisting,
+  onClose,
+  onConfirm,
+  onExisting,
+  onPhoneBook,
+}: {
+  visible: boolean;
+  hasExisting: boolean;
+  onClose: () => void;
+  onConfirm: (name: string) => void;
+  onExisting: () => void;
+  onPhoneBook: () => void;
+}) {
   const styles = useStyles(makeStyles);
   const c = useColors();
   const { t } = useLang();
@@ -362,6 +332,17 @@ function ManualNameSheet({ visible, onClose, onConfirm }: { visible: boolean; on
           <View style={styles.manualActions}>
             <Button label={t.cancel} tone="secondary" style={styles.manualButton} onPress={onClose} />
             <Button label={t.confirm} style={styles.manualButton} onPress={confirm} />
+          </View>
+
+          <View style={styles.secondaryActions}>
+            {hasExisting ? (
+              <Pressable onPress={onExisting} style={({ pressed }) => pressed && styles.pressed}>
+                <Text style={styles.secondaryLink}>{t.orChooseExisting}</Text>
+              </Pressable>
+            ) : null}
+            <Pressable onPress={onPhoneBook} style={({ pressed }) => pressed && styles.pressed}>
+              <Text style={styles.secondaryLink}>{t.orFromContacts}</Text>
+            </Pressable>
           </View>
         </SafeAreaView>
       </KeyboardAvoidingView>
@@ -428,5 +409,7 @@ const makeStyles = (c: Palette) => StyleSheet.create({
   nameInput: { height: 60, backgroundColor: c.surface, borderRadius: radius.md, color: c.text, fontSize: type.bodyLarge, paddingHorizontal: 18 },
   manualActions: { flexDirection: 'row', gap: 10 },
   manualButton: { flex: 1 },
+  secondaryActions: { gap: 14, paddingTop: 4, paddingBottom: 6, alignItems: 'center' },
+  secondaryLink: { color: c.accent, fontSize: type.body, fontWeight: '600' },
   pressed: { opacity: 0.64 },
 });
