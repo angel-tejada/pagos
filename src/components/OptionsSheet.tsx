@@ -2,10 +2,11 @@ import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useLang } from '../i18n';
-import { colors, radius, spacing, type } from '../theme';
+import { radius, spacing, type, useStyles, type Palette } from '../theme';
 import { Button } from './ui';
 
 export function OptionsSheet({ visible, onClose }: { visible: boolean; onClose: () => void }) {
+  const styles = useStyles(makeStyles);
   const { t, lang, setLang } = useLang();
 
   return (
@@ -41,6 +42,7 @@ export function OptionsSheet({ visible, onClose }: { visible: boolean; onClose: 
 }
 
 function LanguageButton({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
+  const styles = useStyles(makeStyles);
   return (
     <Pressable onPress={onPress} style={({ pressed }) => [styles.langButton, active && styles.langButtonActive, pressed && styles.pressed]}>
       <Text style={[styles.langText, active && styles.langTextActive]}>{label}</Text>
@@ -49,6 +51,7 @@ function LanguageButton({ label, active, onPress }: { label: string; active: boo
 }
 
 function ActionRow({ glyph, title, detail, last = false }: { glyph: string; title: string; detail: string; last?: boolean }) {
+  const styles = useStyles(makeStyles);
   return (
     <Pressable style={({ pressed }) => [styles.actionRow, !last && styles.actionBorder, pressed && styles.pressed]}>
       <View style={styles.actionIcon}><Text style={styles.actionGlyph}>{glyph}</Text></View>
@@ -61,29 +64,29 @@ function ActionRow({ glyph, title, detail, last = false }: { glyph: string; titl
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c: Palette) => StyleSheet.create({
   modal: { flex: 1, justifyContent: 'flex-end' },
-  backdrop: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, backgroundColor: colors.overlay },
-  sheet: { backgroundColor: colors.bgRaised, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, paddingHorizontal: spacing.lg, paddingTop: spacing.sm, paddingBottom: spacing.md, borderWidth: 1, borderColor: colors.borderSoft },
-  grabber: { width: 40, height: 5, borderRadius: radius.pill, backgroundColor: colors.border, alignSelf: 'center', marginBottom: spacing.lg },
-  title: { color: colors.text, fontSize: type.title, fontWeight: '800', marginBottom: spacing.xl },
-  label: { color: colors.textSecondary, fontSize: type.caption, fontWeight: '800', letterSpacing: 1.15, textTransform: 'uppercase', marginBottom: spacing.xs },
-  segment: { flexDirection: 'row', backgroundColor: colors.surface, borderRadius: radius.md, padding: 4, gap: 4, marginBottom: spacing.lg },
+  backdrop: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, backgroundColor: c.overlay },
+  sheet: { backgroundColor: c.bgRaised, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, paddingHorizontal: spacing.lg, paddingTop: spacing.sm, paddingBottom: spacing.md, borderWidth: 1, borderColor: c.borderSoft },
+  grabber: { width: 40, height: 5, borderRadius: radius.pill, backgroundColor: c.border, alignSelf: 'center', marginBottom: spacing.lg },
+  title: { color: c.text, fontSize: type.title, fontWeight: '800', marginBottom: spacing.xl },
+  label: { color: c.textSecondary, fontSize: type.caption, fontWeight: '800', letterSpacing: 1.15, textTransform: 'uppercase', marginBottom: spacing.xs },
+  segment: { flexDirection: 'row', backgroundColor: c.surface, borderRadius: radius.md, padding: 4, gap: 4, marginBottom: spacing.lg },
   langButton: { flex: 1, minHeight: 48, borderRadius: radius.sm, alignItems: 'center', justifyContent: 'center' },
-  langButtonActive: { backgroundColor: colors.up },
-  langText: { color: colors.textSecondary, fontSize: type.body, fontWeight: '700' },
-  langTextActive: { color: colors.upInk, fontWeight: '800' },
-  actions: { backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.borderSoft, overflow: 'hidden', marginBottom: spacing.md },
+  langButtonActive: { backgroundColor: c.up },
+  langText: { color: c.textSecondary, fontSize: type.body, fontWeight: '700' },
+  langTextActive: { color: c.upInk, fontWeight: '800' },
+  actions: { backgroundColor: c.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: c.borderSoft, overflow: 'hidden', marginBottom: spacing.md },
   actionRow: { minHeight: 74, flexDirection: 'row', alignItems: 'center', paddingHorizontal: spacing.md, gap: spacing.sm },
-  actionBorder: { borderBottomWidth: 1, borderBottomColor: colors.borderSoft },
-  actionIcon: { width: 38, height: 38, borderRadius: radius.sm, backgroundColor: colors.surfaceRaised, alignItems: 'center', justifyContent: 'center' },
-  actionGlyph: { color: colors.up, fontSize: 20, fontWeight: '800' },
+  actionBorder: { borderBottomWidth: 1, borderBottomColor: c.borderSoft },
+  actionIcon: { width: 38, height: 38, borderRadius: radius.sm, backgroundColor: c.surfaceRaised, alignItems: 'center', justifyContent: 'center' },
+  actionGlyph: { color: c.up, fontSize: 20, fontWeight: '800' },
   actionCopy: { flex: 1 },
-  actionTitle: { color: colors.text, fontSize: type.body, fontWeight: '700', marginBottom: 2 },
-  actionDetail: { color: colors.textMuted, fontSize: type.caption, lineHeight: 17 },
-  chevron: { color: colors.textMuted, fontSize: 25 },
-  notice: { backgroundColor: colors.upSoft, borderRadius: radius.md, padding: spacing.md, marginBottom: spacing.md, borderWidth: 1, borderColor: 'rgba(53, 214, 174, 0.18)' },
-  noticeTitle: { color: colors.up, fontSize: type.label, fontWeight: '800', marginBottom: 3 },
-  noticeBody: { color: colors.textSecondary, fontSize: type.caption, lineHeight: 17 },
+  actionTitle: { color: c.text, fontSize: type.body, fontWeight: '700', marginBottom: 2 },
+  actionDetail: { color: c.textMuted, fontSize: type.caption, lineHeight: 17 },
+  chevron: { color: c.textMuted, fontSize: 25 },
+  notice: { backgroundColor: c.upSoft, borderRadius: radius.md, padding: spacing.md, marginBottom: spacing.md, borderWidth: 1, borderColor: c.borderSoft },
+  noticeTitle: { color: c.up, fontSize: type.label, fontWeight: '800', marginBottom: 3 },
+  noticeBody: { color: c.textSecondary, fontSize: type.caption, lineHeight: 17 },
   pressed: { opacity: 0.72 },
 });

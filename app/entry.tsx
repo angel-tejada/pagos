@@ -15,6 +15,7 @@ import {
   Text,
   TextInput,
   View,
+  useColorScheme,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -22,11 +23,14 @@ import { Button, FieldLabel, InitialAvatar } from '../src/components/ui';
 import { formatDate, parseAmountToCents } from '../src/data/format';
 import { CURRENCIES, useData, type CurrencyCode, type Person } from '../src/data/store';
 import { useLang } from '../src/i18n';
-import { colors, layout, radius, type } from '../src/theme';
+import { layout, radius, type, useColors, useStyles, type Palette } from '../src/theme';
 
 type SelectedPerson = { id?: string; name: string; sourceContactId?: string };
 
 export default function EntryScreen() {
+  const styles = useStyles(makeStyles);
+  const c = useColors();
+  const scheme = useColorScheme();
   const router = useRouter();
   const params = useLocalSearchParams<{ kind?: string; person?: string }>();
   const { t, lang } = useLang();
@@ -154,8 +158,8 @@ export default function EntryScreen() {
                   onChangeText={setAmount}
                   keyboardType="decimal-pad"
                   placeholder="$100"
-                  placeholderTextColor={colors.textMuted}
-                  selectionColor={colors.accent}
+                  placeholderTextColor={c.textMuted}
+                  selectionColor={c.accent}
                   style={styles.amountInput}
                 />
                 {amount ? <Text style={styles.amountPlus}>＋</Text> : null}
@@ -185,8 +189,8 @@ export default function EntryScreen() {
                   mode="date"
                   display="compact"
                   minimumDate={new Date()}
-                  accentColor={colors.accent}
-                  themeVariant="dark"
+                  accentColor={c.accent}
+                  themeVariant={scheme === 'light' ? 'light' : 'dark'}
                   locale={lang === 'es' ? 'es_US' : 'en_US'}
                 />
               ) : (
@@ -195,9 +199,9 @@ export default function EntryScreen() {
               <Switch
                 value={hasDueDate}
                 onValueChange={setHasDueDate}
-                trackColor={{ false: '#3A3A40', true: colors.accent }}
-                thumbColor={colors.text}
-                ios_backgroundColor="#3A3A40"
+                trackColor={{ false: c.switchOff, true: c.accent }}
+                thumbColor={c.text}
+                ios_backgroundColor={c.switchOff}
               />
             </View>
           </View>
@@ -211,8 +215,8 @@ export default function EntryScreen() {
               maxLength={80}
               textAlignVertical="top"
               placeholder={t.notePlaceholder}
-              placeholderTextColor={colors.textMuted}
-              selectionColor={colors.accent}
+              placeholderTextColor={c.textMuted}
+              selectionColor={c.accent}
               style={styles.noteInput}
             />
           </View>
@@ -260,6 +264,7 @@ function PersonActionSheet({
   onExisting: () => void;
   onManual: () => void;
 }) {
+  const styles = useStyles(makeStyles);
   const { t } = useLang();
   return (
     <Modal transparent visible={visible} animationType="fade" onRequestClose={onClose} statusBarTranslucent>
@@ -291,6 +296,7 @@ function ExistingPeopleSheet({
   onClose: () => void;
   onSelect: (person: Person) => void;
 }) {
+  const styles = useStyles(makeStyles);
   const { t } = useLang();
   return (
     <Modal transparent visible={visible} animationType="slide" onRequestClose={onClose}>
@@ -318,6 +324,8 @@ function ExistingPeopleSheet({
 }
 
 function ManualNameSheet({ visible, onClose, onConfirm }: { visible: boolean; onClose: () => void; onConfirm: (name: string) => void }) {
+  const styles = useStyles(makeStyles);
+  const c = useColors();
   const { t } = useLang();
   const [name, setName] = useState('');
 
@@ -347,8 +355,8 @@ function ManualNameSheet({ visible, onClose, onConfirm }: { visible: boolean; on
             onSubmitEditing={confirm}
             returnKeyType="done"
             placeholder={t.namePh}
-            placeholderTextColor={colors.textMuted}
-            selectionColor={colors.accent}
+            placeholderTextColor={c.textMuted}
+            selectionColor={c.accent}
             style={styles.nameInput}
           />
           <View style={styles.manualActions}>
@@ -362,6 +370,7 @@ function ManualNameSheet({ visible, onClose, onConfirm }: { visible: boolean; on
 }
 
 function SheetRow({ label, onPress, last = false }: { label: string; onPress: () => void; last?: boolean }) {
+  const styles = useStyles(makeStyles);
   return (
     <Pressable onPress={onPress} style={({ pressed }) => [styles.sheetRow, !last && styles.sheetBorder, pressed && styles.pressed]}>
       <Text style={styles.sheetText}>{label}</Text>
@@ -383,46 +392,46 @@ function currencySymbol(currency: CurrencyCode): string {
   return '$';
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.bg },
+const makeStyles = (c: Palette) => StyleSheet.create({
+  screen: { flex: 1, backgroundColor: c.bg },
   header: { height: 64, paddingHorizontal: 19, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  cancel: { width: 70, color: colors.accent, fontSize: type.body, fontWeight: '500' },
-  headerTitle: { color: colors.text, fontSize: type.bodyLarge, fontWeight: '700' },
+  cancel: { width: 70, color: c.accent, fontSize: type.body, fontWeight: '500' },
+  headerTitle: { color: c.text, fontSize: type.bodyLarge, fontWeight: '700' },
   headerRight: { width: 70 },
   formScroll: { flex: 1 },
   content: { paddingHorizontal: layout.screenPadding, paddingTop: 34, paddingBottom: 42, gap: 44 },
   amountRow: { flexDirection: 'row', gap: 10 },
-  amountField: { flex: 1, height: layout.controlHeight, flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surface, borderRadius: radius.md, paddingHorizontal: 22 },
-  amountInput: { flex: 1, color: colors.text, fontSize: type.inputAmount, fontWeight: '500', paddingVertical: 0 },
-  amountPlus: { color: colors.accent, fontSize: 31, fontWeight: '300', marginRight: -4 },
-  currencyField: { width: 120, height: layout.controlHeight, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, backgroundColor: colors.surface, borderRadius: radius.md },
-  currencyCode: { color: colors.text, fontSize: type.bodyLarge, fontWeight: '700' },
-  currencySign: { color: colors.accent, fontSize: type.bodyLarge, fontWeight: '700' },
-  personField: { height: layout.controlHeight, flexDirection: 'row', alignItems: 'center', gap: 11, paddingHorizontal: 12, backgroundColor: colors.surface, borderRadius: radius.md },
-  personPlus: { width: 29, height: 29, borderRadius: 15, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center' },
-  personPlusText: { color: colors.bg, fontSize: 21, fontWeight: '600', lineHeight: 24 },
-  personText: { flex: 1, color: colors.accent, fontSize: type.bodyLarge, fontWeight: '500' },
-  dueField: { height: layout.controlHeight, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: colors.surface, borderRadius: radius.md, paddingLeft: 18, paddingRight: 22 },
-  dateText: { color: colors.text, fontSize: type.body, fontWeight: '500', marginLeft: 7 },
-  noteInput: { height: 178, backgroundColor: colors.surface, borderRadius: radius.md, color: colors.text, fontSize: type.bodyLarge, fontWeight: '600', lineHeight: 26, paddingHorizontal: 23, paddingTop: 20 },
-  footer: { flexShrink: 0, width: '100%', paddingHorizontal: layout.screenPadding, paddingTop: 17, paddingBottom: 16, backgroundColor: '#141414' },
+  amountField: { flex: 1, height: layout.controlHeight, flexDirection: 'row', alignItems: 'center', backgroundColor: c.surface, borderRadius: radius.md, paddingHorizontal: 22 },
+  amountInput: { flex: 1, color: c.text, fontSize: type.inputAmount, fontWeight: '500', paddingVertical: 0 },
+  amountPlus: { color: c.accent, fontSize: 31, fontWeight: '300', marginRight: -4 },
+  currencyField: { width: 120, height: layout.controlHeight, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, backgroundColor: c.surface, borderRadius: radius.md },
+  currencyCode: { color: c.text, fontSize: type.bodyLarge, fontWeight: '700' },
+  currencySign: { color: c.accent, fontSize: type.bodyLarge, fontWeight: '700' },
+  personField: { height: layout.controlHeight, flexDirection: 'row', alignItems: 'center', gap: 11, paddingHorizontal: 12, backgroundColor: c.surface, borderRadius: radius.md },
+  personPlus: { width: 29, height: 29, borderRadius: 15, backgroundColor: c.accent, alignItems: 'center', justifyContent: 'center' },
+  personPlusText: { color: c.bg, fontSize: 21, fontWeight: '600', lineHeight: 24 },
+  personText: { flex: 1, color: c.accent, fontSize: type.bodyLarge, fontWeight: '500' },
+  dueField: { height: layout.controlHeight, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: c.surface, borderRadius: radius.md, paddingLeft: 18, paddingRight: 22 },
+  dateText: { color: c.text, fontSize: type.body, fontWeight: '500', marginLeft: 7 },
+  noteInput: { height: 178, backgroundColor: c.surface, borderRadius: radius.md, color: c.text, fontSize: type.bodyLarge, fontWeight: '600', lineHeight: 26, paddingHorizontal: 23, paddingTop: 20 },
+  footer: { flexShrink: 0, width: '100%', paddingHorizontal: layout.screenPadding, paddingTop: 17, paddingBottom: 16, backgroundColor: c.bar },
   modalRoot: { flex: 1, justifyContent: 'flex-end' },
-  backdrop: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, backgroundColor: colors.overlay },
+  backdrop: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, backgroundColor: c.overlay },
   actionSheetSafe: { paddingHorizontal: 8, paddingBottom: 8 },
   actionGroup: { borderRadius: radius.md, overflow: 'hidden', marginBottom: 8 },
-  sheetRow: { height: 64, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surfaceRaised },
-  sheetBorder: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#4A4A4D' },
-  sheetText: { color: colors.text, fontSize: 22, fontWeight: '500' },
-  cancelRow: { height: 64, alignItems: 'center', justifyContent: 'center', backgroundColor: '#303033', borderRadius: radius.md },
-  cancelRowText: { color: colors.text, fontSize: 22, fontWeight: '700' },
-  listSheet: { maxHeight: '72%', backgroundColor: colors.bgRaised, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, padding: layout.screenPadding, gap: 16 },
-  manualSheet: { backgroundColor: colors.bgRaised, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, padding: layout.screenPadding, gap: 16 },
-  sheetTitle: { color: colors.text, fontSize: type.title, fontWeight: '800' },
+  sheetRow: { height: 64, alignItems: 'center', justifyContent: 'center', backgroundColor: c.sheetRow },
+  sheetBorder: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: c.sheetRowBorder },
+  sheetText: { color: c.text, fontSize: 22, fontWeight: '500' },
+  cancelRow: { height: 64, alignItems: 'center', justifyContent: 'center', backgroundColor: c.sheetCancel, borderRadius: radius.md },
+  cancelRowText: { color: c.text, fontSize: 22, fontWeight: '700' },
+  listSheet: { maxHeight: '72%', backgroundColor: c.bgRaised, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, padding: layout.screenPadding, gap: 16 },
+  manualSheet: { backgroundColor: c.bgRaised, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, padding: layout.screenPadding, gap: 16 },
+  sheetTitle: { color: c.text, fontSize: type.title, fontWeight: '800' },
   peopleList: { maxHeight: 360 },
-  existingRow: { height: 68, flexDirection: 'row', alignItems: 'center', gap: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border, paddingHorizontal: 4 },
-  existingName: { color: colors.text, fontSize: type.bodyLarge, fontWeight: '600' },
-  noPeople: { color: colors.textSecondary, fontSize: type.body, paddingVertical: 34, textAlign: 'center' },
-  nameInput: { height: 60, backgroundColor: colors.surface, borderRadius: radius.md, color: colors.text, fontSize: type.bodyLarge, paddingHorizontal: 18 },
+  existingRow: { height: 68, flexDirection: 'row', alignItems: 'center', gap: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: c.border, paddingHorizontal: 4 },
+  existingName: { color: c.text, fontSize: type.bodyLarge, fontWeight: '600' },
+  noPeople: { color: c.textSecondary, fontSize: type.body, paddingVertical: 34, textAlign: 'center' },
+  nameInput: { height: 60, backgroundColor: c.surface, borderRadius: radius.md, color: c.text, fontSize: type.bodyLarge, paddingHorizontal: 18 },
   manualActions: { flexDirection: 'row', gap: 10 },
   manualButton: { flex: 1 },
   pressed: { opacity: 0.64 },

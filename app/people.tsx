@@ -6,9 +6,10 @@ import { BottomNav, EmptyState, InitialAvatar } from '../src/components/ui';
 import { formatMoney } from '../src/data/format';
 import { getBalanceCents, useData } from '../src/data/store';
 import { useLang } from '../src/i18n';
-import { colors, layout, radius, type } from '../src/theme';
+import { layout, radius, type, useStyles, type Palette } from '../src/theme';
 
 export default function PeopleScreen() {
+  const styles = useStyles(makeStyles);
   const { t, lang } = useLang();
   const { data } = useData();
   const router = useRouter();
@@ -44,14 +45,14 @@ export default function PeopleScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.bg },
+const makeStyles = (c: Palette) => StyleSheet.create({
+  screen: { flex: 1, backgroundColor: c.bg },
   header: { height: 64, alignItems: 'center', justifyContent: 'center' },
-  title: { color: colors.text, fontSize: type.screenTitle, fontWeight: '700' },
+  title: { color: c.text, fontSize: type.screenTitle, fontWeight: '700' },
   content: { paddingHorizontal: layout.screenPadding, paddingTop: 23, paddingBottom: 36, gap: 10 },
-  personRow: { width: '100%', height: 91, flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 19, backgroundColor: colors.surface, borderRadius: radius.md, overflow: 'hidden' },
+  personRow: { width: '100%', height: 91, flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 19, backgroundColor: c.surface, borderRadius: radius.md, overflow: 'hidden' },
   personCopy: { gap: 4 },
-  personName: { color: colors.text, fontSize: 22, fontWeight: '700' },
-  amount: { color: colors.textSecondary, fontSize: 18, fontWeight: '400' },
+  personName: { color: c.text, fontSize: 22, fontWeight: '700' },
+  amount: { color: c.textSecondary, fontSize: 18, fontWeight: '400' },
   pressed: { opacity: 0.64 },
 });

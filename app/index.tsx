@@ -8,9 +8,10 @@ import { BottomNav, Button, IconButton } from '../src/components/ui';
 import { formatMoney } from '../src/data/format';
 import { FREE_PERSON_LIMIT, getBalanceCents, useData, type Person } from '../src/data/store';
 import { useLang } from '../src/i18n';
-import { colors, layout, radius, spacing, type } from '../src/theme';
+import { layout, radius, spacing, type, useColors, useStyles, type Palette } from '../src/theme';
 
 export default function HomeScreen() {
+  const styles = useStyles(makeStyles);
   const { t, lang } = useLang();
   const { data, renamePerson, deletePerson } = useData();
   const router = useRouter();
@@ -107,6 +108,7 @@ export default function HomeScreen() {
 }
 
 function DebtMark() {
+  const styles = useStyles(makeStyles);
   return (
     <View style={styles.debtMarkOuter}>
       <View style={styles.debtMarkInner}><Text style={styles.debtMarkText}>$</Text></View>
@@ -114,27 +116,27 @@ function DebtMark() {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.bg },
+const makeStyles = (c: Palette) => StyleSheet.create({
+  screen: { flex: 1, backgroundColor: c.bg },
   header: { height: 64, paddingHorizontal: layout.screenPadding, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  settingsGlyph: { width: 32, color: colors.accent, fontSize: 29, fontWeight: '700', lineHeight: 33, textAlign: 'center' },
-  brand: { color: colors.text, fontSize: type.screenTitle, fontWeight: '500' },
+  settingsGlyph: { width: 32, color: c.accent, fontSize: 29, fontWeight: '700', lineHeight: 33, textAlign: 'center' },
+  brand: { color: c.text, fontSize: type.screenTitle, fontWeight: '500' },
   content: { paddingHorizontal: layout.screenPadding, paddingTop: 38, paddingBottom: spacing.xxxl },
-  total: { color: colors.text, fontSize: type.heroAmount, fontWeight: '600', letterSpacing: -2.2, textAlign: 'center' },
+  total: { color: c.text, fontSize: type.heroAmount, fontWeight: '600', letterSpacing: -2.2, textAlign: 'center' },
   debtsSection: { marginTop: 100 },
-  sectionTitle: { color: colors.text, fontSize: type.title, fontWeight: '700', marginLeft: 10, marginBottom: 12 },
+  sectionTitle: { color: c.text, fontSize: type.title, fontWeight: '700', marginLeft: 10, marginBottom: 12 },
   list: { gap: 10 },
-  debtCard: { width: '100%', height: 98, flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surface, borderRadius: radius.md, paddingHorizontal: 23, overflow: 'hidden' },
+  debtCard: { width: '100%', height: 98, flexDirection: 'row', alignItems: 'center', backgroundColor: c.surface, borderRadius: radius.md, paddingHorizontal: 23, overflow: 'hidden' },
   debtCopy: { flex: 1, alignSelf: 'stretch', justifyContent: 'center' },
-  personName: { color: colors.text, fontSize: 18, fontWeight: '500', marginBottom: 4 },
-  personAmount: { color: colors.accent, fontSize: type.amount, fontWeight: '600', letterSpacing: -0.4 },
-  moreCircle: { width: 29, height: 29, borderRadius: 15, backgroundColor: '#48484C', alignItems: 'center', justifyContent: 'center' },
-  moreDots: { color: '#D3D3D6', fontSize: 12, fontWeight: '800', letterSpacing: -1, marginTop: -4 },
+  personName: { color: c.text, fontSize: 18, fontWeight: '500', marginBottom: 4 },
+  personAmount: { color: c.accent, fontSize: type.amount, fontWeight: '600', letterSpacing: -0.4 },
+  moreCircle: { width: 29, height: 29, borderRadius: 15, backgroundColor: c.chip, alignItems: 'center', justifyContent: 'center' },
+  moreDots: { color: c.chipInk, fontSize: 12, fontWeight: '800', letterSpacing: -1, marginTop: -4 },
   emptyHome: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingBottom: 68 },
-  debtMarkOuter: { width: 108, height: 108, borderRadius: 54, borderWidth: 7, borderColor: '#303034', alignItems: 'center', justifyContent: 'center' },
-  debtMarkInner: { width: 76, height: 76, borderRadius: 38, borderWidth: 6, borderColor: '#303034', alignItems: 'center', justifyContent: 'center' },
-  debtMarkText: { color: '#303034', fontSize: 48, fontWeight: '800' },
+  debtMarkOuter: { width: 108, height: 108, borderRadius: 54, borderWidth: 7, borderColor: c.emptyMark, alignItems: 'center', justifyContent: 'center' },
+  debtMarkInner: { width: 76, height: 76, borderRadius: 38, borderWidth: 6, borderColor: c.emptyMark, alignItems: 'center', justifyContent: 'center' },
+  debtMarkText: { color: c.emptyMark, fontSize: 48, fontWeight: '800' },
   emptyButton: { minHeight: 52, width: 138, borderRadius: 26, marginTop: 45 },
-  limitNote: { color: colors.textMuted, fontSize: type.caption, textAlign: 'center', paddingBottom: 10 },
+  limitNote: { color: c.textMuted, fontSize: type.caption, textAlign: 'center', paddingBottom: 10 },
   pressed: { opacity: 0.64 },
 });

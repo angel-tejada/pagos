@@ -13,13 +13,15 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useLang } from '../i18n';
-import { colors, layout, radius, spacing, type } from '../theme';
+import { layout, radius, spacing, type, useColors, useStyles, type Palette } from '../theme';
 
 export function Card({ children, style }: { children: ReactNode; style?: StyleProp<ViewStyle> }) {
+  const styles = useStyles(makeStyles);
   return <View style={[styles.card, style]}>{children}</View>;
 }
 
 export function SectionHeading({ title, trailing }: { title: string; trailing?: ReactNode }) {
+  const styles = useStyles(makeStyles);
   return (
     <View style={styles.sectionHeading}>
       <Text style={styles.sectionTitle}>{title}</Text>
@@ -37,6 +39,7 @@ type IconButtonProps = Omit<PressableProps, 'style'> & {
 };
 
 export function IconButton({ glyph, tone = 'neutral', size = 'regular', style, ...props }: IconButtonProps) {
+  const styles = useStyles(makeStyles);
   return (
     <Pressable
       {...props}
@@ -64,6 +67,7 @@ type ButtonProps = Omit<PressableProps, 'style'> & {
 };
 
 export function Button({ label, glyph, tone = 'primary', style, disabled, ...props }: ButtonProps) {
+  const styles = useStyles(makeStyles);
   const textStyle: StyleProp<TextStyle> = [styles.buttonText, tone === 'secondary' && styles.buttonTextSecondary];
   return (
     <Pressable
@@ -84,14 +88,17 @@ export function Button({ label, glyph, tone = 'primary', style, disabled, ...pro
 }
 
 export function FieldLabel({ children }: { children: ReactNode }) {
+  const styles = useStyles(makeStyles);
   return <Text style={styles.fieldLabel}>{children}</Text>;
 }
 
 export function FieldShell({ children, style }: { children: ReactNode; style?: StyleProp<ViewStyle> }) {
+  const styles = useStyles(makeStyles);
   return <View style={[styles.fieldShell, style]}>{children}</View>;
 }
 
 export function InitialAvatar({ name: _name, size = 46 }: { name: string; size?: number }) {
+  const styles = useStyles(makeStyles);
   return (
     <View style={[styles.avatar, { width: size, height: size, borderRadius: size / 2 }]}>
       <View style={[styles.avatarHead, { width: size * 0.3, height: size * 0.3, borderRadius: size * 0.15 }]} />
@@ -101,6 +108,7 @@ export function InitialAvatar({ name: _name, size = 46 }: { name: string; size?:
 }
 
 export function EmptyState({ title, body, action }: { title: string; body: string; action?: ReactNode }) {
+  const styles = useStyles(makeStyles);
   return (
     <View style={styles.emptyState}>
       <Text style={styles.emptyTitle}>{title}</Text>
@@ -111,6 +119,7 @@ export function EmptyState({ title, body, action }: { title: string; body: strin
 }
 
 export function BottomNav({ active }: { active: 'home' | 'people' }) {
+  const styles = useStyles(makeStyles);
   const { t } = useLang();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -123,6 +132,8 @@ export function BottomNav({ active }: { active: 'home' | 'people' }) {
 }
 
 function NavItem({ onPress, tab, active, label }: { onPress: () => void; tab: 'home' | 'people'; active: boolean; label: string }) {
+  const styles = useStyles(makeStyles);
+  const colors = useColors();
   const tint = active ? colors.accent : colors.textSecondary;
   return (
     <Pressable onPress={onPress} style={({ pressed }) => [styles.navItem, pressed && styles.pressed]}>
@@ -133,6 +144,7 @@ function NavItem({ onPress, tab, active, label }: { onPress: () => void; tab: 'h
 }
 
 function ListTabIcon({ color }: { color: string }) {
+  const styles = useStyles(makeStyles);
   return (
     <View style={styles.listIcon}>
       {[0, 1, 2].map((row) => (
@@ -146,6 +158,7 @@ function ListTabIcon({ color }: { color: string }) {
 }
 
 function PersonTabIcon({ color }: { color: string }) {
+  const styles = useStyles(makeStyles);
   return (
     <View style={styles.personIcon}>
       <View style={[styles.personHead, { backgroundColor: color }]} />
@@ -154,34 +167,34 @@ function PersonTabIcon({ color }: { color: string }) {
   );
 }
 
-const styles = StyleSheet.create({
-  card: { backgroundColor: colors.surface, borderRadius: radius.lg },
+const makeStyles = (c: Palette) => StyleSheet.create({
+  card: { backgroundColor: c.surface, borderRadius: radius.lg },
   sectionHeading: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.sm },
-  sectionTitle: { color: colors.text, fontSize: type.title, fontWeight: '700' },
+  sectionTitle: { color: c.text, fontSize: type.title, fontWeight: '700' },
   iconButton: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center' },
   iconButtonSmall: { width: 32, height: 32, borderRadius: 16 },
-  iconButtonAccent: { backgroundColor: colors.accent },
-  iconButtonDanger: { backgroundColor: colors.accent },
-  iconGlyph: { color: colors.accent, fontSize: 27, fontWeight: '700', lineHeight: 30 },
-  iconGlyphAccent: { color: colors.bg, fontSize: 25 },
-  iconGlyphDanger: { color: colors.bg },
-  button: { minHeight: layout.buttonHeight, paddingHorizontal: spacing.lg, borderRadius: radius.md, backgroundColor: colors.accent, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.xs },
-  buttonDanger: { backgroundColor: colors.accent },
-  buttonSecondary: { backgroundColor: colors.surfaceRaised },
-  buttonText: { color: colors.text, fontSize: type.bodyLarge, fontWeight: '700' },
-  buttonTextSecondary: { color: colors.text },
+  iconButtonAccent: { backgroundColor: c.accent },
+  iconButtonDanger: { backgroundColor: c.accent },
+  iconGlyph: { color: c.accent, fontSize: 27, fontWeight: '700', lineHeight: 30 },
+  iconGlyphAccent: { color: c.bg, fontSize: 25 },
+  iconGlyphDanger: { color: c.bg },
+  button: { minHeight: layout.buttonHeight, paddingHorizontal: spacing.lg, borderRadius: radius.md, backgroundColor: c.accent, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.xs },
+  buttonDanger: { backgroundColor: c.accent },
+  buttonSecondary: { backgroundColor: c.surfaceRaised },
+  buttonText: { color: c.text, fontSize: type.bodyLarge, fontWeight: '700' },
+  buttonTextSecondary: { color: c.text },
   pressed: { opacity: 0.66 },
   disabled: { opacity: 0.4 },
-  fieldLabel: { color: colors.text, fontSize: type.title, fontWeight: '700', marginBottom: spacing.sm },
-  fieldShell: { minHeight: layout.controlHeight, backgroundColor: colors.surface, borderRadius: radius.md, paddingHorizontal: spacing.lg, flexDirection: 'row', alignItems: 'center' },
-  avatar: { backgroundColor: '#343438', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
-  avatarHead: { backgroundColor: '#1D1D1F', marginTop: 2 },
-  avatarBody: { backgroundColor: '#1D1D1F', marginTop: 3 },
+  fieldLabel: { color: c.text, fontSize: type.title, fontWeight: '700', marginBottom: spacing.sm },
+  fieldShell: { minHeight: layout.controlHeight, backgroundColor: c.surface, borderRadius: radius.md, paddingHorizontal: spacing.lg, flexDirection: 'row', alignItems: 'center' },
+  avatar: { backgroundColor: c.avatarBg, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
+  avatarHead: { backgroundColor: c.avatarInk, marginTop: 2 },
+  avatarBody: { backgroundColor: c.avatarInk, marginTop: 3 },
   emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingBottom: 40 },
-  emptyTitle: { color: '#4D4D50', fontSize: 31, fontWeight: '800', textAlign: 'center' },
-  emptyBody: { color: '#5F5F63', fontSize: 18, fontWeight: '400', textAlign: 'center', marginTop: 4 },
+  emptyTitle: { color: c.emptyTitle, fontSize: 31, fontWeight: '800', textAlign: 'center' },
+  emptyBody: { color: c.emptyBody, fontSize: 18, fontWeight: '400', textAlign: 'center', marginTop: 4 },
   emptyAction: { marginTop: spacing.xl },
-  bottomNav: { width: '100%', flexDirection: 'row', backgroundColor: colors.bg },
+  bottomNav: { width: '100%', flexDirection: 'row', backgroundColor: c.bg },
   navItem: { flex: 1, minWidth: 0, alignItems: 'center', justifyContent: 'flex-end', paddingBottom: 4 },
   navLabel: { fontSize: 10, lineHeight: 12, fontWeight: '500', marginTop: 4 },
   listIcon: { width: 22, height: 18, justifyContent: 'space-between' },

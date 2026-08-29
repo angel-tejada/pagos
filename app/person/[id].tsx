@@ -7,9 +7,10 @@ import { shareBalanceMessage } from '../../src/data/files';
 import { formatEntryDate, formatMoney } from '../../src/data/format';
 import { getBalanceCents, useData, type Entry, type Person } from '../../src/data/store';
 import { useLang } from '../../src/i18n';
-import { colors, layout, radius, type } from '../../src/theme';
+import { layout, radius, type, useStyles, type Palette } from '../../src/theme';
 
 export default function PersonScreen() {
+  const styles = useStyles(makeStyles);
   const { id = '' } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { t, lang } = useLang();
@@ -120,6 +121,7 @@ export default function PersonScreen() {
 }
 
 function HistoryRow({ entry, person, onPress }: { entry: Entry; person: Person; onPress: () => void }) {
+  const styles = useStyles(makeStyles);
   const { t, lang } = useLang();
   const isDebt = entry.kind === 'debt';
   return (
@@ -138,30 +140,30 @@ function HistoryRow({ entry, person, onPress }: { entry: Entry; person: Person; 
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.bg },
+const makeStyles = (c: Palette) => StyleSheet.create({
+  screen: { flex: 1, backgroundColor: c.bg },
   missing: { flex: 1, justifyContent: 'center', paddingHorizontal: layout.screenPadding },
   header: { height: 64, paddingHorizontal: layout.screenPadding, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  headerControl: { width: 36, color: colors.accent, fontSize: 38, fontWeight: '300', lineHeight: 40 },
-  name: { color: colors.text, fontSize: type.screenTitle, fontWeight: '700' },
-  more: { width: 36, color: colors.accent, fontSize: 16, fontWeight: '800', textAlign: 'right', letterSpacing: -1 },
+  headerControl: { width: 36, color: c.accent, fontSize: 38, fontWeight: '300', lineHeight: 40 },
+  name: { color: c.text, fontSize: type.screenTitle, fontWeight: '700' },
+  more: { width: 36, color: c.accent, fontSize: 16, fontWeight: '800', textAlign: 'right', letterSpacing: -1 },
   content: { paddingHorizontal: layout.screenPadding, paddingTop: 38, paddingBottom: 40 },
-  balance: { color: colors.text, fontSize: 58, fontWeight: '600', letterSpacing: -2, textAlign: 'center' },
+  balance: { color: c.text, fontSize: 58, fontWeight: '600', letterSpacing: -2, textAlign: 'center' },
   sendButton: { marginTop: 26 },
   historySection: { marginTop: 58 },
-  sectionTitle: { color: colors.text, fontSize: type.title, fontWeight: '700', marginLeft: 10, marginBottom: 12 },
+  sectionTitle: { color: c.text, fontSize: type.title, fontWeight: '700', marginLeft: 10, marginBottom: 12 },
   historyList: { gap: 9 },
-  historyRow: { height: 82, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 14, backgroundColor: colors.surface, borderRadius: radius.md },
-  entryMark: { width: 38, height: 38, borderRadius: 19, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center' },
-  entryMarkPaid: { backgroundColor: '#404043' },
-  entryArrow: { color: colors.text, fontSize: 19, fontWeight: '800' },
+  historyRow: { height: 82, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 14, backgroundColor: c.surface, borderRadius: radius.md },
+  entryMark: { width: 38, height: 38, borderRadius: 19, backgroundColor: c.accent, alignItems: 'center', justifyContent: 'center' },
+  entryMarkPaid: { backgroundColor: c.neutralMark },
+  entryArrow: { color: c.text, fontSize: 19, fontWeight: '800' },
   entryCopy: { flex: 1, gap: 4 },
-  entryTitle: { color: colors.text, fontSize: 17, fontWeight: '600' },
-  entryMeta: { color: colors.textSecondary, fontSize: 12 },
-  entryAmount: { color: colors.accent, fontSize: 18, fontWeight: '700' },
-  entryAmountPaid: { color: colors.textSecondary },
-  empty: { color: colors.textMuted, fontSize: type.body, textAlign: 'center', paddingTop: 80 },
-  actionBar: { flexDirection: 'row', gap: 10, paddingHorizontal: layout.screenPadding, paddingTop: 16, paddingBottom: 16, backgroundColor: '#141414' },
+  entryTitle: { color: c.text, fontSize: 17, fontWeight: '600' },
+  entryMeta: { color: c.textSecondary, fontSize: 12 },
+  entryAmount: { color: c.accent, fontSize: 18, fontWeight: '700' },
+  entryAmountPaid: { color: c.textSecondary },
+  empty: { color: c.textMuted, fontSize: type.body, textAlign: 'center', paddingTop: 80 },
+  actionBar: { flexDirection: 'row', gap: 10, paddingHorizontal: layout.screenPadding, paddingTop: 16, paddingBottom: 16, backgroundColor: c.bar },
   actionButton: { flex: 1 },
   pressed: { opacity: 0.64 },
 });
