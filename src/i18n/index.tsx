@@ -7,7 +7,8 @@
  * Se guardará en el teléfono en el paso 2 (la capa de datos).
  * For now the language is memory-only; it gets saved to the device in step 2.
  */
-import { createContext, useContext, useMemo, useState, type ReactNode } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { DEFAULT_LANG, dict, type Lang, type Strings } from './strings';
 
 type LangValue = {
@@ -17,9 +18,23 @@ type LangValue = {
 };
 
 const LangContext = createContext<LangValue | null>(null);
+const LANGUAGE_STORAGE_KEY = 'pagos_language_v1';
 
 export function LangProvider({ children }: { children: ReactNode }) {
-  const [lang, setLang] = useState<Lang>(DEFAULT_LANG);
+  const [lang, setLangState] = useState<Lang>(DEFAULT_LANG);
+
+  useEffect(() => {
+    AsyncStorage.getItem(LANGUAGE_STORAGE_KEY)
+      .then((saved) => {
+        if (saved === 'es' || saved === 'en') setLangState(saved);
+      })
+      .catch(() => undefined);
+  }, []);
+
+  const setLang = useCallback((next: Lang) => {
+    setLangState(next);
+    void AsyncStorage.setItem(LANGUAGE_STORAGE_KEY, next);
+  }, []);
 
   const value = useMemo<LangValue>(() => ({ lang, setLang, t: dict[lang] }), [lang]);
 

@@ -9,7 +9,10 @@
     "userInterfaceStyle": "dark",
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.angeltejada.pagos"
+      "bundleIdentifier": "com.angeltejada.pagos",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -24,7 +27,21 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-router"
-    ]
+      "expo-router",
+      [
+        "expo-contacts",
+        {
+          "contactsPermission": "Permite que Pagos acceda a tus contactos para elegir una persona. Allow Pagos to access contacts so you can choose a person."
+        }
+      ],
+      "expo-sharing",
+      "expo-notifications"
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "21c5fe80-6999-45e5-bd3d-ac38995042bd"
+      }
+    }
   }
 }

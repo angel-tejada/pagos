@@ -1,34 +1,32 @@
-/**
- * El esqueleto de la app: una pila de pantallas.
- * The app skeleton: one stack of screens.
- *
- *   index        → la lista de personas / the list of people
- *   person/[id]  → una persona y su historial / one person and their history
- */
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { LangProvider } from '../src/i18n';
+import { DataProvider } from '../src/data/store';
 import { colors } from '../src/theme';
 
 export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1, backgroundColor: colors.bg }}>
       <SafeAreaProvider>
-        <LangProvider>
-          <StatusBar style="light" />
-          <Stack
-            screenOptions={{
-              headerStyle: { backgroundColor: colors.bg },
-              headerTintColor: colors.text,
-              headerTitleStyle: { color: colors.text },
-              headerShadowVisible: false,
-              contentStyle: { backgroundColor: colors.bg },
-            }}
-          />
-        </LangProvider>
+        <DataProvider>
+          <LangProvider>
+            <StatusBar style="light" />
+            <Stack
+              screenOptions={{
+                headerShown: false,
+                contentStyle: { backgroundColor: colors.bg },
+                animation: 'fade_from_bottom',
+              }}>
+              <Stack.Screen name="index" />
+              <Stack.Screen name="people" />
+              <Stack.Screen name="person/[id]" options={{ animation: 'slide_from_right' }} />
+              <Stack.Screen name="entry" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
+            </Stack>
+          </LangProvider>
+        </DataProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

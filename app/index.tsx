@@ -1,121 +1,133 @@
-/**
- * PANTALLA 1 — la lista de personas.
- * SCREEN 1 — the list of people.
- *
- * PROVISIONAL: las dos personas de abajo están escritas a mano solo para
- * comprobar que se puede pasar de una pantalla a otra. Se reemplazan por
- * datos de verdad en el paso 3.
- * TEMPORARY: the two people below are hardcoded only to prove navigation
- * works. Real data replaces them in step 3.
- */
-import { Link, Stack } from 'expo-router';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useRouter } from 'expo-router';
+import { useState } from 'react';
+import { ActionSheetIOS, Alert, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { OptionsSheet } from '../src/components/OptionsSheet';
+import { BottomNav, Button, IconButton } from '../src/components/ui';
+import { formatMoney } from '../src/data/format';
+import { getBalanceCents, useData, type Person } from '../src/data/store';
 import { useLang } from '../src/i18n';
-import { colors, radius, size } from '../src/theme';
+import { colors, layout, radius, spacing, type } from '../src/theme';
 
-const EJEMPLO = [
-  { id: '1', name: 'Juan', amount: '$120.00' },
-  { id: '2', name: 'María', amount: '$45.50' },
-];
+export default function HomeScreen() {
+  const { t, lang } = useLang();
+  const { data, renamePerson, deletePerson } = useData();
+  const router = useRouter();
+  const [optionsOpen, setOptionsOpen] = useState(false);
+  const people = data.people
+    .map((person) => ({ person, balance: getBalanceCents(data, person.id) }))
+    .filter(({ balance }) => balance > 0)
+    .sort((a, b) => b.balance - a.balance);
+  const total = people.reduce((sum, item) => sum + item.balance, 0);
 
-export default function ListScreen() {
-  const { t, lang, setLang } = useLang();
+  const editPerson = (person: Person) => {
+    Alert.prompt(t.editPerson, t.name, (name) => renamePerson(person.id, name), 'plain-text', person.name);
+  };
+
+  const confirmDelete = (person: Person) => {
+    Alert.alert(t.delete, t.confirmDelPerson(person.name), [
+      { text: t.cancel, style: 'cancel' },
+      { text: t.delete, style: 'destructive', onPress: () => deletePerson(person.id) },
+    ]);
+  };
+
+  const openPersonActions = (person: Person) => {
+    if (Platform.OS === 'ios') {
+      ActionSheetIOS.showActionSheetWithOptions(
+        { options: [t.cancel, t.viewPerson, t.editPerson, t.delete], cancelButtonIndex: 0, destructiveButtonIndex: 3 },
+        (index) => {
+          if (index === 1) router.push(`/person/${person.id}`);
+          if (index === 2) editPerson(person);
+          if (index === 3) confirmDelete(person);
+        },
+      );
+      return;
+    }
+    Alert.alert(person.name, undefined, [
+      { text: t.viewPerson, onPress: () => router.push(`/person/${person.id}`) },
+      { text: t.editPerson, onPress: () => editPerson(person) },
+      { text: t.delete, style: 'destructive', onPress: () => confirmDelete(person) },
+      { text: t.cancel, style: 'cancel' },
+    ]);
+  };
 
   return (
-    <>
-      <Stack.Screen options={{ title: 'Pagos' }} />
-      <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-        <View style={styles.totalRow}>
-          <Text style={styles.totalLabel}>{t.totalOwed}</Text>
-          <Text style={styles.totalAmount}>$165.50</Text>
+    <SafeAreaView edges={['top']} style={styles.screen}>
+      <View style={styles.header}>
+        <Pressable hitSlop={12} onPress={() => setOptionsOpen(true)} style={({ pressed }) => pressed && styles.pressed}>
+          <Text style={styles.settingsGlyph}>⚙︎</Text>
+        </Pressable>
+        <Text style={styles.brand}>Pagos</Text>
+        <IconButton glyph="＋" size="small" tone="accent" accessibilityLabel={t.addEntryA11y} onPress={() => router.push('/entry')} />
+      </View>
+
+      {people.length === 0 ? (
+        <View style={styles.emptyHome}>
+          <DebtMark />
+          <Button label={t.addDebt} style={styles.emptyButton} onPress={() => router.push('/entry')} />
         </View>
+      ) : (
+        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+          <Text style={styles.total}>{formatMoney(total, people[0]?.person.currency ?? 'USD', lang)}</Text>
 
-        <Text style={styles.section}>{t.owing}</Text>
+          <View style={styles.debtsSection}>
+            <Text style={styles.sectionTitle}>{t.activeBalances}</Text>
+            <View style={styles.list}>
+              {people.map(({ person, balance }) => (
+                <View key={person.id} style={styles.debtCard}>
+                  <Pressable onPress={() => router.push(`/person/${person.id}`)} style={({ pressed }) => [styles.debtCopy, pressed && styles.pressed]}>
+                    <Text style={styles.personName}>{person.name}</Text>
+                    <Text style={styles.personAmount}>{formatMoney(balance, person.currency, lang)}</Text>
+                  </Pressable>
+                  <Pressable
+                    accessibilityLabel={t.moreActions}
+                    hitSlop={10}
+                    onPress={() => openPersonActions(person)}
+                    style={({ pressed }) => [styles.moreCircle, pressed && styles.pressed]}>
+                    <Text style={styles.moreDots}>•••</Text>
+                  </Pressable>
+                </View>
+              ))}
+            </View>
+          </View>
+        </ScrollView>
+      )}
 
-        {EJEMPLO.map((p) => (
-          <Link key={p.id} href={`/person/${p.id}`} asChild>
-            <Pressable style={styles.card}>
-              <View style={styles.strip} />
-              <View style={styles.cardBody}>
-                <Text style={styles.cardName}>{p.name}</Text>
-                <Text style={styles.cardAmount}>{p.amount}</Text>
-              </View>
-            </Pressable>
-          </Link>
-        ))}
+      <BottomNav active="home" />
+      <OptionsSheet visible={optionsOpen} onClose={() => setOptionsOpen(false)} />
+    </SafeAreaView>
+  );
+}
 
-        {/* PROVISIONAL: botones para ver los dos idiomas. El menú real llega después. */}
-        <Text style={styles.section}>{t.options}</Text>
-        <View style={styles.langRow}>
-          <Pressable
-            style={[styles.langBtn, lang === 'es' && styles.langBtnOn]}
-            onPress={() => setLang('es')}>
-            <Text style={[styles.langText, lang === 'es' && styles.langTextOn]}>Español</Text>
-          </Pressable>
-          <Pressable
-            style={[styles.langBtn, lang === 'en' && styles.langBtnOn]}
-            onPress={() => setLang('en')}>
-            <Text style={[styles.langText, lang === 'en' && styles.langTextOn]}>English</Text>
-          </Pressable>
-        </View>
-      </ScrollView>
-    </>
+function DebtMark() {
+  return (
+    <View style={styles.debtMarkOuter}>
+      <View style={styles.debtMarkInner}><Text style={styles.debtMarkText}>$</Text></View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg },
-  content: { padding: 14, paddingBottom: 40 },
-
-  totalRow: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    justifyContent: 'flex-end',
-    gap: 8,
-    borderWidth: 1,
-    borderColor: colors.line,
-    borderRadius: 14,
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-  },
-  totalLabel: { color: colors.dim, fontSize: size.totalAmount - 2, fontWeight: '800' },
-  totalAmount: { color: colors.up, fontSize: size.totalAmount, fontWeight: '800' },
-
-  section: {
-    color: colors.dim,
-    fontSize: size.tiny,
-    fontWeight: '800',
-    textTransform: 'uppercase',
-    letterSpacing: 1.1,
-    paddingTop: 18,
-    paddingBottom: 8,
-    paddingHorizontal: 2,
-  },
-
-  card: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.card,
-    borderRadius: radius.card,
-    marginBottom: 8,
-    overflow: 'hidden',
-  },
-  strip: { width: 4, alignSelf: 'stretch', backgroundColor: colors.up },
-  cardBody: { flex: 1, paddingVertical: 10, paddingHorizontal: 13 },
-  cardName: { color: colors.dim, fontSize: size.name, fontWeight: '600' },
-  cardAmount: { color: colors.up, fontSize: size.cardAmount, fontWeight: '800' },
-
-  langRow: { flexDirection: 'row', gap: 10 },
-  langBtn: {
-    flex: 1,
-    minHeight: 46,
-    borderRadius: radius.card,
-    backgroundColor: colors.card2,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  langBtnOn: { backgroundColor: colors.accent },
-  langText: { color: colors.dim, fontSize: size.small, fontWeight: '700' },
-  langTextOn: { color: colors.upInk },
+  header: { height: 64, paddingHorizontal: layout.screenPadding, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  settingsGlyph: { width: 32, color: colors.accent, fontSize: 29, fontWeight: '700', lineHeight: 33, textAlign: 'center' },
+  brand: { color: colors.text, fontSize: type.screenTitle, fontWeight: '500' },
+  content: { paddingHorizontal: layout.screenPadding, paddingTop: 38, paddingBottom: spacing.xxxl },
+  total: { color: colors.text, fontSize: type.heroAmount, fontWeight: '600', letterSpacing: -2.2, textAlign: 'center' },
+  debtsSection: { marginTop: 100 },
+  sectionTitle: { color: colors.text, fontSize: type.title, fontWeight: '700', marginLeft: 10, marginBottom: 12 },
+  list: { gap: 10 },
+  debtCard: { width: '100%', height: 98, flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surface, borderRadius: radius.md, paddingHorizontal: 23, overflow: 'hidden' },
+  debtCopy: { flex: 1, alignSelf: 'stretch', justifyContent: 'center' },
+  personName: { color: colors.text, fontSize: 18, fontWeight: '500', marginBottom: 4 },
+  personAmount: { color: colors.accent, fontSize: type.amount, fontWeight: '600', letterSpacing: -0.4 },
+  moreCircle: { width: 29, height: 29, borderRadius: 15, backgroundColor: '#48484C', alignItems: 'center', justifyContent: 'center' },
+  moreDots: { color: '#D3D3D6', fontSize: 12, fontWeight: '800', letterSpacing: -1, marginTop: -4 },
+  emptyHome: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingBottom: 68 },
+  debtMarkOuter: { width: 108, height: 108, borderRadius: 54, borderWidth: 7, borderColor: '#303034', alignItems: 'center', justifyContent: 'center' },
+  debtMarkInner: { width: 76, height: 76, borderRadius: 38, borderWidth: 6, borderColor: '#303034', alignItems: 'center', justifyContent: 'center' },
+  debtMarkText: { color: '#303034', fontSize: 48, fontWeight: '800' },
+  emptyButton: { minHeight: 52, width: 138, borderRadius: 26, marginTop: 45 },
+  pressed: { opacity: 0.64 },
 });
