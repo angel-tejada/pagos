@@ -237,7 +237,7 @@ export const layout = {
   minTapTarget: 44,
 } as const;
 
-type ShadowSpec = { offsetY: number; opacity: number; radius: number; elevation: number };
+export type ShadowSpec = { offsetY: number; opacity: number; radius: number; elevation: number };
 
 /**
  * One set of numbers, two renderings. iOS reads shadowColor/shadowOffset/
@@ -248,7 +248,7 @@ type ShadowSpec = { offsetY: number; opacity: number; radius: number; elevation:
  * only one of the two ever ships — this never sends the web-only key to
  * native or vice versa.
  */
-function makeShadow(spec: ShadowSpec): ViewStyle {
+export function makeShadow(spec: ShadowSpec): ViewStyle {
   const { offsetY, opacity, radius, elevation } = spec;
   return Platform.select<ViewStyle>({
     web: { boxShadow: `0px ${offsetY}px ${radius}px rgba(0, 0, 0, ${opacity})` },

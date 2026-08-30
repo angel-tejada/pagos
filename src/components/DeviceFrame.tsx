@@ -1,7 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 
-import { font, useColors } from '../theme';
+import { font, makeShadow, useColors } from '../theme';
 import { DialogHost } from './dialogs';
 import { OverlayHostContext } from './overlayHost';
 
@@ -173,10 +173,9 @@ const styles = StyleSheet.create({
     padding: BEZEL,
     borderRadius: DEVICE_R,
     backgroundColor: '#000000',
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 30 },
-    shadowOpacity: 0.45,
-    shadowRadius: 60,
+    // Through the shared helper like every other shadow, so this one cannot
+    // drift back onto the deprecated shadow* path on web.
+    ...makeShadow({ offsetY: 30, opacity: 0.45, radius: 60, elevation: 12 }),
   },
   screen: {
     width: SCREEN_W,
