@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { CURRENCY_LIST, type CurrencyEntry } from '../data/currencies';
 import { useLang } from '../i18n';
-import { layout, radius, type, useColors, useStyles, type Palette } from '../theme';
+import { font, layout, radius, tabular, type, useColors, useStyles, type Palette } from '../theme';
 import { Button } from './ui';
 
 /** Strips accents so "dolar" finds "Dólar". */
@@ -64,8 +64,8 @@ export function CurrencyPicker({
             value={query}
             onChangeText={setQuery}
             placeholder={t.searchCurrency}
-            placeholderTextColor={c.textMuted}
-            selectionColor={c.accent}
+            placeholderTextColor={c.mute}
+            selectionColor={c.ink}
             autoCorrect={false}
             autoCapitalize="characters"
             clearButtonMode="while-editing"
@@ -91,7 +91,7 @@ export function CurrencyPicker({
         />
 
         <View style={styles.footer}>
-          <Button label={t.cancel} tone="secondary" onPress={close} />
+          <Button label={t.cancel} tone="outline" onPress={close} />
         </View>
       </SafeAreaView>
     </Modal>
@@ -134,18 +134,19 @@ function CurrencyRow({
 
 const makeStyles = (c: Palette) =>
   StyleSheet.create({
-    screen: { flex: 1, backgroundColor: c.bg },
+    screen: { flex: 1, backgroundColor: c.sheet },
     header: { paddingHorizontal: layout.screenPadding, paddingTop: 6, paddingBottom: 10 },
-    title: { color: c.text, fontSize: type.title, fontWeight: '800' },
+    title: { color: c.ink, fontFamily: font.extrabold, fontSize: type.sheetTitle, letterSpacing: -0.6 },
     searchWrap: { paddingHorizontal: layout.screenPadding, paddingBottom: 10 },
     search: {
       height: 48,
-      backgroundColor: c.surface,
+      backgroundColor: c.sheetCard,
       borderRadius: radius.md,
       borderWidth: 1,
-      borderColor: c.border,
-      color: c.text,
-      fontSize: type.body,
+      borderColor: c.sheetLine,
+      color: c.ink,
+      fontFamily: font.medium,
+      fontSize: 16,
       paddingHorizontal: 14,
     },
     list: { paddingHorizontal: layout.screenPadding, paddingBottom: 12 },
@@ -158,24 +159,24 @@ const makeStyles = (c: Palette) =>
       marginBottom: 6,
       borderRadius: radius.md,
       borderWidth: 1,
-      borderColor: c.borderSoft,
-      backgroundColor: c.surface,
+      borderColor: c.sheetLine,
+      backgroundColor: c.sheetCard,
     },
-    rowActive: { borderColor: c.accent, borderWidth: 2, backgroundColor: c.accentSoft },
+    rowActive: { borderColor: c.ink, borderWidth: 2 },
     symbolBox: {
       width: 46,
       height: 34,
       borderRadius: radius.sm,
-      backgroundColor: c.surfaceRaised,
+      backgroundColor: c.sheetLine,
       alignItems: 'center',
       justifyContent: 'center',
     },
-    symbol: { color: c.text, fontSize: type.body, fontWeight: '700' },
+    symbol: { color: c.mute, fontFamily: font.semibold, fontSize: type.body },
     copy: { flex: 1 },
-    code: { color: c.text, fontSize: type.body, fontWeight: '700' },
-    name: { color: c.textSecondary, fontSize: type.label },
-    check: { color: c.accent, fontSize: type.bodyLarge, fontWeight: '800' },
-    empty: { color: c.textMuted, fontSize: type.body, textAlign: 'center', paddingTop: 40 },
+    code: { color: c.ink, fontFamily: font.semibold, fontSize: type.body, letterSpacing: -0.17 },
+    name: { color: c.mute, fontFamily: font.regular, fontSize: type.label },
+    check: { color: c.ink, fontFamily: font.extrabold, fontSize: type.bodyLarge },
+    empty: { color: c.mute, fontFamily: font.regular, fontSize: type.body, textAlign: 'center', paddingTop: 40 },
     footer: { paddingHorizontal: layout.screenPadding, paddingTop: 8 },
     pressed: { opacity: 0.7 },
   });

@@ -1,96 +1,55 @@
-import { useRouter } from 'expo-router';
-import type { ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import {
+  Animated,
+  Easing,
   Pressable,
   StyleSheet,
   Text,
   View,
+  type LayoutChangeEvent,
   type PressableProps,
   type StyleProp,
   type TextStyle,
   type ViewStyle,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { useLang } from '../i18n';
-import { layout, radius, spacing, type, useColors, useStyles, type Palette } from '../theme';
+import { font, layout, motion, radius, shadows, spacing, type, useStyles, type Palette } from '../theme';
 
-export function Card({ children, style }: { children: ReactNode; style?: StyleProp<ViewStyle> }) {
-  const styles = useStyles(makeStyles);
-  return <View style={[styles.card, style]}>{children}</View>;
-}
-
-export function SectionHeading({ title, trailing }: { title: string; trailing?: ReactNode }) {
-  const styles = useStyles(makeStyles);
-  return (
-    <View style={styles.sectionHeading}>
-      <Text style={styles.sectionTitle}>{title}</Text>
-      {trailing}
-    </View>
-  );
-}
-
-type IconButtonProps = Omit<PressableProps, 'style'> & {
-  glyph: string;
-  accessibilityLabel: string;
-  tone?: 'neutral' | 'accent' | 'danger';
-  size?: 'small' | 'regular';
-  style?: StyleProp<ViewStyle>;
-};
-
-export function IconButton({ glyph, tone = 'neutral', size = 'regular', style, ...props }: IconButtonProps) {
-  const styles = useStyles(makeStyles);
-  return (
-    <Pressable
-      {...props}
-      hitSlop={10}
-      style={({ pressed }) => [
-        styles.iconButton,
-        size === 'small' && styles.iconButtonSmall,
-        tone === 'accent' && styles.iconButtonAccent,
-        tone === 'danger' && styles.iconButtonDanger,
-        pressed && styles.pressed,
-        style,
-      ]}>
-      <Text style={[styles.iconGlyph, tone === 'accent' && styles.iconGlyphAccent, tone === 'danger' && styles.iconGlyphDanger]}>
-        {glyph}
-      </Text>
-    </Pressable>
-  );
-}
+type ButtonTone = 'debt' | 'payment' | 'outline' | 'sheet';
 
 type ButtonProps = Omit<PressableProps, 'style'> & {
   label: string;
-  /** 'up' and 'down' carry the ledger's direction semantic: green = they
-   *  borrowed, red = they paid back. Everything else is a plain control. */
-  tone?: 'primary' | 'danger' | 'secondary' | 'up' | 'down';
-  glyph?: string;
+  /**
+   * 'debt' is the only red control in the app: money going out.
+   * 'payment' is the neutral solid. 'outline' is quiet and never filled.
+   */
+  tone?: ButtonTone;
   style?: StyleProp<ViewStyle>;
 };
 
-export function Button({ label, glyph, tone = 'primary', style, disabled, ...props }: ButtonProps) {
+export function Button({ label, tone = 'payment', style, disabled, ...props }: ButtonProps) {
   const styles = useStyles(makeStyles);
   const textStyle: StyleProp<TextStyle> = [
     styles.buttonText,
-    tone === 'secondary' && styles.buttonTextSecondary,
-    tone === 'up' && styles.buttonTextUp,
-    tone === 'down' && styles.buttonTextDown,
+    tone === 'debt' && styles.buttonTextDebt,
+    tone === 'payment' && styles.buttonTextPayment,
+    (tone === 'outline' || tone === 'sheet') && styles.buttonTextQuiet,
   ];
   return (
     <Pressable
       {...props}
+      accessibilityRole="button"
       disabled={disabled}
       style={({ pressed }) => [
         styles.button,
-        tone === 'danger' && styles.buttonDanger,
-        tone === 'secondary' && styles.buttonSecondary,
-        tone === 'up' && styles.buttonUp,
-        tone === 'down' && styles.buttonDown,
+        tone === 'debt' && styles.buttonDebt,
+        tone === 'payment' && styles.buttonPayment,
+        tone === 'outline' && styles.buttonOutline,
+        tone === 'sheet' && styles.buttonSheet,
         pressed && styles.pressed,
         disabled && styles.disabled,
         style,
       ]}>
-      {glyph ? <Text style={textStyle}>{glyph}</Text> : null}
       <Text style={textStyle}>{label}</Text>
     </Pressable>
   );
@@ -101,120 +60,169 @@ export function FieldLabel({ children }: { children: ReactNode }) {
   return <Text style={styles.fieldLabel}>{children}</Text>;
 }
 
-export function FieldShell({ children, style }: { children: ReactNode; style?: StyleProp<ViewStyle> }) {
-  const styles = useStyles(makeStyles);
-  return <View style={[styles.fieldShell, style]}>{children}</View>;
-}
-
-export function InitialAvatar({ name: _name, size = 46 }: { name: string; size?: number }) {
+export function InitialAvatar({ size = 46 }: { name?: string; size?: number }) {
   const styles = useStyles(makeStyles);
   return (
     <View style={[styles.avatar, { width: size, height: size, borderRadius: size / 2 }]}>
       <View style={[styles.avatarHead, { width: size * 0.3, height: size * 0.3, borderRadius: size * 0.15 }]} />
-      <View style={[styles.avatarBody, { width: size * 0.56, height: size * 0.24, borderTopLeftRadius: size * 0.28, borderTopRightRadius: size * 0.28 }]} />
+      <View
+        style={[
+          styles.avatarBody,
+          {
+            width: size * 0.56,
+            height: size * 0.24,
+            borderTopLeftRadius: size * 0.28,
+            borderTopRightRadius: size * 0.28,
+          },
+        ]}
+      />
     </View>
   );
 }
 
-export function EmptyState({ title, body, action }: { title: string; body: string; action?: ReactNode }) {
+export function EmptyState({ body }: { body: string }) {
   const styles = useStyles(makeStyles);
   return (
     <View style={styles.emptyState}>
-      <Text style={styles.emptyTitle}>{title}</Text>
       <Text style={styles.emptyBody}>{body}</Text>
-      {action ? <View style={styles.emptyAction}>{action}</View> : null}
     </View>
   );
 }
 
-export function BottomNav({ active }: { active: 'home' | 'people' }) {
+export type SegmentOption<T extends string> = { value: T; label: string };
+
+/**
+ * The selected pill slides to whatever was tapped. Never a fade, never a pop.
+ * Unselected labels sit at 45% so chosen versus not-chosen reads at a glance,
+ * and the shadow is outward — an inset would read as "pressed", not "on".
+ */
+export function Segment<T extends string>({
+  options,
+  value,
+  onChange,
+}: {
+  options: readonly SegmentOption<T>[];
+  value: T;
+  onChange: (next: T) => void;
+}) {
   const styles = useStyles(makeStyles);
-  const { t } = useLang();
-  const router = useRouter();
-  const insets = useSafeAreaInsets();
+  const [trackWidth, setTrackWidth] = useState(0);
+  const index = Math.max(0, options.findIndex((option) => option.value === value));
+  const position = useRef(new Animated.Value(index)).current;
+
+  useEffect(() => {
+    Animated.timing(position, {
+      toValue: index,
+      duration: motion.segmentMs,
+      easing: Easing.bezier(...motion.segmentEasing),
+      useNativeDriver: true,
+    }).start();
+  }, [index, position]);
+
+  const inner = Math.max(0, trackWidth - SEGMENT_PAD * 2);
+  const cell = options.length ? inner / options.length : 0;
+  const translateX =
+    options.length > 1
+      ? position.interpolate({
+          inputRange: options.map((_, i) => i),
+          outputRange: options.map((_, i) => i * cell),
+        })
+      : 0;
+
+  const onLayout = (event: LayoutChangeEvent) => setTrackWidth(event.nativeEvent.layout.width);
+
   return (
-    <View style={[styles.bottomNav, { height: layout.bottomBarHeight + insets.bottom, paddingBottom: insets.bottom }]}>
-      <NavItem onPress={() => router.replace('/')} tab="home" active={active === 'home'} label={t.homeTab} />
-      <NavItem onPress={() => router.replace('/people')} tab="people" active={active === 'people'} label={t.peopleTab} />
+    <View style={styles.segment} onLayout={onLayout}>
+      {cell > 0 ? (
+        <Animated.View
+          pointerEvents="none"
+          style={[styles.segmentPill, { width: cell, transform: [{ translateX }] }]}
+        />
+      ) : null}
+      {options.map((option) => {
+        const active = option.value === value;
+        return (
+          <Pressable
+            key={option.value}
+            accessibilityRole="button"
+            accessibilityState={{ selected: active }}
+            onPress={() => onChange(option.value)}
+            style={styles.segmentButton}>
+            <Text style={[styles.segmentLabel, active ? styles.segmentLabelOn : styles.segmentLabelOff]}>
+              {option.label}
+            </Text>
+          </Pressable>
+        );
+      })}
     </View>
   );
 }
 
-function NavItem({ onPress, tab, active, label }: { onPress: () => void; tab: 'home' | 'people'; active: boolean; label: string }) {
-  const styles = useStyles(makeStyles);
-  const colors = useColors();
-  const tint = active ? colors.accent : colors.textSecondary;
-  return (
-    <Pressable onPress={onPress} style={({ pressed }) => [styles.navItem, pressed && styles.pressed]}>
-      {tab === 'home' ? <ListTabIcon color={tint} /> : <PersonTabIcon color={tint} />}
-      <Text style={[styles.navLabel, { color: tint }]}>{label}</Text>
-    </Pressable>
-  );
-}
+const SEGMENT_PAD = 5;
 
-function ListTabIcon({ color }: { color: string }) {
-  const styles = useStyles(makeStyles);
-  return (
-    <View style={styles.listIcon}>
-      {[0, 1, 2].map((row) => (
-        <View key={row} style={styles.listIconRow}>
-          <View style={[styles.listDot, { backgroundColor: color }]} />
-          <View style={[styles.listLine, { backgroundColor: color }]} />
-        </View>
-      ))}
-    </View>
-  );
-}
+const makeStyles = (c: Palette) =>
+  StyleSheet.create({
+    button: {
+      minHeight: layout.buttonHeight,
+      paddingHorizontal: spacing.lg,
+      borderRadius: radius.lg,
+      alignItems: 'center',
+      justifyContent: 'center',
+      flexDirection: 'row',
+      gap: spacing.xs,
+    },
+    buttonDebt: { backgroundColor: c.red },
+    buttonPayment: { backgroundColor: c.ink },
+    buttonOutline: { backgroundColor: c.card, borderWidth: 1, borderColor: c.line },
+    buttonSheet: { backgroundColor: c.sheetCard, borderWidth: 1, borderColor: c.sheetLine, ...shadows.raised },
+    buttonText: { fontFamily: font.extrabold, fontSize: type.bodyLarge, letterSpacing: -0.18 },
+    buttonTextDebt: { color: c.redOn },
+    buttonTextPayment: { color: c.inkOn },
+    buttonTextQuiet: { color: c.ink, fontFamily: font.bold },
+    pressed: { opacity: 0.7 },
+    disabled: { opacity: 0.3 },
 
-function PersonTabIcon({ color }: { color: string }) {
-  const styles = useStyles(makeStyles);
-  return (
-    <View style={styles.personIcon}>
-      <View style={[styles.personHead, { backgroundColor: color }]} />
-      <View style={[styles.personBody, { backgroundColor: color }]} />
-    </View>
-  );
-}
+    fieldLabel: {
+      color: c.ink,
+      fontFamily: font.extrabold,
+      fontSize: 22,
+      letterSpacing: -0.4,
+      marginBottom: spacing.sm,
+    },
 
-const makeStyles = (c: Palette) => StyleSheet.create({
-  card: { backgroundColor: c.surface, borderRadius: radius.lg },
-  sectionHeading: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.sm },
-  sectionTitle: { color: c.text, fontSize: type.title, fontWeight: '700' },
-  iconButton: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center' },
-  iconButtonSmall: { width: 32, height: 32, borderRadius: 16 },
-  iconButtonAccent: { backgroundColor: c.accent },
-  iconButtonDanger: { backgroundColor: c.accent },
-  iconGlyph: { color: c.accent, fontSize: 27, fontWeight: '700', lineHeight: 30 },
-  iconGlyphAccent: { color: c.accentInk, fontSize: 25 },
-  iconGlyphDanger: { color: c.accentInk },
-  button: { minHeight: layout.buttonHeight, paddingHorizontal: spacing.lg, borderRadius: radius.md, backgroundColor: c.accent, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.xs },
-  buttonDanger: { backgroundColor: c.accent },
-  buttonSecondary: { backgroundColor: c.surfaceRaised },
-  buttonUp: { backgroundColor: c.up },
-  buttonDown: { backgroundColor: c.down },
-  buttonText: { color: c.accentInk, fontSize: type.bodyLarge, fontWeight: '700' },
-  buttonTextSecondary: { color: c.text },
-  buttonTextUp: { color: c.upInk },
-  buttonTextDown: { color: c.downInk },
-  pressed: { opacity: 0.66 },
-  disabled: { opacity: 0.4 },
-  fieldLabel: { color: c.text, fontSize: type.title, fontWeight: '700', marginBottom: spacing.sm },
-  fieldShell: { minHeight: layout.controlHeight, backgroundColor: c.surface, borderRadius: radius.md, paddingHorizontal: spacing.lg, flexDirection: 'row', alignItems: 'center' },
-  avatar: { backgroundColor: c.avatarBg, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
-  avatarHead: { backgroundColor: c.avatarInk, marginTop: 2 },
-  avatarBody: { backgroundColor: c.avatarInk, marginTop: 3 },
-  emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingBottom: 40 },
-  emptyTitle: { color: c.emptyTitle, fontSize: 31, fontWeight: '800', textAlign: 'center' },
-  emptyBody: { color: c.emptyBody, fontSize: 18, fontWeight: '400', textAlign: 'center', marginTop: 4 },
-  emptyAction: { marginTop: spacing.xl },
-  bottomNav: { width: '100%', flexDirection: 'row', backgroundColor: c.bg },
-  navItem: { flex: 1, minWidth: 0, alignItems: 'center', justifyContent: 'flex-end', paddingBottom: 4 },
-  navLabel: { fontSize: 10, lineHeight: 12, fontWeight: '500', marginTop: 4 },
-  listIcon: { width: 22, height: 18, justifyContent: 'space-between' },
-  listIconRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  listDot: { width: 2, height: 2, borderRadius: 1 },
-  listLine: { width: 16, height: 2, borderRadius: 1 },
-  personIcon: { width: 20, height: 19, alignItems: 'center' },
-  personHead: { width: 7, height: 7, borderRadius: 4 },
-  personBody: { width: 17, height: 9, borderTopLeftRadius: 9, borderTopRightRadius: 9, marginTop: 2 },
-});
+    avatar: { backgroundColor: c.avatarBg, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
+    avatarHead: { backgroundColor: c.avatarInk, marginTop: 2 },
+    avatarBody: { backgroundColor: c.avatarInk, marginTop: 3 },
+
+    emptyState: { paddingVertical: 60, paddingHorizontal: spacing.xl },
+    emptyBody: {
+      color: c.mute,
+      fontFamily: font.regular,
+      fontSize: 16,
+      lineHeight: 26,
+      textAlign: 'center',
+    },
+
+    segment: {
+      flexDirection: 'row',
+      backgroundColor: c.sheetCard,
+      borderRadius: radius.lg,
+      borderWidth: 1,
+      borderColor: c.sheetLine,
+      padding: SEGMENT_PAD,
+      ...shadows.raised,
+    },
+    segmentPill: {
+      position: 'absolute',
+      top: SEGMENT_PAD,
+      bottom: SEGMENT_PAD,
+      left: SEGMENT_PAD,
+      borderRadius: radius.md,
+      backgroundColor: c.ink,
+      ...shadows.pill,
+    },
+    segmentButton: { flex: 1, minHeight: 52, alignItems: 'center', justifyContent: 'center' },
+    segmentLabel: { fontSize: type.body, letterSpacing: -0.17 },
+    segmentLabelOn: { color: c.inkOn, fontFamily: font.extrabold },
+    segmentLabelOff: { color: c.ink, fontFamily: font.semibold, opacity: 0.45 },
+  });

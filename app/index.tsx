@@ -4,11 +4,11 @@ import { ActionSheetIOS, Alert, Platform, Pressable, ScrollView, StyleSheet, Tex
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { OptionsSheet } from '../src/components/OptionsSheet';
-import { BottomNav, Button, IconButton } from '../src/components/ui';
+import { EmptyState } from '../src/components/ui';
 import { formatBalance } from '../src/data/format';
 import { FREE_PERSON_LIMIT, getBalanceCents, useData, type Person } from '../src/data/store';
 import { useLang } from '../src/i18n';
-import { balanceColor, layout, radius, spacing, type, useColors, useStyles, type Palette } from '../src/theme';
+import { balanceColor, font, layout, radius, tabular, type, useColors, useStyles, type Palette } from '../src/theme';
 
 export default function HomeScreen() {
   const styles = useStyles(makeStyles);
@@ -17,11 +17,11 @@ export default function HomeScreen() {
   const { data, renamePerson, deletePerson } = useData();
   const router = useRouter();
   const [optionsOpen, setOptionsOpen] = useState(false);
+
   const people = data.people
     .map((person) => ({ person, balance: getBalanceCents(data, person.id) }))
-    .filter(({ balance }) => balance > 0)
     .sort((a, b) => b.balance - a.balance);
-  const total = people.reduce((sum, item) => sum + item.balance, 0);
+  const total = people.reduce((sum, item) => sum + Math.max(0, item.balance), 0);
 
   const editPerson = (person: Person) => {
     Alert.prompt(t.editPerson, t.name, (name) => renamePerson(person.id, name), 'plain-text', person.name);
@@ -55,98 +55,145 @@ export default function HomeScreen() {
   };
 
   return (
-    <SafeAreaView edges={['top']} style={styles.screen}>
+    <SafeAreaView edges={['top', 'bottom']} style={styles.screen}>
+      {/* Plain glyphs, no circular backgrounds. Same 44px target on both;
+          the plus simply draws larger than the gear. */}
       <View style={styles.header}>
         <Pressable
+          accessibilityRole="button"
           accessibilityLabel={t.openOptions}
-          hitSlop={10}
           onPress={() => setOptionsOpen(true)}
-          style={({ pressed }) => [styles.settingsButton, pressed && styles.pressed]}>
-          <Text style={styles.settingsGlyph}>⚙︎</Text>
+          style={({ pressed }) => [styles.headerButton, pressed && styles.pressed]}>
+          <Text style={styles.gearGlyph}>⚙</Text>
         </Pressable>
         <Text style={styles.brand}>Pagos</Text>
-        <IconButton glyph="＋" size="small" tone="accent" accessibilityLabel={t.addEntryA11y} onPress={() => router.push('/entry')} />
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={t.addEntryA11y}
+          onPress={() => router.push('/entry')}
+          style={({ pressed }) => [styles.headerButton, pressed && styles.pressed]}>
+          <Text style={styles.plusGlyph}>＋</Text>
+        </Pressable>
       </View>
 
-      {people.length === 0 ? (
-        <View style={styles.emptyHome}>
-          <DebtMark />
-          <Button label={t.addDebt} style={styles.emptyButton} onPress={() => router.push('/entry')} />
-        </View>
-      ) : (
-        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-          <Text style={[styles.total, { color: balanceColor(total, c) }]}>
-            {formatBalance(total, people[0]?.person.currency ?? 'USD', lang)}
-          </Text>
+      <View style={styles.totalWrap}>
+        <Text style={[styles.total, { color: balanceColor(total, c) }]}>
+          {formatBalance(total, people[0]?.person.currency ?? 'USD', lang)}
+        </Text>
+      </View>
 
-          <View style={styles.debtsSection}>
-            <Text style={styles.sectionTitle}>{t.activeBalances}</Text>
-            <View style={styles.list}>
-              {people.map(({ person, balance }) => (
-                <View key={person.id} style={styles.debtCard}>
-                  <Pressable onPress={() => router.push(`/person/${person.id}`)} style={({ pressed }) => [styles.debtCopy, pressed && styles.pressed]}>
-                    <Text style={styles.personName}>{person.name}</Text>
-                    <Text style={[styles.personAmount, { color: balanceColor(balance, c) }]}>
-                      {formatBalance(balance, person.currency, lang)}
-                    </Text>
-                  </Pressable>
-                  <Pressable
-                    accessibilityLabel={t.moreActions}
-                    hitSlop={10}
-                    onPress={() => openPersonActions(person)}
-                    style={({ pressed }) => [styles.moreCircle, pressed && styles.pressed]}>
-                    <Text style={styles.moreDots}>•••</Text>
-                  </Pressable>
-                </View>
-              ))}
+      <Text style={styles.section}>{t.activeBalances}</Text>
+
+      <ScrollView contentContainerStyle={styles.list} showsVerticalScrollIndicator={false}>
+        {people.length === 0 ? (
+          <EmptyState body={t.emptyList} />
+        ) : (
+          people.map(({ person, balance }) => (
+            <View key={person.id} style={styles.card}>
+              {/* Name left, amount right, sharing one baseline. */}
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => router.push(`/person/${person.id}`)}
+                style={({ pressed }) => [styles.cardMain, pressed && styles.pressed]}>
+                <Text style={styles.cardName} numberOfLines={1}>
+                  {person.name}
+                </Text>
+                <Text style={[styles.cardAmount, balance === 0 && styles.cardAmountZero, { color: balanceColor(balance, c) }]}>
+                  {formatBalance(balance, person.currency, lang)}
+                </Text>
+              </Pressable>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={t.moreActions}
+                hitSlop={8}
+                onPress={() => openPersonActions(person)}
+                style={({ pressed }) => [styles.dots, pressed && styles.pressed]}>
+                <Text style={styles.dotsGlyph}>•••</Text>
+              </Pressable>
             </View>
-          </View>
-        </ScrollView>
-      )}
+          ))
+        )}
+      </ScrollView>
 
-      <Text style={styles.limitNote}>
-        {data.people.length === 0
-          ? t.freeLimitEmpty(FREE_PERSON_LIMIT)
-          : t.freeLimitCount(data.people.length, FREE_PERSON_LIMIT)}
-      </Text>
+      {/* Sits where the tab bar used to be. */}
+      <Text style={styles.limitNote}>{t.freeLimitCount(data.people.length, FREE_PERSON_LIMIT)}</Text>
 
-      <BottomNav active="home" />
       <OptionsSheet visible={optionsOpen} onClose={() => setOptionsOpen(false)} />
     </SafeAreaView>
   );
 }
 
-function DebtMark() {
-  const styles = useStyles(makeStyles);
-  return (
-    <View style={styles.debtMarkOuter}>
-      <View style={styles.debtMarkInner}><Text style={styles.debtMarkText}>$</Text></View>
-    </View>
-  );
-}
+const makeStyles = (c: Palette) =>
+  StyleSheet.create({
+    screen: { flex: 1, backgroundColor: c.bg },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: layout.screenPadding,
+      paddingTop: 6,
+      paddingBottom: 10,
+    },
+    headerButton: {
+      width: 48,
+      height: 48,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    gearGlyph: { color: c.ink, fontSize: 26, fontFamily: font.regular, lineHeight: 30 },
+    plusGlyph: { color: c.ink, fontSize: 34, fontFamily: font.regular, lineHeight: 38 },
+    brand: { flex: 1, textAlign: 'center', color: c.ink, fontFamily: font.bold, fontSize: type.title, letterSpacing: -0.19 },
 
-const makeStyles = (c: Palette) => StyleSheet.create({
-  screen: { flex: 1, backgroundColor: c.bg },
-  header: { height: 56, paddingHorizontal: layout.screenPadding, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  settingsButton: { width: layout.minTapTarget, height: layout.minTapTarget, borderRadius: layout.minTapTarget / 2, backgroundColor: c.surface, alignItems: 'center', justifyContent: 'center' },
-  settingsGlyph: { color: c.text, fontSize: 24, fontWeight: '700', lineHeight: 28, textAlign: 'center' },
-  brand: { color: c.text, fontSize: type.screenTitle, fontWeight: '500' },
-  content: { paddingHorizontal: layout.screenPadding, paddingTop: 30, paddingBottom: spacing.xxxl },
-  total: { fontSize: type.heroAmount, fontWeight: '600', letterSpacing: -2.2, textAlign: 'center' },
-  debtsSection: { marginTop: 62 },
-  sectionTitle: { color: c.text, fontSize: type.title, fontWeight: '700', marginLeft: 10, marginBottom: 12 },
-  list: { gap: 10 },
-  debtCard: { width: '100%', height: 83, flexDirection: 'row', alignItems: 'center', backgroundColor: c.surface, borderRadius: radius.md, borderWidth: 1, borderColor: c.borderSoft, paddingHorizontal: 19, overflow: 'hidden' },
-  debtCopy: { flex: 1, alignSelf: 'stretch', justifyContent: 'center' },
-  personName: { color: c.text, fontSize: 16, fontWeight: '500', marginBottom: 3 },
-  personAmount: { fontSize: type.amount, fontWeight: '600', letterSpacing: -0.4 },
-  moreCircle: { width: 29, height: 29, borderRadius: 15, backgroundColor: c.chip, alignItems: 'center', justifyContent: 'center' },
-  moreDots: { color: c.chipInk, fontSize: 12, fontWeight: '800', letterSpacing: -1, marginTop: -4 },
-  emptyHome: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingBottom: 68 },
-  debtMarkOuter: { width: 92, height: 92, borderRadius: 46, borderWidth: 6, borderColor: c.emptyMark, alignItems: 'center', justifyContent: 'center' },
-  debtMarkInner: { width: 64, height: 64, borderRadius: 32, borderWidth: 5, borderColor: c.emptyMark, alignItems: 'center', justifyContent: 'center' },
-  debtMarkText: { color: c.emptyMark, fontSize: 40, fontWeight: '800' },
-  emptyButton: { minHeight: 46, width: 122, borderRadius: 23, marginTop: 36 },
-  limitNote: { color: c.textMuted, fontSize: type.caption, textAlign: 'center', paddingBottom: 10 },
-  pressed: { opacity: 0.64 },
-});
+    totalWrap: { paddingHorizontal: layout.screenPadding, paddingTop: 24, paddingBottom: 34 },
+    total: {
+      textAlign: 'center',
+      fontFamily: font.extrabold,
+      fontSize: type.hero,
+      letterSpacing: -2.5,
+      ...tabular,
+    },
+
+    section: {
+      paddingHorizontal: layout.screenPadding,
+      paddingBottom: 12,
+      color: c.ink,
+      fontFamily: font.bold,
+      fontSize: type.title,
+      letterSpacing: -0.19,
+    },
+
+    list: { paddingHorizontal: layout.screenPadding, paddingBottom: 8 },
+    card: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      backgroundColor: c.card,
+      borderWidth: 1,
+      borderColor: c.line,
+      borderRadius: radius.xl,
+      paddingVertical: 16,
+      paddingHorizontal: 18,
+      marginBottom: 12,
+    },
+    cardMain: { flex: 1, flexDirection: 'row', alignItems: 'baseline', gap: 10 },
+    cardName: { flex: 1, color: c.ink, fontFamily: font.semibold, fontSize: type.cardName, letterSpacing: -0.18 },
+    cardAmount: { fontFamily: font.bold, fontSize: type.cardAmount, letterSpacing: -0.5, ...tabular },
+    cardAmountZero: { fontFamily: font.semibold, fontSize: type.cardName },
+    dots: {
+      width: 38,
+      height: 38,
+      borderRadius: 19,
+      backgroundColor: c.chip,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    dotsGlyph: { color: c.chipInk, fontSize: 15, letterSpacing: 0.5, fontFamily: font.bold },
+
+    limitNote: {
+      textAlign: 'center',
+      color: c.mute,
+      fontFamily: font.regular,
+      fontSize: type.label,
+      paddingVertical: 14,
+    },
+    pressed: { opacity: 0.7 },
+  });

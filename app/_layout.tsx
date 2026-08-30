@@ -1,7 +1,16 @@
+import {
+  Inter_400Regular,
+  Inter_500Medium,
+  Inter_600SemiBold,
+  Inter_700Bold,
+  Inter_800ExtraBold,
+  useFonts,
+} from '@expo-google-fonts/inter';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { Platform } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { SafeAreaProvider, type Metrics } from 'react-native-safe-area-context';
 
 // Registers the local-notification handler at startup.
 import '../src/data/reminders';
@@ -9,16 +18,35 @@ import { LangProvider } from '../src/i18n';
 import { DataProvider } from '../src/data/store';
 import { ThemeContextProvider, ThemeControlProvider, useThemePreference } from '../src/theme';
 
+/**
+ * The browser preview renders inside an iPhone 16 Pro frame, so the web build
+ * is handed the same insets the real device reports. Native reads its own.
+ */
+const WEB_METRICS: Metrics = {
+  insets: { top: 62, bottom: 21, left: 0, right: 0 },
+  frame: { x: 0, y: 0, width: 402, height: 874 },
+};
+
 export default function RootLayout() {
   /** Light by default; the user switches it in Options. */
   const { palette, scheme, setScheme } = useThemePreference();
+  // Inter carries the whole interface; nothing renders in a fallback face.
+  const [fontsReady] = useFonts({
+    Inter_400Regular,
+    Inter_500Medium,
+    Inter_600SemiBold,
+    Inter_700Bold,
+    Inter_800ExtraBold,
+  });
   const control = { scheme, setScheme };
+
+  if (!fontsReady) return null;
 
   return (
     <ThemeControlProvider value={control}>
       <ThemeContextProvider value={palette}>
         <GestureHandlerRootView style={{ flex: 1, backgroundColor: palette.bg }}>
-          <SafeAreaProvider>
+          <SafeAreaProvider initialMetrics={Platform.OS === 'web' ? WEB_METRICS : undefined}>
             <DataProvider>
               <LangProvider>
                 <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
@@ -30,8 +58,7 @@ export default function RootLayout() {
                   {/* The two tabs swap with no animation. A transition here
                       reads as the screen sliding or dropping on every tap. */}
                   <Stack.Screen name="index" options={{ animation: 'none' }} />
-                  <Stack.Screen name="people" options={{ animation: 'none' }} />
-                  <Stack.Screen name="person/[id]" options={{ animation: 'slide_from_right' }} />
+                    <Stack.Screen name="person/[id]" options={{ animation: 'slide_from_right' }} />
                   <Stack.Screen name="entry" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
                 </Stack>
               </LangProvider>

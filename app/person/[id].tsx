@@ -2,12 +2,12 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ActionSheetIOS, Alert, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Button } from '../../src/components/ui';
+import { Button, EmptyState } from '../../src/components/ui';
 import { shareBalanceMessage, sharePersonPdf } from '../../src/data/files';
 import { formatBalance, formatEntryDate, formatMoney } from '../../src/data/format';
 import { getBalanceCents, useData, type Entry, type Person } from '../../src/data/store';
 import { useLang } from '../../src/i18n';
-import { balanceColor, layout, radius, type, useColors, useStyles, type Palette } from '../../src/theme';
+import { balanceColor, font, layout, radius, tabular, type, useColors, useStyles, type Palette } from '../../src/theme';
 
 export default function PersonScreen() {
   const styles = useStyles(makeStyles);
@@ -68,128 +68,179 @@ export default function PersonScreen() {
   };
 
   const confirmDeleteEntry = (entry: Entry) => {
-    Alert.alert(
-      entry.kind === 'debt' ? t.borrowed : t.paidBtn,
-      `${formatMoney(entry.amountCents, person.currency, lang)}\n${formatEntryDate(entry, lang)}${entry.note ? `\n${entry.note}` : ''}`,
-      [
-        { text: t.cancel, style: 'cancel' },
-        { text: t.delete, style: 'destructive', onPress: () => deleteEntry(entry.id) },
-      ],
-    );
+    Alert.alert(t.confirmDelMov, `${formatMoney(entry.amountCents, person.currency, lang)}\n${formatEntryDate(entry, lang)}`, [
+      { text: t.cancel, style: 'cancel' },
+      { text: t.delete, style: 'destructive', onPress: () => deleteEntry(entry.id) },
+    ]);
   };
 
-  const sendBalance = () => {
-    void shareBalanceMessage(person, data, t, lang).catch(() => Alert.alert(t.shareFailed));
-  };
-
-  const sharePdf = () => {
-    void sharePersonPdf(person, data, t, lang).catch(() => Alert.alert(t.shareFailed));
-  };
+  const balance = getBalanceCents(data, person.id);
 
   return (
-    <SafeAreaView edges={['top']} style={styles.screen}>
+    <SafeAreaView edges={['top', 'bottom']} style={styles.screen}>
       <View style={styles.header}>
-        <Pressable hitSlop={12} onPress={() => router.back()} style={({ pressed }) => pressed && styles.pressed}>
-          <Text style={styles.headerControl}>‹</Text>
+        <Pressable hitSlop={12} onPress={() => router.back()} style={({ pressed }) => [styles.headerSide, pressed && styles.pressed]}>
+          <Text style={styles.back}>‹</Text>
         </Pressable>
-        <Text style={styles.name}>{person.name}</Text>
-        <Pressable accessibilityLabel={t.moreActions} hitSlop={12} onPress={openActions} style={({ pressed }) => pressed && styles.pressed}>
-          <Text style={styles.more}>•••</Text>
+        <Text style={styles.name} numberOfLines={1}>
+          {person.name}
+        </Text>
+        <Pressable
+          accessibilityLabel={t.moreActions}
+          hitSlop={12}
+          onPress={openActions}
+          style={({ pressed }) => [styles.headerSide, styles.headerRight, pressed && styles.pressed]}>
+          <Text style={styles.dots}>•••</Text>
         </Pressable>
       </View>
 
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <Text style={[styles.balance, { color: balanceColor(getBalanceCents(data, person.id), c) }]}>
-          {formatBalance(getBalanceCents(data, person.id), person.currency, lang)}
+      <View style={styles.balanceWrap}>
+        <Text style={[styles.balance, { color: balanceColor(balance, c) }]}>
+          {formatBalance(balance, person.currency, lang)}
         </Text>
+      </View>
 
-        <View style={styles.shareRow}>
-          <Button label={t.sendBalance} style={styles.shareButton} onPress={sendBalance} />
-          <Button label={t.sharePdf} tone="secondary" style={styles.shareButton} onPress={sharePdf} />
-        </View>
+      {/* Both quiet outlines: neither is the primary action on this screen. */}
+      <View style={styles.shareRow}>
+        <Button
+          label={t.sendBalance}
+          tone="outline"
+          style={styles.shareButton}
+          onPress={() => void shareBalanceMessage(person, data, t, lang).catch(() => Alert.alert(t.shareFailed))}
+        />
+        <Button
+          label={t.sharePdf}
+          tone="outline"
+          style={styles.shareButton}
+          onPress={() => void sharePersonPdf(person, data, t, lang).catch(() => Alert.alert(t.shareFailed))}
+        />
+      </View>
 
-        <View style={styles.historySection}>
-          <Text style={styles.sectionTitle}>{t.history}</Text>
-          {entries.length === 0 ? (
-            <Text style={styles.empty}>{t.emptyMovs}</Text>
-          ) : (
-            <View style={styles.historyList}>
-              {entries.map((entry) => (
-                <HistoryRow key={entry.id} entry={entry} person={person} onDelete={() => confirmDeleteEntry(entry)} />
-              ))}
-            </View>
-          )}
-        </View>
+      <Text style={styles.section}>{t.history}</Text>
+
+      <ScrollView contentContainerStyle={styles.list} showsVerticalScrollIndicator={false}>
+        {entries.length === 0 ? (
+          <EmptyState body={t.emptyMovs} />
+        ) : (
+          entries.map((entry) => (
+            <HistoryRow
+              key={entry.id}
+              entry={entry}
+              person={person}
+              onDelete={() => confirmDeleteEntry(entry)}
+            />
+          ))
+        )}
       </ScrollView>
 
-      <SafeAreaView edges={['bottom']} style={styles.actionBar}>
-        <Button label={t.borrowed} tone="up" style={styles.actionButton} onPress={() => router.push({ pathname: '/entry', params: { kind: 'debt', person: id } })} />
-        <Button label={t.paidBtn} tone="down" style={styles.actionButton} onPress={() => router.push({ pathname: '/entry', params: { kind: 'paid', person: id } })} />
-      </SafeAreaView>
+      <View style={styles.dock}>
+        <Button
+          label={t.borrowed}
+          tone="debt"
+          style={styles.dockButton}
+          onPress={() => router.push({ pathname: '/entry', params: { kind: 'debt', person: id } })}
+        />
+        <Button
+          label={t.paidBtn}
+          tone="payment"
+          style={styles.dockButton}
+          onPress={() => router.push({ pathname: '/entry', params: { kind: 'paid', person: id } })}
+        />
+      </View>
     </SafeAreaView>
   );
 }
 
+/**
+ * Fully neutral. Direction is the word and the sign, never colour, so the
+ * ledger reads the same for someone who cannot tell red from green.
+ */
 function HistoryRow({ entry, person, onDelete }: { entry: Entry; person: Person; onDelete: () => void }) {
   const styles = useStyles(makeStyles);
   const { t, lang } = useLang();
   const isDebt = entry.kind === 'debt';
   return (
-    <View style={styles.historyRow}>
-      <View style={[styles.entryMark, !isDebt && styles.entryMarkPaid]}>
-        <Text style={[styles.entryArrow, !isDebt && styles.entryArrowPaid]}>{isDebt ? '↑' : '↓'}</Text>
+    <View style={styles.entry}>
+      <View style={styles.mark}>
+        <Text style={styles.markGlyph}>{isDebt ? '↑' : '↓'}</Text>
       </View>
-      <View style={styles.entryCopy}>
+      <View style={styles.entryMain}>
         <Text style={styles.entryTitle}>{isDebt ? t.borrowed : t.paidBtn}</Text>
-        <Text style={styles.entryMeta}>{formatEntryDate(entry, lang)}{entry.note ? ` · ${entry.note}` : ''}</Text>
+        <Text style={styles.entryMeta} numberOfLines={1}>
+          {formatEntryDate(entry, lang)}
+          {entry.note ? ` · ${entry.note}` : ''}
+        </Text>
       </View>
       <View style={styles.entryRight}>
-        <Text style={[styles.entryAmount, !isDebt && styles.entryAmountPaid]}>
-          {isDebt ? '+' : '−'}{formatMoney(entry.amountCents, person.currency, lang)}
+        <Text style={styles.entryAmount}>
+          {isDebt ? '+' : '−'}
+          {formatMoney(entry.amountCents, person.currency, lang)}
         </Text>
-        {/* A labelled control, not a swipe: swiping is a steering gesture with
-            no affordance, which is exactly wrong for the target user. */}
-        <Pressable
-          accessibilityLabel={t.delete}
-          hitSlop={12}
-          onPress={onDelete}
-          style={({ pressed }) => [styles.deleteControl, pressed && styles.pressed]}>
-          <Text style={styles.deleteText}>{t.delete}</Text>
+        <Pressable accessibilityRole="button" accessibilityLabel={t.delete} hitSlop={12} onPress={onDelete}>
+          <Text style={styles.entryDelete}>{t.delete}</Text>
         </Pressable>
       </View>
     </View>
   );
 }
 
-const makeStyles = (c: Palette) => StyleSheet.create({
-  screen: { flex: 1, backgroundColor: c.bg },
-  missing: { flex: 1, justifyContent: 'center', paddingHorizontal: layout.screenPadding },
-  header: { height: 56, paddingHorizontal: layout.screenPadding, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  headerControl: { width: 32, color: c.accent, fontSize: 33, fontWeight: '300', lineHeight: 40 },
-  name: { color: c.text, fontSize: type.screenTitle, fontWeight: '700' },
-  more: { width: 36, color: c.accent, fontSize: 16, fontWeight: '800', textAlign: 'right', letterSpacing: -1 },
-  content: { paddingHorizontal: layout.screenPadding, paddingTop: 30, paddingBottom: 40 },
-  balance: { fontSize: 49, fontWeight: '600', letterSpacing: -2, textAlign: 'center' },
-  shareRow: { flexDirection: 'row', gap: 9, marginTop: 22 },
-  shareButton: { flex: 1 },
-  historySection: { marginTop: 44 },
-  sectionTitle: { color: c.text, fontSize: type.title, fontWeight: '700', marginLeft: 10, marginBottom: 12 },
-  historyList: { gap: 9 },
-  historyRow: { minHeight: 78, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 14, backgroundColor: c.surface, borderRadius: radius.md, borderWidth: 1, borderColor: c.borderSoft },
-  entryMark: { width: 32, height: 32, borderRadius: 16, backgroundColor: c.up, alignItems: 'center', justifyContent: 'center' },
-  entryMarkPaid: { backgroundColor: c.down },
-  entryArrow: { color: c.upInk, fontSize: 16, fontWeight: '800' },
-  entryArrowPaid: { color: c.downInk },
-  entryCopy: { flex: 1, gap: 4 },
-  entryTitle: { color: c.text, fontSize: 15, fontWeight: '600' },
-  entryMeta: { color: c.textSecondary, fontSize: 11 },
-  entryRight: { alignItems: 'flex-end', gap: 2 },
-  entryAmount: { color: c.up, fontSize: 16, fontWeight: '700' },
-  deleteControl: { minHeight: 32, justifyContent: 'center', paddingHorizontal: 6 },
-  deleteText: { color: c.textSecondary, fontSize: type.label, fontWeight: '600' },
-  entryAmountPaid: { color: c.down },
-  empty: { color: c.textMuted, fontSize: type.body, textAlign: 'center', paddingTop: 60 },
-  actionBar: { flexDirection: 'row', gap: 10, paddingHorizontal: layout.screenPadding, paddingTop: 16, paddingBottom: 16, backgroundColor: c.bar },
-  actionButton: { flex: 1 },
-  pressed: { opacity: 0.64 },
-});
+const makeStyles = (c: Palette) =>
+  StyleSheet.create({
+    screen: { flex: 1, backgroundColor: c.bg },
+    missing: { flex: 1, justifyContent: 'center', paddingHorizontal: layout.screenPadding },
+
+    header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: layout.screenPadding, paddingTop: 6, paddingBottom: 10 },
+    headerSide: { width: 44, height: 44, justifyContent: 'center' },
+    headerRight: { alignItems: 'flex-end' },
+    back: { color: c.ink, fontSize: 26, fontFamily: font.regular, lineHeight: 30 },
+    dots: { color: c.ink, fontSize: 20, letterSpacing: 1, fontFamily: font.bold },
+    name: { flex: 1, textAlign: 'center', color: c.ink, fontFamily: font.bold, fontSize: type.title, letterSpacing: -0.19 },
+
+    balanceWrap: { paddingHorizontal: layout.screenPadding, paddingTop: 24, paddingBottom: 26 },
+    balance: { textAlign: 'center', fontFamily: font.extrabold, fontSize: type.hero, letterSpacing: -2.5, ...tabular },
+
+    shareRow: { flexDirection: 'row', gap: 12, paddingHorizontal: layout.screenPadding, paddingBottom: 30 },
+    shareButton: { flex: 1, minHeight: layout.actionHeight },
+
+    section: {
+      paddingHorizontal: layout.screenPadding,
+      paddingBottom: 12,
+      color: c.ink,
+      fontFamily: font.bold,
+      fontSize: type.title,
+      letterSpacing: -0.19,
+    },
+
+    list: { paddingHorizontal: layout.screenPadding, paddingBottom: 8 },
+    entry: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 14,
+      backgroundColor: c.card,
+      borderWidth: 1,
+      borderColor: c.line,
+      borderRadius: radius.xl,
+      paddingVertical: 14,
+      paddingHorizontal: 16,
+      marginBottom: 12,
+    },
+    mark: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: c.chip,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    markGlyph: { color: c.ink, fontSize: 18, fontFamily: font.bold },
+    entryMain: { flex: 1, minWidth: 0 },
+    entryTitle: { color: c.ink, fontFamily: font.bold, fontSize: 16, letterSpacing: -0.16 },
+    entryMeta: { color: c.mute, fontFamily: font.regular, fontSize: type.caption, marginTop: 2 },
+    entryRight: { alignItems: 'flex-end' },
+    entryAmount: { color: c.ink, fontFamily: font.extrabold, fontSize: type.entryAmount, letterSpacing: -0.4, ...tabular },
+    entryDelete: { color: c.mute, fontFamily: font.semibold, fontSize: type.label, marginTop: 3 },
+
+    dock: { flexDirection: 'row', gap: 12, paddingHorizontal: layout.screenPadding, paddingVertical: 14 },
+    dockButton: { flex: 1 },
+    pressed: { opacity: 0.7 },
+  });
