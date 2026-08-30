@@ -44,7 +44,13 @@ export const es = {
   pdfNoEntries: 'Sin movimientos.',
   sendBalanceTitle: 'Enviar saldo',
   balanceMessage: (name: string, date: string, lent: string, paid: string, balance: string) =>
-    'Hola ' + name + ' — resumen al ' + date + ': prestado ' + lent + ', pagado ' + paid + ', saldo ' + balance,
+    'Hola ' + name + ', un resumen rápido: te presté ' + lent + ', me pagaste ' + paid +
+    ', quedan ' + balance + ' (al ' + date + '). Avísame si algo no cuadra.',
+  balanceSettledMessage: (name: string, lent: string) =>
+    'Hola ' + name + ', ya quedamos a mano. Te presté ' + lent + ' y me pagaste todo. Gracias.',
+  balanceOverpaidMessage: (name: string, date: string, lent: string, paid: string, over: string) =>
+    'Hola ' + name + ', un resumen rápido: te presté ' + lent + ', me pagaste ' + paid +
+    ', o sea ' + over + ' de más (al ' + date + '). Avísame si algo no cuadra.',
   shareFailed: 'No se pudo compartir.',
 
   /* ---- detalle ---- */
@@ -213,7 +219,13 @@ export const en: Strings = {
   pdfNoEntries: 'No entries.',
   sendBalanceTitle: 'Send balance',
   balanceMessage: (name: string, date: string, lent: string, paid: string, balance: string) =>
-    'Hi ' + name + ' — summary as of ' + date + ': lent ' + lent + ', paid ' + paid + ', balance ' + balance,
+    'Hi ' + name + ', quick summary: I lent you ' + lent + ', you have paid ' + paid +
+    ', so ' + balance + ' is left (as of ' + date + '). Let me know if anything looks off.',
+  balanceSettledMessage: (name: string, lent: string) =>
+    'Hi ' + name + ', we are all square. I lent you ' + lent + ' and you have paid it all back. Thank you.',
+  balanceOverpaidMessage: (name: string, date: string, lent: string, paid: string, over: string) =>
+    'Hi ' + name + ', quick summary: I lent you ' + lent + ', you have paid ' + paid +
+    ', which is ' + over + ' more than we said (as of ' + date + '). Let me know if anything looks off.',
   shareFailed: 'Could not share.',
 
   /* ---- detail ---- */

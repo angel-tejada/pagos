@@ -33,13 +33,20 @@ export async function shareBalanceMessage(
     if (entry.kind === 'debt') lentCents += entry.amountCents;
     else paidCents += entry.amountCents;
   }
-  const message = t.balanceMessage(
-    person.name,
-    formatShortDate(new Date(), lang),
-    formatMoney(lentCents, person.currency, lang),
-    formatMoney(paidCents, person.currency, lang),
-    formatMoney(lentCents - paidCents, person.currency, lang),
-  );
+  const balanceCents = lentCents - paidCents;
+  const date = formatShortDate(new Date(), lang);
+  const lent = formatMoney(lentCents, person.currency, lang);
+  const paid = formatMoney(paidCents, person.currency, lang);
+
+  // Settled reads as closure, not as another data point. Overpaid never says
+  // "quedan -$20", which is what a single template would have produced.
+  const message =
+    balanceCents === 0
+      ? t.balanceSettledMessage(person.name, lent)
+      : balanceCents < 0
+        ? t.balanceOverpaidMessage(person.name, date, lent, paid, formatMoney(-balanceCents, person.currency, lang))
+        : t.balanceMessage(person.name, date, lent, paid, formatMoney(balanceCents, person.currency, lang));
+
   await Share.share({ message }, { subject: t.sendBalanceTitle });
 }
 
