@@ -61,14 +61,21 @@ export function IconButton({ glyph, tone = 'neutral', size = 'regular', style, .
 
 type ButtonProps = Omit<PressableProps, 'style'> & {
   label: string;
-  tone?: 'primary' | 'danger' | 'secondary';
+  /** 'up' and 'down' carry the ledger's direction semantic: green = they
+   *  borrowed, red = they paid back. Everything else is a plain control. */
+  tone?: 'primary' | 'danger' | 'secondary' | 'up' | 'down';
   glyph?: string;
   style?: StyleProp<ViewStyle>;
 };
 
 export function Button({ label, glyph, tone = 'primary', style, disabled, ...props }: ButtonProps) {
   const styles = useStyles(makeStyles);
-  const textStyle: StyleProp<TextStyle> = [styles.buttonText, tone === 'secondary' && styles.buttonTextSecondary];
+  const textStyle: StyleProp<TextStyle> = [
+    styles.buttonText,
+    tone === 'secondary' && styles.buttonTextSecondary,
+    tone === 'up' && styles.buttonTextUp,
+    tone === 'down' && styles.buttonTextDown,
+  ];
   return (
     <Pressable
       {...props}
@@ -77,6 +84,8 @@ export function Button({ label, glyph, tone = 'primary', style, disabled, ...pro
         styles.button,
         tone === 'danger' && styles.buttonDanger,
         tone === 'secondary' && styles.buttonSecondary,
+        tone === 'up' && styles.buttonUp,
+        tone === 'down' && styles.buttonDown,
         pressed && styles.pressed,
         disabled && styles.disabled,
         style,
@@ -181,8 +190,12 @@ const makeStyles = (c: Palette) => StyleSheet.create({
   button: { minHeight: layout.buttonHeight, paddingHorizontal: spacing.lg, borderRadius: radius.md, backgroundColor: c.accent, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.xs },
   buttonDanger: { backgroundColor: c.accent },
   buttonSecondary: { backgroundColor: c.surfaceRaised },
+  buttonUp: { backgroundColor: c.up },
+  buttonDown: { backgroundColor: c.down },
   buttonText: { color: c.accentInk, fontSize: type.bodyLarge, fontWeight: '700' },
   buttonTextSecondary: { color: c.text },
+  buttonTextUp: { color: c.upInk },
+  buttonTextDown: { color: c.downInk },
   pressed: { opacity: 0.66 },
   disabled: { opacity: 0.4 },
   fieldLabel: { color: c.text, fontSize: type.title, fontWeight: '700', marginBottom: spacing.sm },

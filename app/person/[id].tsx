@@ -123,8 +123,8 @@ export default function PersonScreen() {
       </ScrollView>
 
       <SafeAreaView edges={['bottom']} style={styles.actionBar}>
-        <Button label={t.borrowed} style={styles.actionButton} onPress={() => router.push({ pathname: '/entry', params: { kind: 'debt', person: id } })} />
-        <Button label={t.paidBtn} tone="secondary" style={styles.actionButton} onPress={() => router.push({ pathname: '/entry', params: { kind: 'paid', person: id } })} />
+        <Button label={t.borrowed} tone="up" style={styles.actionButton} onPress={() => router.push({ pathname: '/entry', params: { kind: 'debt', person: id } })} />
+        <Button label={t.paidBtn} tone="down" style={styles.actionButton} onPress={() => router.push({ pathname: '/entry', params: { kind: 'paid', person: id } })} />
       </SafeAreaView>
     </SafeAreaView>
   );
