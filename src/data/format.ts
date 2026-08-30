@@ -83,3 +83,12 @@ export function formatShortDate(value: Date, lang: 'es' | 'en'): string {
   const month = String(value.getMonth() + 1).padStart(2, '0');
   return lang === 'es' ? `${day}/${month}` : `${month}/${day}`;
 }
+
+/**
+ * Zero is the app's happy moment, not an amount. A settled person reads as a
+ * plain "$0" rather than a large formatted figure people mistake for a debt.
+ */
+export function formatBalance(cents: number, currency: CurrencyCode, lang: 'es' | 'en'): string {
+  if (cents === 0) return currencySymbol(currency) + '0';
+  return formatMoney(cents, currency, lang);
+}

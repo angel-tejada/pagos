@@ -7,34 +7,38 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import '../src/data/reminders';
 import { LangProvider } from '../src/i18n';
 import { DataProvider } from '../src/data/store';
-import { ThemeContextProvider, useResolvedPalette } from '../src/theme';
+import { ThemeContextProvider, ThemeControlProvider, useThemePreference } from '../src/theme';
 
 export default function RootLayout() {
-  /** Light and dark both ship; the device setting decides. */
-  const { palette, scheme } = useResolvedPalette();
+  /** Light by default; the user switches it in Options. */
+  const { palette, scheme, setScheme } = useThemePreference();
+  const control = { scheme, setScheme };
 
   return (
-    <ThemeContextProvider value={palette}>
-      <GestureHandlerRootView style={{ flex: 1, backgroundColor: palette.bg }}>
-        <SafeAreaProvider>
-          <DataProvider>
-            <LangProvider>
-              <StatusBar style={scheme === 'light' ? 'dark' : 'light'} />
-              <Stack
-                screenOptions={{
-                  headerShown: false,
-                  contentStyle: { backgroundColor: palette.bg },
-                  animation: 'fade_from_bottom',
-                }}>
-                <Stack.Screen name="index" />
-                <Stack.Screen name="people" />
-                <Stack.Screen name="person/[id]" options={{ animation: 'slide_from_right' }} />
-                <Stack.Screen name="entry" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
-              </Stack>
-            </LangProvider>
-          </DataProvider>
-        </SafeAreaProvider>
-      </GestureHandlerRootView>
-    </ThemeContextProvider>
+    <ThemeControlProvider value={control}>
+      <ThemeContextProvider value={palette}>
+        <GestureHandlerRootView style={{ flex: 1, backgroundColor: palette.bg }}>
+          <SafeAreaProvider>
+            <DataProvider>
+              <LangProvider>
+                <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
+                <Stack
+                  screenOptions={{
+                    headerShown: false,
+                    contentStyle: { backgroundColor: palette.bg },
+                  }}>
+                  {/* The two tabs swap with no animation. A transition here
+                      reads as the screen sliding or dropping on every tap. */}
+                  <Stack.Screen name="index" options={{ animation: 'none' }} />
+                  <Stack.Screen name="people" options={{ animation: 'none' }} />
+                  <Stack.Screen name="person/[id]" options={{ animation: 'slide_from_right' }} />
+                  <Stack.Screen name="entry" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
+                </Stack>
+              </LangProvider>
+            </DataProvider>
+          </SafeAreaProvider>
+        </GestureHandlerRootView>
+      </ThemeContextProvider>
+    </ThemeControlProvider>
   );
 }

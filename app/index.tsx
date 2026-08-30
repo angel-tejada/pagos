@@ -5,7 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { OptionsSheet } from '../src/components/OptionsSheet';
 import { BottomNav, Button, IconButton } from '../src/components/ui';
-import { formatMoney } from '../src/data/format';
+import { formatBalance } from '../src/data/format';
 import { FREE_PERSON_LIMIT, getBalanceCents, useData, type Person } from '../src/data/store';
 import { useLang } from '../src/i18n';
 import { balanceColor, layout, radius, spacing, type, useColors, useStyles, type Palette } from '../src/theme';
@@ -57,7 +57,11 @@ export default function HomeScreen() {
   return (
     <SafeAreaView edges={['top']} style={styles.screen}>
       <View style={styles.header}>
-        <Pressable hitSlop={12} onPress={() => setOptionsOpen(true)} style={({ pressed }) => pressed && styles.pressed}>
+        <Pressable
+          accessibilityLabel={t.openOptions}
+          hitSlop={10}
+          onPress={() => setOptionsOpen(true)}
+          style={({ pressed }) => [styles.settingsButton, pressed && styles.pressed]}>
           <Text style={styles.settingsGlyph}>⚙︎</Text>
         </Pressable>
         <Text style={styles.brand}>Pagos</Text>
@@ -72,7 +76,7 @@ export default function HomeScreen() {
       ) : (
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
           <Text style={[styles.total, { color: balanceColor(total, c) }]}>
-            {formatMoney(total, people[0]?.person.currency ?? 'USD', lang)}
+            {formatBalance(total, people[0]?.person.currency ?? 'USD', lang)}
           </Text>
 
           <View style={styles.debtsSection}>
@@ -83,7 +87,7 @@ export default function HomeScreen() {
                   <Pressable onPress={() => router.push(`/person/${person.id}`)} style={({ pressed }) => [styles.debtCopy, pressed && styles.pressed]}>
                     <Text style={styles.personName}>{person.name}</Text>
                     <Text style={[styles.personAmount, { color: balanceColor(balance, c) }]}>
-                      {formatMoney(balance, person.currency, lang)}
+                      {formatBalance(balance, person.currency, lang)}
                     </Text>
                   </Pressable>
                   <Pressable
@@ -123,25 +127,26 @@ function DebtMark() {
 
 const makeStyles = (c: Palette) => StyleSheet.create({
   screen: { flex: 1, backgroundColor: c.bg },
-  header: { height: 64, paddingHorizontal: layout.screenPadding, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  settingsGlyph: { width: 32, color: c.accent, fontSize: 29, fontWeight: '700', lineHeight: 33, textAlign: 'center' },
+  header: { height: 56, paddingHorizontal: layout.screenPadding, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  settingsButton: { width: layout.minTapTarget, height: layout.minTapTarget, borderRadius: layout.minTapTarget / 2, backgroundColor: c.surface, alignItems: 'center', justifyContent: 'center' },
+  settingsGlyph: { color: c.text, fontSize: 24, fontWeight: '700', lineHeight: 28, textAlign: 'center' },
   brand: { color: c.text, fontSize: type.screenTitle, fontWeight: '500' },
-  content: { paddingHorizontal: layout.screenPadding, paddingTop: 38, paddingBottom: spacing.xxxl },
+  content: { paddingHorizontal: layout.screenPadding, paddingTop: 30, paddingBottom: spacing.xxxl },
   total: { fontSize: type.heroAmount, fontWeight: '600', letterSpacing: -2.2, textAlign: 'center' },
-  debtsSection: { marginTop: 100 },
+  debtsSection: { marginTop: 62 },
   sectionTitle: { color: c.text, fontSize: type.title, fontWeight: '700', marginLeft: 10, marginBottom: 12 },
   list: { gap: 10 },
-  debtCard: { width: '100%', height: 98, flexDirection: 'row', alignItems: 'center', backgroundColor: c.surface, borderRadius: radius.md, paddingHorizontal: 23, overflow: 'hidden' },
+  debtCard: { width: '100%', height: 83, flexDirection: 'row', alignItems: 'center', backgroundColor: c.surface, borderRadius: radius.md, paddingHorizontal: 19, overflow: 'hidden' },
   debtCopy: { flex: 1, alignSelf: 'stretch', justifyContent: 'center' },
-  personName: { color: c.text, fontSize: 18, fontWeight: '500', marginBottom: 4 },
+  personName: { color: c.text, fontSize: 16, fontWeight: '500', marginBottom: 3 },
   personAmount: { fontSize: type.amount, fontWeight: '600', letterSpacing: -0.4 },
   moreCircle: { width: 29, height: 29, borderRadius: 15, backgroundColor: c.chip, alignItems: 'center', justifyContent: 'center' },
   moreDots: { color: c.chipInk, fontSize: 12, fontWeight: '800', letterSpacing: -1, marginTop: -4 },
   emptyHome: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingBottom: 68 },
-  debtMarkOuter: { width: 108, height: 108, borderRadius: 54, borderWidth: 7, borderColor: c.emptyMark, alignItems: 'center', justifyContent: 'center' },
-  debtMarkInner: { width: 76, height: 76, borderRadius: 38, borderWidth: 6, borderColor: c.emptyMark, alignItems: 'center', justifyContent: 'center' },
-  debtMarkText: { color: c.emptyMark, fontSize: 48, fontWeight: '800' },
-  emptyButton: { minHeight: 52, width: 138, borderRadius: 26, marginTop: 45 },
+  debtMarkOuter: { width: 92, height: 92, borderRadius: 46, borderWidth: 6, borderColor: c.emptyMark, alignItems: 'center', justifyContent: 'center' },
+  debtMarkInner: { width: 64, height: 64, borderRadius: 32, borderWidth: 5, borderColor: c.emptyMark, alignItems: 'center', justifyContent: 'center' },
+  debtMarkText: { color: c.emptyMark, fontSize: 40, fontWeight: '800' },
+  emptyButton: { minHeight: 46, width: 122, borderRadius: 23, marginTop: 36 },
   limitNote: { color: c.textMuted, fontSize: type.caption, textAlign: 'center', paddingBottom: 10 },
   pressed: { opacity: 0.64 },
 });

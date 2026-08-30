@@ -4,13 +4,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { pickRestoreFile, shareBackup } from '../data/files';
 import { useData } from '../data/store';
 import { useLang } from '../i18n';
-import { radius, spacing, type, useStyles, type Palette } from '../theme';
+import { radius, spacing, type, useStyles, useThemeControl, type Palette } from '../theme';
 import { Button } from './ui';
 
 export function OptionsSheet({ visible, onClose }: { visible: boolean; onClose: () => void }) {
   const styles = useStyles(makeStyles);
   const { t, lang, setLang } = useLang();
   const { data, restoreData, markBackupComplete } = useData();
+  const { scheme, setScheme } = useThemeControl();
 
   const runBackup = () => {
     void shareBackup(data)
@@ -48,8 +49,14 @@ export function OptionsSheet({ visible, onClose }: { visible: boolean; onClose: 
 
           <Text style={styles.label}>{t.language}</Text>
           <View style={styles.segment}>
-            <LanguageButton label="Español" active={lang === 'es'} onPress={() => setLang('es')} />
-            <LanguageButton label="English" active={lang === 'en'} onPress={() => setLang('en')} />
+            <SegmentButton label="Español" active={lang === 'es'} onPress={() => setLang('es')} />
+            <SegmentButton label="English" active={lang === 'en'} onPress={() => setLang('en')} />
+          </View>
+
+          <Text style={styles.label}>{t.appearance}</Text>
+          <View style={styles.segment}>
+            <SegmentButton label={t.themeLight} active={scheme === 'light'} onPress={() => setScheme('light')} />
+            <SegmentButton label={t.themeDark} active={scheme === 'dark'} onPress={() => setScheme('dark')} />
           </View>
 
           <View style={styles.actions}>
@@ -69,7 +76,7 @@ export function OptionsSheet({ visible, onClose }: { visible: boolean; onClose: 
   );
 }
 
-function LanguageButton({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
+function SegmentButton({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
   const styles = useStyles(makeStyles);
   return (
     <Pressable onPress={onPress} style={({ pressed }) => [styles.langButton, active && styles.langButtonActive, pressed && styles.pressed]}>

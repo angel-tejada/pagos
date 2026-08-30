@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '../../src/components/ui';
 import { shareBalanceMessage, sharePersonPdf } from '../../src/data/files';
-import { formatEntryDate, formatMoney } from '../../src/data/format';
+import { formatBalance, formatEntryDate, formatMoney } from '../../src/data/format';
 import { getBalanceCents, useData, type Entry, type Person } from '../../src/data/store';
 import { useLang } from '../../src/i18n';
 import { balanceColor, layout, radius, type, useColors, useStyles, type Palette } from '../../src/theme';
@@ -100,7 +100,7 @@ export default function PersonScreen() {
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <Text style={[styles.balance, { color: balanceColor(getBalanceCents(data, person.id), c) }]}>
-          {formatMoney(getBalanceCents(data, person.id), person.currency, lang)}
+          {formatBalance(getBalanceCents(data, person.id), person.currency, lang)}
         </Text>
 
         <View style={styles.shareRow}>
@@ -164,31 +164,31 @@ function HistoryRow({ entry, person, onDelete }: { entry: Entry; person: Person;
 const makeStyles = (c: Palette) => StyleSheet.create({
   screen: { flex: 1, backgroundColor: c.bg },
   missing: { flex: 1, justifyContent: 'center', paddingHorizontal: layout.screenPadding },
-  header: { height: 64, paddingHorizontal: layout.screenPadding, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  headerControl: { width: 36, color: c.accent, fontSize: 38, fontWeight: '300', lineHeight: 40 },
+  header: { height: 56, paddingHorizontal: layout.screenPadding, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  headerControl: { width: 32, color: c.accent, fontSize: 33, fontWeight: '300', lineHeight: 40 },
   name: { color: c.text, fontSize: type.screenTitle, fontWeight: '700' },
   more: { width: 36, color: c.accent, fontSize: 16, fontWeight: '800', textAlign: 'right', letterSpacing: -1 },
-  content: { paddingHorizontal: layout.screenPadding, paddingTop: 38, paddingBottom: 40 },
-  balance: { fontSize: 58, fontWeight: '600', letterSpacing: -2, textAlign: 'center' },
-  shareRow: { flexDirection: 'row', gap: 10, marginTop: 26 },
+  content: { paddingHorizontal: layout.screenPadding, paddingTop: 30, paddingBottom: 40 },
+  balance: { fontSize: 49, fontWeight: '600', letterSpacing: -2, textAlign: 'center' },
+  shareRow: { flexDirection: 'row', gap: 9, marginTop: 22 },
   shareButton: { flex: 1 },
-  historySection: { marginTop: 58 },
+  historySection: { marginTop: 44 },
   sectionTitle: { color: c.text, fontSize: type.title, fontWeight: '700', marginLeft: 10, marginBottom: 12 },
   historyList: { gap: 9 },
-  historyRow: { minHeight: 92, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 14, backgroundColor: c.surface, borderRadius: radius.md },
-  entryMark: { width: 38, height: 38, borderRadius: 19, backgroundColor: c.up, alignItems: 'center', justifyContent: 'center' },
+  historyRow: { minHeight: 78, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 14, backgroundColor: c.surface, borderRadius: radius.md },
+  entryMark: { width: 32, height: 32, borderRadius: 16, backgroundColor: c.up, alignItems: 'center', justifyContent: 'center' },
   entryMarkPaid: { backgroundColor: c.down },
-  entryArrow: { color: c.upInk, fontSize: 19, fontWeight: '800' },
+  entryArrow: { color: c.upInk, fontSize: 16, fontWeight: '800' },
   entryArrowPaid: { color: c.downInk },
   entryCopy: { flex: 1, gap: 4 },
-  entryTitle: { color: c.text, fontSize: 17, fontWeight: '600' },
-  entryMeta: { color: c.textSecondary, fontSize: 12 },
+  entryTitle: { color: c.text, fontSize: 15, fontWeight: '600' },
+  entryMeta: { color: c.textSecondary, fontSize: 11 },
   entryRight: { alignItems: 'flex-end', gap: 2 },
-  entryAmount: { color: c.up, fontSize: 18, fontWeight: '700' },
-  deleteControl: { minHeight: 28, justifyContent: 'center', paddingHorizontal: 2 },
+  entryAmount: { color: c.up, fontSize: 16, fontWeight: '700' },
+  deleteControl: { minHeight: 32, justifyContent: 'center', paddingHorizontal: 6 },
   deleteText: { color: c.textSecondary, fontSize: type.label, fontWeight: '600' },
   entryAmountPaid: { color: c.down },
-  empty: { color: c.textMuted, fontSize: type.body, textAlign: 'center', paddingTop: 80 },
+  empty: { color: c.textMuted, fontSize: type.body, textAlign: 'center', paddingTop: 60 },
   actionBar: { flexDirection: 'row', gap: 10, paddingHorizontal: layout.screenPadding, paddingTop: 16, paddingBottom: 16, backgroundColor: c.bar },
   actionButton: { flex: 1 },
   pressed: { opacity: 0.64 },

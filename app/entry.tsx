@@ -1,7 +1,7 @@
 import DateTimePicker from '@expo/ui/community/datetime-picker';
 import { Contact, requestPermissionsAsync } from 'expo-contacts';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   ActionSheetIOS,
   Alert,
@@ -22,7 +22,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button, FieldLabel, InitialAvatar } from '../src/components/ui';
 import { currencySymbol, formatDate, formatMoney, parseAmountToCents } from '../src/data/format';
 import { scheduleDueReminder } from '../src/data/reminders';
-import { CURRENCIES, useData, type CurrencyCode, type Person } from '../src/data/store';
+import { CURRENCIES, FREE_PERSON_LIMIT, useData, type CurrencyCode, type Person } from '../src/data/store';
 import { useLang } from '../src/i18n';
 import { layout, radius, type, useColors, useStyles, type Palette } from '../src/theme';
 
@@ -47,6 +47,7 @@ export default function EntryScreen() {
   const [note, setNote] = useState('');
   const [existingSheetOpen, setExistingSheetOpen] = useState(false);
   const [manualSheetOpen, setManualSheetOpen] = useState(false);
+  const scrollRef = useRef<ScrollView>(null);
 
   useEffect(() => {
     if (!routePerson) return;
@@ -61,6 +62,12 @@ export default function EntryScreen() {
           (selection.sourceContactId && person.sourceContactId === selection.sourceContactId) ||
           normalizeName(person.name) === normalizeName(selection.name),
         );
+    // A scope limit, not a rate limit: existing people can always be logged
+    // against, only a brand new person is refused at the cap.
+    if (!existing && data.people.length >= FREE_PERSON_LIMIT) {
+      Alert.alert(t.limitReachedTitle, t.limitReachedBody(FREE_PERSON_LIMIT));
+      return;
+    }
     const resolved = existing
       ? { id: existing.id, name: existing.name, sourceContactId: existing.sourceContactId }
       : selection;
@@ -118,6 +125,10 @@ export default function EntryScreen() {
       Alert.alert(t.personRequired);
       return;
     }
+    if (!selectedPerson.id && data.people.length >= FREE_PERSON_LIMIT) {
+      Alert.alert(t.limitReachedTitle, t.limitReachedBody(FREE_PERSON_LIMIT));
+      return;
+    }
 
     // The reminder is scheduled before saving so the entry can store its id and
     // cancel it later. A refused permission is not a reason to lose the entry.
@@ -158,6 +169,7 @@ export default function EntryScreen() {
         </View>
 
         <ScrollView
+          ref={scrollRef}
           style={styles.formScroll}
           contentContainerStyle={styles.content}
           keyboardShouldPersistTaps="handled"
@@ -197,7 +209,19 @@ export default function EntryScreen() {
           <View>
             <FieldLabel>{t.dueDate}</FieldLabel>
             <View style={styles.dueField}>
-              {hasDueDate ? (
+              <Text style={styles.dateText}>{hasDueDate ? formatDate(dueDate, lang) : t.dueDateOff}</Text>
+              <Switch
+                value={hasDueDate}
+                onValueChange={setHasDueDate}
+                trackColor={{ false: c.switchOff, true: c.accent }}
+                thumbColor={c.accentInk}
+                ios_backgroundColor={c.switchOff}
+              />
+            </View>
+            {/* The native picker gets its own row and an explicit size. Inline
+                in the switch row it renders at zero width and smears. */}
+            {hasDueDate ? (
+              <View style={styles.datePickerRow}>
                 <DateTimePicker
                   value={dueDate}
                   onValueChange={(_event, date) => setDueDate(date)}
@@ -207,18 +231,10 @@ export default function EntryScreen() {
                   accentColor={c.accent}
                   themeVariant={scheme === 'light' ? 'light' : 'dark'}
                   locale={lang === 'es' ? 'es_US' : 'en_US'}
+                  style={styles.datePicker}
                 />
-              ) : (
-                <Text style={styles.dateText}>{formatDate(dueDate, lang)}</Text>
-              )}
-              <Switch
-                value={hasDueDate}
-                onValueChange={setHasDueDate}
-                trackColor={{ false: c.switchOff, true: c.accent }}
-                thumbColor={c.text}
-                ios_backgroundColor={c.switchOff}
-              />
-            </View>
+              </View>
+            ) : null}
           </View>
 
           <View>
@@ -229,6 +245,7 @@ export default function EntryScreen() {
               multiline
               maxLength={80}
               textAlignVertical="top"
+              onFocus={() => setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 120)}
               placeholder={t.notePlaceholder}
               placeholderTextColor={c.textMuted}
               selectionColor={c.accent}
@@ -358,13 +375,9 @@ function ManualNameSheet({
 
           <View style={styles.secondaryActions}>
             {hasExisting ? (
-              <Pressable onPress={onExisting} style={({ pressed }) => pressed && styles.pressed}>
-                <Text style={styles.secondaryLink}>{t.orChooseExisting}</Text>
-              </Pressable>
+              <Button label={t.orChooseExisting} tone="secondary" onPress={onExisting} />
             ) : null}
-            <Pressable onPress={onPhoneBook} style={({ pressed }) => pressed && styles.pressed}>
-              <Text style={styles.secondaryLink}>{t.orFromContacts}</Text>
-            </Pressable>
+            <Button label={t.orFromContacts} tone="secondary" onPress={onPhoneBook} />
           </View>
         </SafeAreaView>
       </KeyboardAvoidingView>
@@ -391,47 +404,48 @@ function dateOnlyIso(date: Date): string {
 
 const makeStyles = (c: Palette) => StyleSheet.create({
   screen: { flex: 1, backgroundColor: c.bg },
-  header: { height: 64, paddingHorizontal: 19, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  header: { height: 56, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   cancel: { width: 70, color: c.accent, fontSize: type.body, fontWeight: '500' },
   headerTitle: { color: c.text, fontSize: type.bodyLarge, fontWeight: '700' },
   headerRight: { width: 70 },
   formScroll: { flex: 1 },
-  content: { paddingHorizontal: layout.screenPadding, paddingTop: 34, paddingBottom: 42, gap: 44 },
+  content: { paddingHorizontal: layout.screenPadding, paddingTop: 28, paddingBottom: 40, gap: 30 },
   amountRow: { flexDirection: 'row', gap: 10 },
   amountField: { flex: 1, height: layout.controlHeight, flexDirection: 'row', alignItems: 'center', backgroundColor: c.surface, borderRadius: radius.md, paddingHorizontal: 22 },
   amountInput: { flex: 1, color: c.text, fontSize: type.inputAmount, fontWeight: '500', paddingVertical: 0 },
-  amountPlus: { color: c.accent, fontSize: 31, fontWeight: '300', marginRight: -4 },
-  currencyField: { width: 120, height: layout.controlHeight, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, backgroundColor: c.surface, borderRadius: radius.md },
+  amountPlus: { color: c.accent, fontSize: 26, fontWeight: '300', marginRight: -4 },
+  currencyField: { width: 100, height: layout.controlHeight, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, backgroundColor: c.surface, borderRadius: radius.md },
   currencyCode: { color: c.text, fontSize: type.bodyLarge, fontWeight: '700' },
   currencySign: { color: c.accent, fontSize: type.bodyLarge, fontWeight: '700' },
   personField: { height: layout.controlHeight, flexDirection: 'row', alignItems: 'center', gap: 11, paddingHorizontal: 12, backgroundColor: c.surface, borderRadius: radius.md },
-  personPlus: { width: 29, height: 29, borderRadius: 15, backgroundColor: c.accent, alignItems: 'center', justifyContent: 'center' },
-  personPlusText: { color: c.accentInk, fontSize: 21, fontWeight: '600', lineHeight: 24 },
+  personPlus: { width: 26, height: 26, borderRadius: 13, backgroundColor: c.accent, alignItems: 'center', justifyContent: 'center' },
+  personPlusText: { color: c.accentInk, fontSize: 18, fontWeight: '600', lineHeight: 21 },
   personText: { flex: 1, color: c.accent, fontSize: type.bodyLarge, fontWeight: '500' },
-  dueField: { height: layout.controlHeight, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: c.surface, borderRadius: radius.md, paddingLeft: 18, paddingRight: 22 },
-  dateText: { color: c.text, fontSize: type.body, fontWeight: '500', marginLeft: 7 },
-  noteInput: { height: 178, backgroundColor: c.surface, borderRadius: radius.md, color: c.text, fontSize: type.bodyLarge, fontWeight: '600', lineHeight: 26, paddingHorizontal: 23, paddingTop: 20 },
+  dueField: { minHeight: layout.controlHeight, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: c.surface, borderRadius: radius.md, paddingLeft: 16, paddingRight: 18 },
+  dateText: { color: c.text, fontSize: type.body, fontWeight: '500' },
+  datePickerRow: { marginTop: 10, alignItems: 'flex-start' },
+  datePicker: { width: 150, height: 40 },
+  noteInput: { height: 104, backgroundColor: c.surface, borderRadius: radius.md, color: c.text, fontSize: type.bodyLarge, fontWeight: '500', lineHeight: 22, paddingHorizontal: 18, paddingTop: 15 },
   footer: { flexShrink: 0, width: '100%', paddingHorizontal: layout.screenPadding, paddingTop: 17, paddingBottom: 16, backgroundColor: c.bar },
   modalRoot: { flex: 1, justifyContent: 'flex-end' },
   backdrop: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, backgroundColor: c.overlay },
   actionSheetSafe: { paddingHorizontal: 8, paddingBottom: 8 },
   actionGroup: { borderRadius: radius.md, overflow: 'hidden', marginBottom: 8 },
-  sheetRow: { height: 64, alignItems: 'center', justifyContent: 'center', backgroundColor: c.sheetRow },
+  sheetRow: { height: 54, alignItems: 'center', justifyContent: 'center', backgroundColor: c.sheetRow },
   sheetBorder: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: c.sheetRowBorder },
-  sheetText: { color: c.text, fontSize: 22, fontWeight: '500' },
-  cancelRow: { height: 64, alignItems: 'center', justifyContent: 'center', backgroundColor: c.sheetCancel, borderRadius: radius.md },
-  cancelRowText: { color: c.text, fontSize: 22, fontWeight: '700' },
-  listSheet: { maxHeight: '72%', backgroundColor: c.bgRaised, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, padding: layout.screenPadding, gap: 16 },
-  manualSheet: { backgroundColor: c.bgRaised, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, padding: layout.screenPadding, gap: 16 },
+  sheetText: { color: c.text, fontSize: 19, fontWeight: '500' },
+  cancelRow: { height: 54, alignItems: 'center', justifyContent: 'center', backgroundColor: c.sheetCancel, borderRadius: radius.md },
+  cancelRowText: { color: c.text, fontSize: 19, fontWeight: '700' },
+  listSheet: { maxHeight: '80%', backgroundColor: c.bgRaised, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, padding: layout.screenPadding, gap: 16 },
+  manualSheet: { maxHeight: '88%', backgroundColor: c.bgRaised, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, paddingHorizontal: layout.screenPadding, paddingTop: layout.screenPadding, paddingBottom: 12, gap: 12 },
   sheetTitle: { color: c.text, fontSize: type.title, fontWeight: '800' },
   peopleList: { maxHeight: 360 },
-  existingRow: { height: 68, flexDirection: 'row', alignItems: 'center', gap: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: c.border, paddingHorizontal: 4 },
+  existingRow: { height: 58, flexDirection: 'row', alignItems: 'center', gap: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: c.border, paddingHorizontal: 4 },
   existingName: { color: c.text, fontSize: type.bodyLarge, fontWeight: '600' },
   noPeople: { color: c.textSecondary, fontSize: type.body, paddingVertical: 34, textAlign: 'center' },
-  nameInput: { height: 60, backgroundColor: c.surface, borderRadius: radius.md, color: c.text, fontSize: type.bodyLarge, paddingHorizontal: 18 },
+  nameInput: { height: 54, backgroundColor: c.surface, borderRadius: radius.md, color: c.text, fontSize: type.bodyLarge, paddingHorizontal: 18 },
   manualActions: { flexDirection: 'row', gap: 10 },
   manualButton: { flex: 1 },
-  secondaryActions: { gap: 14, paddingTop: 4, paddingBottom: 6, alignItems: 'center' },
-  secondaryLink: { color: c.accent, fontSize: type.body, fontWeight: '600' },
+  secondaryActions: { gap: 9, paddingTop: 2 },
   pressed: { opacity: 0.64 },
 });

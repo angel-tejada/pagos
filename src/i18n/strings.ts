@@ -30,6 +30,9 @@ export const es = {
   /* ---- limite gratis ---- */
   freeLimitEmpty: (max: number) => 'Gratis hasta ' + max + ' personas.',
   freeLimitCount: (n: number, max: number) => n + ' de ' + max + ' personas',
+  limitReachedTitle: 'Ya tienes 12 personas',
+  limitReachedBody: (max: number) =>
+    'La version gratis guarda hasta ' + max + ' personas. Borra a alguien que ya no necesites para agregar a otro.',
 
   /* ---- enviar saldo ---- */
   sendBalance: 'Enviar saldo',
@@ -110,6 +113,9 @@ export const es = {
   close: 'Cerrar',
   options: 'Opciones',
   language: 'Idioma',
+  appearance: 'Apariencia',
+  themeLight: 'Claro',
+  themeDark: 'Oscuro',
   openOptions: 'Abrir opciones',
   addEntryA11y: 'Agregar un apunte',
   goBack: 'Volver',
@@ -130,7 +136,7 @@ export const es = {
   localOnlyBody: 'Pagos guarda todo solamente en este teléfono. Se incluye en la copia de seguridad de tu iPhone.',
   restoreConfirm: 'Esto reemplaza todo lo que tienes ahora. ¿Seguir?',
   reminderTitle: 'Pagos',
-  reminderBody: (name: string, amount: string) => name + ' — ' + amount,
+  reminderBody: (name: string, amount: string) => name + ': ' + amount,
   reminderDenied: 'Sin permiso de avisos no se puede recordar la fecha. El apunte se guardó igual.',
   restoreFailed: 'No se pudo leer ese archivo.',
   backupFailed: 'No se pudo compartir la copia de seguridad.',
@@ -177,7 +183,7 @@ export const en: Strings = {
   activeBalances: 'Active balances',
   peopleCount: (n: number) => (n === 1 ? '1 person' : n + ' people'),
   seeAll: 'See all',
-  homeTab: 'Pagos',
+  homeTab: 'Home',
   peopleTab: 'People',
   search: 'Search by name…',
   owing: 'Still owe me',
@@ -193,6 +199,9 @@ export const en: Strings = {
   /* ---- free limit ---- */
   freeLimitEmpty: (max: number) => 'Free for up to ' + max + ' people.',
   freeLimitCount: (n: number, max: number) => n + ' of ' + max + ' people',
+  limitReachedTitle: 'You already have 12 people',
+  limitReachedBody: (max: number) =>
+    'The free version keeps up to ' + max + ' people. Delete someone you no longer need to add another.',
 
   /* ---- send balance ---- */
   sendBalance: 'Send balance',
@@ -273,6 +282,9 @@ export const en: Strings = {
   close: 'Close',
   options: 'Options',
   language: 'Language',
+  appearance: 'Appearance',
+  themeLight: 'Light',
+  themeDark: 'Dark',
   openOptions: 'Open options',
   addEntryA11y: 'Add an entry',
   goBack: 'Go back',
@@ -293,7 +305,7 @@ export const en: Strings = {
   localOnlyBody: 'Pagos stores everything only on this phone. It is included in your iPhone backup.',
   restoreConfirm: 'This replaces everything you have now. Continue?',
   reminderTitle: 'Pagos',
-  reminderBody: (name: string, amount: string) => name + ' — ' + amount,
+  reminderBody: (name: string, amount: string) => name + ': ' + amount,
   reminderDenied: 'Without notification permission the due date cannot remind you. The entry was still saved.',
   restoreFailed: 'Could not read that file.',
   backupFailed: 'The backup file could not be shared.',
