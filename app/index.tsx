@@ -136,7 +136,7 @@ const makeStyles = (c: Palette) => StyleSheet.create({
   debtsSection: { marginTop: 62 },
   sectionTitle: { color: c.text, fontSize: type.title, fontWeight: '700', marginLeft: 10, marginBottom: 12 },
   list: { gap: 10 },
-  debtCard: { width: '100%', height: 83, flexDirection: 'row', alignItems: 'center', backgroundColor: c.surface, borderRadius: radius.md, paddingHorizontal: 19, overflow: 'hidden' },
+  debtCard: { width: '100%', height: 83, flexDirection: 'row', alignItems: 'center', backgroundColor: c.surface, borderRadius: radius.md, borderWidth: 1, borderColor: c.borderSoft, paddingHorizontal: 19, overflow: 'hidden' },
   debtCopy: { flex: 1, alignSelf: 'stretch', justifyContent: 'center' },
   personName: { color: c.text, fontSize: 16, fontWeight: '500', marginBottom: 3 },
   personAmount: { fontSize: type.amount, fontWeight: '600', letterSpacing: -0.4 },

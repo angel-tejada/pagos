@@ -53,7 +53,7 @@ const makeStyles = (c: Palette) => StyleSheet.create({
   header: { height: 56, alignItems: 'center', justifyContent: 'center' },
   title: { color: c.text, fontSize: type.screenTitle, fontWeight: '700' },
   content: { paddingHorizontal: layout.screenPadding, paddingTop: 23, paddingBottom: 36, gap: 10 },
-  personRow: { width: '100%', height: 77, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, backgroundColor: c.surface, borderRadius: radius.md, overflow: 'hidden' },
+  personRow: { width: '100%', height: 77, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, backgroundColor: c.surface, borderRadius: radius.md, borderWidth: 1, borderColor: c.borderSoft, overflow: 'hidden' },
   personCopy: { gap: 4 },
   personName: { color: c.text, fontSize: 19, fontWeight: '700' },
   amount: { fontSize: 16, fontWeight: '600' },

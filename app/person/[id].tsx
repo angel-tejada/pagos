@@ -175,7 +175,7 @@ const makeStyles = (c: Palette) => StyleSheet.create({
   historySection: { marginTop: 44 },
   sectionTitle: { color: c.text, fontSize: type.title, fontWeight: '700', marginLeft: 10, marginBottom: 12 },
   historyList: { gap: 9 },
-  historyRow: { minHeight: 78, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 14, backgroundColor: c.surface, borderRadius: radius.md },
+  historyRow: { minHeight: 78, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 14, backgroundColor: c.surface, borderRadius: radius.md, borderWidth: 1, borderColor: c.borderSoft },
   entryMark: { width: 32, height: 32, borderRadius: 16, backgroundColor: c.up, alignItems: 'center', justifyContent: 'center' },
   entryMarkPaid: { backgroundColor: c.down },
   entryArrow: { color: c.upInk, fontSize: 16, fontWeight: '800' },

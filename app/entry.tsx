@@ -6,6 +6,7 @@ import {
   ActionSheetIOS,
   Alert,
   KeyboardAvoidingView,
+  Keyboard,
   Modal,
   Platform,
   Pressable,
@@ -19,10 +20,11 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { CurrencyPicker } from '../src/components/CurrencyPicker';
 import { Button, FieldLabel, InitialAvatar } from '../src/components/ui';
 import { currencySymbol, formatDate, formatMoney, parseAmountToCents } from '../src/data/format';
 import { scheduleDueReminder } from '../src/data/reminders';
-import { CURRENCIES, FREE_PERSON_LIMIT, useData, type CurrencyCode, type Person } from '../src/data/store';
+import { DEFAULT_CURRENCY, FREE_PERSON_LIMIT, useData, type CurrencyCode, type Person } from '../src/data/store';
 import { useLang } from '../src/i18n';
 import { layout, radius, type, useColors, useStyles, type Palette } from '../src/theme';
 
@@ -41,13 +43,26 @@ export default function EntryScreen() {
 
   const [selectedPerson, setSelectedPerson] = useState<SelectedPerson | null>(null);
   const [amount, setAmount] = useState('');
-  const [currency, setCurrency] = useState<CurrencyCode>('USD');
+  const [currency, setCurrency] = useState<CurrencyCode>(DEFAULT_CURRENCY);
   const [hasDueDate, setHasDueDate] = useState(false);
   const [dueDate, setDueDate] = useState(new Date());
   const [note, setNote] = useState('');
   const [existingSheetOpen, setExistingSheetOpen] = useState(false);
   const [manualSheetOpen, setManualSheetOpen] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
+  const [currencyOpen, setCurrencyOpen] = useState(false);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+
+  useEffect(() => {
+    const show = Keyboard.addListener('keyboardWillChangeFrame', (event) =>
+      setKeyboardHeight(event.endCoordinates.height),
+    );
+    const hide = Keyboard.addListener('keyboardWillHide', () => setKeyboardHeight(0));
+    return () => {
+      show.remove();
+      hide.remove();
+    };
+  }, []);
 
   useEffect(() => {
     if (!routePerson) return;
@@ -98,21 +113,14 @@ export default function EntryScreen() {
     }
   };
 
-  const openCurrencyPicker = () => {
-    const options = [...CURRENCIES, t.cancel];
-    if (Platform.OS === 'ios') {
-      ActionSheetIOS.showActionSheetWithOptions(
-        { title: t.chooseCurrency, options, cancelButtonIndex: options.length - 1 },
-        (index) => {
-          if (index < CURRENCIES.length) setCurrency(CURRENCIES[index]);
-        },
-      );
-      return;
+  /** Turning the reminder on dismisses the keypad and brings the row into
+   *  view, so the picker can never open behind the keyboard. */
+  const toggleDueDate = (next: boolean) => {
+    setHasDueDate(next);
+    if (next) {
+      Keyboard.dismiss();
+      setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 180);
     }
-    Alert.alert(t.chooseCurrency, undefined, [
-      ...CURRENCIES.map((code) => ({ text: code, onPress: () => setCurrency(code) })),
-      { text: t.cancel, style: 'cancel' as const },
-    ]);
   };
 
   const submit = async () => {
@@ -159,7 +167,7 @@ export default function EntryScreen() {
 
   return (
     <SafeAreaView edges={['top']} style={styles.screen}>
-      <KeyboardAvoidingView style={styles.screen} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <View style={[styles.screen, { paddingBottom: keyboardHeight }]}>
         <View style={styles.header}>
           <Pressable hitSlop={10} onPress={() => router.back()} style={({ pressed }) => pressed && styles.pressed}>
             <Text style={styles.cancel}>{t.cancel}</Text>
@@ -174,7 +182,6 @@ export default function EntryScreen() {
           contentContainerStyle={styles.content}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="interactive"
-          automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
           showsVerticalScrollIndicator={false}>
           <View>
             <FieldLabel>{t.amount}</FieldLabel>
@@ -191,18 +198,32 @@ export default function EntryScreen() {
                 />
                 {amount ? <Text style={styles.amountPlus}>＋</Text> : null}
               </View>
-              <Pressable accessibilityLabel={t.chooseCurrency} onPress={openCurrencyPicker} style={({ pressed }) => [styles.currencyField, pressed && styles.pressed]}>
-                <Text style={styles.currencyCode}>{currency}</Text>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={t.chooseCurrency}
+                onPress={() => {
+                  Keyboard.dismiss();
+                  setCurrencyOpen(true);
+                }}
+                style={({ pressed }) => [styles.currencyField, pressed && styles.pressedField]}>
                 <Text style={styles.currencySign}>{currencySymbol(currency)}</Text>
+                <Text style={styles.currencyCode}>{currency}</Text>
+                <Text style={styles.chevron}>›</Text>
               </Pressable>
             </View>
           </View>
 
           <View>
             <FieldLabel>{t.person}</FieldLabel>
-            <Pressable onPress={() => setManualSheetOpen(true)} style={({ pressed }) => [styles.personField, pressed && styles.pressed]}>
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => setManualSheetOpen(true)}
+              style={({ pressed }) => [styles.personField, pressed && styles.pressedField]}>
               <View style={styles.personPlus}><Text style={styles.personPlusText}>＋</Text></View>
-              <Text style={styles.personText}>{selectedPerson?.name ?? t.person}</Text>
+              <Text style={[styles.personText, !selectedPerson && styles.personTextEmpty]}>
+                {selectedPerson?.name ?? t.choosePerson}
+              </Text>
+              <Text style={styles.chevron}>›</Text>
             </Pressable>
           </View>
 
@@ -212,20 +233,19 @@ export default function EntryScreen() {
               <Text style={styles.dateText}>{hasDueDate ? formatDate(dueDate, lang) : t.dueDateOff}</Text>
               <Switch
                 value={hasDueDate}
-                onValueChange={setHasDueDate}
-                trackColor={{ false: c.switchOff, true: c.accent }}
-                thumbColor={c.accentInk}
+                onValueChange={toggleDueDate}
+                trackColor={{ false: c.switchOff, true: c.up }}
+                thumbColor="#FFFFFF"
                 ios_backgroundColor={c.switchOff}
+                style={styles.switch}
               />
             </View>
-            {/* The native picker gets its own row and an explicit size. Inline
-                in the switch row it renders at zero width and smears. */}
             {hasDueDate ? (
               <View style={styles.datePickerRow}>
                 <DateTimePicker
                   value={dueDate}
                   onValueChange={(_event, date) => setDueDate(date)}
-                  mode="date"
+                  mode="datetime"
                   display="compact"
                   minimumDate={new Date()}
                   accentColor={c.accent}
@@ -254,7 +274,7 @@ export default function EntryScreen() {
           </View>
         </ScrollView>
 
-        <SafeAreaView edges={['bottom']} style={styles.footer}>
+        <SafeAreaView edges={keyboardHeight > 0 ? [] : ['bottom']} style={styles.footer}>
           {/* Matches the direction the user came in on, so the colour that
               started the action is the colour that commits it. */}
           <Button
@@ -263,7 +283,17 @@ export default function EntryScreen() {
             onPress={() => void submit()}
           />
         </SafeAreaView>
-      </KeyboardAvoidingView>
+      </View>
+
+      <CurrencyPicker
+        visible={currencyOpen}
+        selected={currency}
+        onClose={() => setCurrencyOpen(false)}
+        onSelect={(code) => {
+          setCurrency(code);
+          setCurrencyOpen(false);
+        }}
+      />
 
       <ManualNameSheet
         visible={manualSheetOpen}
@@ -411,21 +441,25 @@ const makeStyles = (c: Palette) => StyleSheet.create({
   formScroll: { flex: 1 },
   content: { paddingHorizontal: layout.screenPadding, paddingTop: 28, paddingBottom: 40, gap: 30 },
   amountRow: { flexDirection: 'row', gap: 10 },
-  amountField: { flex: 1, height: layout.controlHeight, flexDirection: 'row', alignItems: 'center', backgroundColor: c.surface, borderRadius: radius.md, paddingHorizontal: 22 },
+  amountField: { flex: 1, height: layout.controlHeight, flexDirection: 'row', alignItems: 'center', backgroundColor: c.surface, borderRadius: radius.md, borderWidth: 1, borderColor: c.border, paddingHorizontal: 18 },
   amountInput: { flex: 1, color: c.text, fontSize: type.inputAmount, fontWeight: '500', paddingVertical: 0 },
   amountPlus: { color: c.accent, fontSize: 26, fontWeight: '300', marginRight: -4 },
-  currencyField: { width: 100, height: layout.controlHeight, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, backgroundColor: c.surface, borderRadius: radius.md },
-  currencyCode: { color: c.text, fontSize: type.bodyLarge, fontWeight: '700' },
-  currencySign: { color: c.accent, fontSize: type.bodyLarge, fontWeight: '700' },
-  personField: { height: layout.controlHeight, flexDirection: 'row', alignItems: 'center', gap: 11, paddingHorizontal: 12, backgroundColor: c.surface, borderRadius: radius.md },
+  currencyField: { width: 112, height: layout.controlHeight, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, backgroundColor: c.surface, borderRadius: radius.md, borderWidth: 1, borderColor: c.border },
+  currencyCode: { color: c.text, fontSize: type.body, fontWeight: '700' },
+  currencySign: { color: c.text, fontSize: type.bodyLarge, fontWeight: '700' },
+  personField: { height: layout.controlHeight, flexDirection: 'row', alignItems: 'center', gap: 11, paddingHorizontal: 14, backgroundColor: c.surface, borderRadius: radius.md, borderWidth: 1, borderColor: c.border },
   personPlus: { width: 26, height: 26, borderRadius: 13, backgroundColor: c.accent, alignItems: 'center', justifyContent: 'center' },
   personPlusText: { color: c.accentInk, fontSize: 18, fontWeight: '600', lineHeight: 21 },
-  personText: { flex: 1, color: c.accent, fontSize: type.bodyLarge, fontWeight: '500' },
-  dueField: { minHeight: layout.controlHeight, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: c.surface, borderRadius: radius.md, paddingLeft: 16, paddingRight: 18 },
+  personText: { flex: 1, color: c.text, fontSize: type.bodyLarge, fontWeight: '600' },
+  personTextEmpty: { color: c.textMuted, fontWeight: '500' },
+  dueField: { height: layout.controlHeight, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: c.surface, borderRadius: radius.md, borderWidth: 1, borderColor: c.border, paddingLeft: 16, paddingRight: 14 },
   dateText: { color: c.text, fontSize: type.body, fontWeight: '500' },
   datePickerRow: { marginTop: 10, alignItems: 'flex-start' },
-  datePicker: { width: 150, height: 40 },
-  noteInput: { height: 104, backgroundColor: c.surface, borderRadius: radius.md, color: c.text, fontSize: type.bodyLarge, fontWeight: '500', lineHeight: 22, paddingHorizontal: 18, paddingTop: 15 },
+  chevron: { color: c.textMuted, fontSize: 22, fontWeight: '400', marginLeft: 2 },
+  switch: { alignSelf: 'center' },
+  pressedField: { backgroundColor: c.surfacePressed, borderColor: c.accent },
+  datePicker: { width: 260, height: 40 },
+  noteInput: { height: 104, backgroundColor: c.surface, borderRadius: radius.md, borderWidth: 1, borderColor: c.border, color: c.text, fontSize: type.bodyLarge, fontWeight: '500', lineHeight: 22, paddingHorizontal: 18, paddingTop: 15 },
   footer: { flexShrink: 0, width: '100%', paddingHorizontal: layout.screenPadding, paddingTop: 17, paddingBottom: 16, backgroundColor: c.bar },
   modalRoot: { flex: 1, justifyContent: 'flex-end' },
   backdrop: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, backgroundColor: c.overlay },
@@ -443,7 +477,7 @@ const makeStyles = (c: Palette) => StyleSheet.create({
   existingRow: { height: 58, flexDirection: 'row', alignItems: 'center', gap: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: c.border, paddingHorizontal: 4 },
   existingName: { color: c.text, fontSize: type.bodyLarge, fontWeight: '600' },
   noPeople: { color: c.textSecondary, fontSize: type.body, paddingVertical: 34, textAlign: 'center' },
-  nameInput: { height: 54, backgroundColor: c.surface, borderRadius: radius.md, color: c.text, fontSize: type.bodyLarge, paddingHorizontal: 18 },
+  nameInput: { height: 54, backgroundColor: c.surface, borderRadius: radius.md, borderWidth: 1, borderColor: c.border, color: c.text, fontSize: type.bodyLarge, paddingHorizontal: 18 },
   manualActions: { flexDirection: 'row', gap: 10 },
   manualButton: { flex: 1 },
   secondaryActions: { gap: 9, paddingTop: 2 },

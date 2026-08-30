@@ -1,9 +1,8 @@
+import { currencyEntry } from './currencies';
 import type { CurrencyCode, Entry } from './store';
 
-const SYMBOLS: Record<CurrencyCode, string> = { USD: '$', DOP: 'RD$', EUR: '€' };
-
 export function currencySymbol(currency: CurrencyCode): string {
-  return SYMBOLS[currency];
+  return currencyEntry(currency)?.symbol ?? currency;
 }
 
 /**
@@ -27,7 +26,7 @@ export function formatMoney(cents: number, currency: CurrencyCode, lang: 'es' | 
   const grouped = String(whole).replace(/\B(?=(\d{3})+(?!\d))/g, groupSeparator);
   const decimals = String(fraction).padStart(2, '0');
 
-  return `${negative ? '-' : ''}${SYMBOLS[currency]}${grouped}${decimalSeparator}${decimals}`;
+  return `${negative ? '-' : ''}${currencySymbol(currency)}${grouped}${decimalSeparator}${decimals}`;
 }
 
 export function formatDate(value: string | Date, lang: 'es' | 'en'): string {

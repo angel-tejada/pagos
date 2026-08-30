@@ -1,16 +1,22 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { isKnownCurrency } from './currencies';
 import * as Notifications from 'expo-notifications';
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 
 export const DATA_SCHEMA_VERSION = 1 as const;
 export const DATA_STORAGE_KEY = 'pagos_native_v1';
-export const CURRENCIES = ['USD', 'DOP', 'EUR'] as const;
+/**
+ * Any active ISO 4217 code. This widens the accepted set rather than changing
+ * the saved shape, so ledgers written when only USD/DOP/EUR existed still load
+ * without a migration.
+ */
+export const DEFAULT_CURRENCY = 'USD';
 
 /** Free tier caps how many people you can track — never how often you can log.
  *  A scope limit, not a rate limit. See CLAUDE.md monetization rules. */
 export const FREE_PERSON_LIMIT = 12;
 
-export type CurrencyCode = (typeof CURRENCIES)[number];
+export type CurrencyCode = string;
 export type EntryKind = 'debt' | 'payment';
 
 export type Person = {
@@ -242,7 +248,7 @@ function isPerson(value: unknown): value is Person {
   return isRecord(value) &&
     typeof value.id === 'string' &&
     typeof value.name === 'string' &&
-    CURRENCIES.includes(value.currency as CurrencyCode) &&
+    isKnownCurrency(value.currency) &&
     typeof value.createdAt === 'string' &&
     (value.sourceContactId === undefined || typeof value.sourceContactId === 'string');
 }
