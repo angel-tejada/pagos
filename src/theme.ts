@@ -273,7 +273,7 @@ function makeShadow(spec: ShadowSpec): ViewStyle {
  * for a possible future build and is inert everywhere today.
  */
 export const shadows = {
-  raised: makeShadow({ offsetY: 2, opacity: 0.1, radius: 28, elevation: 3 }),
+  raised: makeShadow({ offsetY: 2, opacity: 0.2, radius: 16, elevation: 3 }),
   pill: makeShadow({ offsetY: 2, opacity: 0.16, radius: 20, elevation: 4 }),
 } as const;
 
