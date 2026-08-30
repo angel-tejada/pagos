@@ -1,12 +1,13 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { ActionSheetIOS, Alert, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { OptionsSheet } from '../src/components/OptionsSheet';
 import { EmptyState } from '../src/components/ui';
 import { formatBalance } from '../src/data/format';
 import { FREE_PERSON_LIMIT, getBalanceCents, useData, type Person } from '../src/data/store';
+import { showActions, showAlert, showPrompt } from '../src/components/dialogs';
 import { useLang } from '../src/i18n';
 import { balanceColor, font, layout, radius, tabular, type, useColors, useStyles, type Palette } from '../src/theme';
 
@@ -24,34 +25,29 @@ export default function HomeScreen() {
   const total = people.reduce((sum, item) => sum + Math.max(0, item.balance), 0);
 
   const editPerson = (person: Person) => {
-    Alert.prompt(t.editPerson, t.name, (name) => renamePerson(person.id, name), 'plain-text', person.name);
+    showPrompt(t.editPerson, t.name, (name) => renamePerson(person.id, name), person.name);
   };
 
   const confirmDelete = (person: Person) => {
-    Alert.alert(t.delete, t.confirmDelPerson(person.name), [
+    showAlert(t.delete, t.confirmDelPerson(person.name), [
       { text: t.cancel, style: 'cancel' },
       { text: t.delete, style: 'destructive', onPress: () => deletePerson(person.id) },
     ]);
   };
 
   const openPersonActions = (person: Person) => {
-    if (Platform.OS === 'ios') {
-      ActionSheetIOS.showActionSheetWithOptions(
-        { options: [t.cancel, t.viewPerson, t.editPerson, t.delete], cancelButtonIndex: 0, destructiveButtonIndex: 3 },
-        (index) => {
-          if (index === 1) router.push(`/person/${person.id}`);
-          if (index === 2) editPerson(person);
-          if (index === 3) confirmDelete(person);
-        },
-      );
-      return;
-    }
-    Alert.alert(person.name, undefined, [
-      { text: t.viewPerson, onPress: () => router.push(`/person/${person.id}`) },
-      { text: t.editPerson, onPress: () => editPerson(person) },
-      { text: t.delete, style: 'destructive', onPress: () => confirmDelete(person) },
-      { text: t.cancel, style: 'cancel' },
-    ]);
+    showActions(
+      {
+        options: [t.cancel, t.viewPerson, t.editPerson, t.delete],
+        cancelButtonIndex: 0,
+        destructiveButtonIndex: 3,
+      },
+      (index) => {
+        if (index === 1) router.push(`/person/${person.id}`);
+        if (index === 2) editPerson(person);
+        if (index === 3) confirmDelete(person);
+      },
+    );
   };
 
   return (

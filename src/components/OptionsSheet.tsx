@@ -1,10 +1,11 @@
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { pickRestoreFile, shareBackup } from '../data/files';
 import { useData } from '../data/store';
 import { useLang } from '../i18n';
 import { font, layout, radius, shadows, spacing, type, useStyles, useThemeControl, type Palette } from '../theme';
+import { showAlert } from './dialogs';
 import { Sheet } from './Sheet';
 import { Button, Segment } from './ui';
 
@@ -15,14 +16,14 @@ export function OptionsSheet({ visible, onClose }: { visible: boolean; onClose: 
   const { scheme, setScheme } = useThemeControl();
 
   const runBackup = () => {
-    void shareBackup(data).then(markBackupComplete).catch(() => Alert.alert(t.backupFailed));
+    void shareBackup(data).then(markBackupComplete).catch(() => showAlert(t.backupFailed));
   };
 
   const runRestore = () => {
     void pickRestoreFile()
       .then((restored) => {
         if (!restored) return;
-        Alert.alert(t.mRestore, t.restoreConfirm, [
+        showAlert(t.mRestore, t.restoreConfirm, [
           { text: t.cancel, style: 'cancel' },
           {
             text: t.confirm,
@@ -30,12 +31,12 @@ export function OptionsSheet({ visible, onClose }: { visible: boolean; onClose: 
             onPress: () => {
               restoreData(restored);
               onClose();
-              Alert.alert(t.restored);
+              showAlert(t.restored);
             },
           },
         ]);
       })
-      .catch(() => Alert.alert(t.restoreFailed));
+      .catch(() => showAlert(t.restoreFailed));
   };
 
   return (

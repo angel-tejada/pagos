@@ -3,9 +3,7 @@ import { Contact, requestPermissionsAsync } from 'expo-contacts';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  Alert,
   Keyboard,
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -29,6 +27,7 @@ import {
   type CurrencyCode,
   type Person,
 } from '../src/data/store';
+import { showActions, showAlert, showPrompt } from '../src/components/dialogs';
 import { useLang } from '../src/i18n';
 import { font, layout, radius, tabular, type, useColors, useStyles, type Palette } from '../src/theme';
 
@@ -83,7 +82,7 @@ export default function EntryScreen() {
         );
     // A scope limit, not a rate limit: only a brand new person is refused.
     if (!existing && data.people.length >= FREE_PERSON_LIMIT) {
-      Alert.alert(t.limitReachedTitle, t.limitReachedBody(FREE_PERSON_LIMIT));
+      showAlert(t.limitReachedTitle, t.limitReachedBody(FREE_PERSON_LIMIT));
       return;
     }
     setSelectedPerson(
@@ -98,19 +97,19 @@ export default function EntryScreen() {
     try {
       const permission = await requestPermissionsAsync();
       if (permission.status !== 'granted') {
-        Alert.alert(t.contactsDeniedTitle, t.contactsDeniedBody);
+        showAlert(t.contactsDeniedTitle, t.contactsDeniedBody);
         return;
       }
       const contact = await Contact.presentPicker();
       if (!contact) return;
       const name = (await contact.getFullName()).trim();
       if (!name) {
-        Alert.alert(t.needName, t.contactsFailed);
+        showAlert(t.needName, t.contactsFailed);
         return;
       }
       choosePerson({ name, sourceContactId: contact.id });
     } catch {
-      Alert.alert(t.contactsUnavailable, t.contactsFailed);
+      showAlert(t.contactsUnavailable, t.contactsFailed);
     }
   };
 
@@ -130,15 +129,15 @@ export default function EntryScreen() {
 
   const submit = async () => {
     if (!amountCents) {
-      Alert.alert(t.needAmount);
+      showAlert(t.needAmount);
       return;
     }
     if (!selectedPerson) {
-      Alert.alert(t.personRequired);
+      showAlert(t.personRequired);
       return;
     }
     if (!selectedPerson.id && data.people.length >= FREE_PERSON_LIMIT) {
-      Alert.alert(t.limitReachedTitle, t.limitReachedBody(FREE_PERSON_LIMIT));
+      showAlert(t.limitReachedTitle, t.limitReachedBody(FREE_PERSON_LIMIT));
       return;
     }
 
@@ -150,7 +149,7 @@ export default function EntryScreen() {
         t.reminderBody(selectedPerson.name, formatMoney(amountCents, currency, lang)),
         when,
       );
-      if (!notificationId && when.getTime() > Date.now()) Alert.alert(t.reminderDenied);
+      if (!notificationId && when.getTime() > Date.now()) showAlert(t.reminderDenied);
     }
 
     const personId = addEntry({

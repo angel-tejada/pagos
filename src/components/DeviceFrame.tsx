@@ -2,6 +2,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 
 import { font, useColors } from '../theme';
+import { DialogHost } from './dialogs';
 import { OverlayHostContext } from './overlayHost';
 
 /**
@@ -61,6 +62,11 @@ export function DeviceFrame({ children }: { children: ReactNode }) {
               pointerEvents="box-none"
               style={styles.overlayHost}
             />
+            {/* Above sheets: an alert raised from inside a sheet must sit
+                on top of it. */}
+            <View pointerEvents="box-none" style={styles.dialogHost}>
+              <DialogHost />
+            </View>
           </OverlayHostContext.Provider>
 
           <StatusBar color={c.ink} />
@@ -173,13 +179,22 @@ const styles = StyleSheet.create({
     zIndex: 5,
   },
 
+  dialogHost: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 6,
+  },
+
   statusBar: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
     height: STATUS_H,
-    zIndex: 6,
+    zIndex: 7,
   },
   statusLeft: {
     position: 'absolute',
@@ -216,7 +231,7 @@ const styles = StyleSheet.create({
     height: ISLAND_H,
     borderRadius: ISLAND_H / 2,
     backgroundColor: '#000000',
-    zIndex: 7,
+    zIndex: 8,
   },
   home: {
     position: 'absolute',
@@ -226,6 +241,6 @@ const styles = StyleSheet.create({
     height: HOME_H,
     borderRadius: HOME_H / 2,
     opacity: 0.85,
-    zIndex: 7,
+    zIndex: 8,
   },
 });

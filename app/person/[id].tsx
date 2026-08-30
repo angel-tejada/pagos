@@ -1,11 +1,12 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ActionSheetIOS, Alert, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button, EmptyState } from '../../src/components/ui';
 import { shareBalanceMessage, sharePersonPdf } from '../../src/data/files';
 import { formatBalance, formatEntryDate, formatMoney } from '../../src/data/format';
 import { getBalanceCents, useData, type Entry, type Person } from '../../src/data/store';
+import { showActions, showAlert, showPrompt } from '../../src/components/dialogs';
 import { useLang } from '../../src/i18n';
 import { balanceColor, font, layout, radius, tabular, type, useColors, useStyles, type Palette } from '../../src/theme';
 
@@ -32,11 +33,11 @@ export default function PersonScreen() {
   }
 
   const editPerson = () => {
-    Alert.prompt(t.editPerson, t.name, (name) => renamePerson(person.id, name), 'plain-text', person.name);
+    showPrompt(t.editPerson, t.name, (name) => renamePerson(person.id, name), person.name);
   };
 
   const confirmDeletePerson = () => {
-    Alert.alert(t.delete, t.confirmDelPerson(person.name), [
+    showAlert(t.delete, t.confirmDelPerson(person.name), [
       { text: t.cancel, style: 'cancel' },
       {
         text: t.delete,
@@ -50,25 +51,17 @@ export default function PersonScreen() {
   };
 
   const openActions = () => {
-    if (Platform.OS === 'ios') {
-      ActionSheetIOS.showActionSheetWithOptions(
-        { options: [t.cancel, t.editPerson, t.delete], cancelButtonIndex: 0, destructiveButtonIndex: 2 },
-        (index) => {
-          if (index === 1) editPerson();
-          if (index === 2) confirmDeletePerson();
-        },
-      );
-      return;
-    }
-    Alert.alert(person.name, undefined, [
-      { text: t.editPerson, onPress: editPerson },
-      { text: t.delete, style: 'destructive', onPress: confirmDeletePerson },
-      { text: t.cancel, style: 'cancel' },
-    ]);
+    showActions(
+      { options: [t.cancel, t.editPerson, t.delete], cancelButtonIndex: 0, destructiveButtonIndex: 2 },
+      (index) => {
+        if (index === 1) editPerson();
+        if (index === 2) confirmDeletePerson();
+      },
+    );
   };
 
   const confirmDeleteEntry = (entry: Entry) => {
-    Alert.alert(t.confirmDelMov, `${formatMoney(entry.amountCents, person.currency, lang)}\n${formatEntryDate(entry, lang)}`, [
+    showAlert(t.confirmDelMov, `${formatMoney(entry.amountCents, person.currency, lang)}\n${formatEntryDate(entry, lang)}`, [
       { text: t.cancel, style: 'cancel' },
       { text: t.delete, style: 'destructive', onPress: () => deleteEntry(entry.id) },
     ]);
@@ -106,13 +99,13 @@ export default function PersonScreen() {
           label={t.sendBalance}
           tone="outline"
           style={styles.shareButton}
-          onPress={() => void shareBalanceMessage(person, data, t, lang).catch(() => Alert.alert(t.shareFailed))}
+          onPress={() => void shareBalanceMessage(person, data, t, lang).catch(() => showAlert(t.shareFailed))}
         />
         <Button
           label={t.sharePdf}
           tone="outline"
           style={styles.shareButton}
-          onPress={() => void sharePersonPdf(person, data, t, lang).catch(() => Alert.alert(t.shareFailed))}
+          onPress={() => void sharePersonPdf(person, data, t, lang).catch(() => showAlert(t.shareFailed))}
         />
       </View>
 
