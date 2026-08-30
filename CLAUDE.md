@@ -1,5 +1,22 @@
 # Pagos — Project Rules
 
+## Before you do anything: read `PROJECT_STATE.md`
+
+**Every session starts by reading `PROJECT_STATE.md`, and every task ends by
+updating it.** Both, every time — including tasks that change no code, and
+including tasks where the user did not mention it.
+
+`PROJECT_STATE.md` carries the things this file cannot: what is half-finished,
+what is broken right now, what has never been tested on the device, why a
+design decision was made so you do not undo it, and the traps that have already
+cost hours. Skipping it is how a session re-derives decisions that were already
+settled, or reverses one on the assumption it was an oversight.
+
+This instruction has been ignored before. If you are about to write a final
+response and have not updated `PROJECT_STATE.md`, you are not finished.
+
+---
+
 Read this before every task. These rules override any instinct to "improve" things.
 
 Research backing for many of these decisions is in `research/market-analysis.md`

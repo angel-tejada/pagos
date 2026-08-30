@@ -1,81 +1,314 @@
-# Pagos project state
+# Pagos — project state
 
-Last verified: 2026-08-29 (America/New_York)
+**Read this file before doing anything. Update it before you finish anything.**
+It is the handoff snapshot between sessions. It is not a diary: replace stale
+statements rather than appending to them.
 
-Everything below was checked against the code in this session. The previous
-version of this file claimed the data layer was "not started" while
-`src/data/store.tsx` already existed and worked — do not trust a claim here that
-you have not re-verified.
+Last updated: 2026-08-31 · HEAD `7fb67f2` · branch `main` · worktree clean
 
-## How this ships
+---
 
-- Standalone EAS `preview` build on a physical iPhone. No Metro, no tunnel.
-- JavaScript-only changes ship over the air: `npx eas-cli update --branch preview
-  --platform ios --environment preview --non-interactive`. `--platform ios` is
-  required or the export tries to bundle for web and fails on `react-native-web`.
-- Native changes (new native dependency, app config, plugins) need a full
-  `npx eas-cli build --platform ios --profile preview` and a reinstall.
-- `runtimeVersion` uses the `fingerprint` policy, so an installed build silently
-  ignores an update it cannot run rather than crashing.
+## 1. Where things stand
 
-## What works
+The app runs on a real iPhone and in a browser preview. The v1 feature list in
+`CLAUDE.md` is largely implemented. The current work is a **design pass
+converging the app onto the approved mockup**, and the immediate blocker is the
+New Entry screen (section 5).
 
-- **Data layer** (`src/data/store.tsx`) — AsyncStorage persistence, schema
-  version 1, integer cents throughout, type validation on load, add / rename /
-  delete / restore. A new install starts empty.
-- **Bilingual strings** (`src/i18n/`) — language choice persists. Parity is
-  compiler-enforced: `en` is typed as `Strings = typeof es`, so adding a key to
-  one language without the other fails the build.
-- **Theme** (`src/theme.ts`) — light and dark palettes behind a context; screens
-  build their StyleSheet from the active palette via `useStyles`. Follows the
-  device setting.
-- **Money formatting** (`src/data/format.ts`) — `$1.234,56` in Spanish,
-  `$1,234.56` in English, done by hand rather than through Intl because Hermes
-  and Node disagree and Spanish CLDR drops the separator for four-digit numbers.
-  The parser accepts either separator style. Round trips verified.
-- **Screens** — list with grand total and the free-limit notice, people A–Z,
-  person detail with history, entry with amount / currency / person / note /
-  due date.
-- **Send balance** — composes a short neutral summary and opens the share sheet.
-  The user sends it themselves; the other person is never notified.
-- **Share PDF** — per-person balance and full history, rendered on device,
-  app name at the bottom, user text HTML-escaped.
-- **Backup and restore** — `src/data/files.ts`, wired into Options. Restore
-  confirms before overwriting. Legacy `pagos.html` JSON import is implemented in
-  `parseLegacyData` but has not been exercised against a real old backup file.
-- **Due-date reminders** — schedule a local notification at noon on the due
-  date and store the identifier so deleting the entry cancels it. Permission is
-  requested when a reminder is set, never at launch.
-- **Deletes** — every delete has a visible labelled control. Nothing is
-  swipe-only.
+**Exact next action:** diagnose the New Entry screen. The user reports the
+currency button missing, the person picker and due-date picker dead, and no
+keypad. None of that has been diagnosed yet — see section 5 for what is known
+and what is only suspected.
 
-## Not built
+---
 
-- **No monetization code at all.** No ads, no AdMob, no banner, no in-app
-  purchase, no purchase restore. The 12-person limit is *displayed* but not
-  enforced — enforcing it before a purchase path exists would strand users.
-- **No review prompt** at zero balance.
-- **No find-a-person** search or A–Z toggle (scope item 12).
-- **Green/red semantics are not implemented.** Every amount renders in the pink
-  accent; `up` and `down` in the palette are both red. CLAUDE.md calls for green
-  = they owe you more, red = they paid you back. This is a deliberate open
-  question, not an oversight.
-- No automated tests. Money formatting was verified by a throwaway script, not a
-  checked-in suite.
+## 2. What is built and working
 
-## Known gaps and risks
+Verified by reading the code, by `tsc`, by bundling both platforms, and — where
+noted — by screenshot in a real browser.
 
-- Existing installs still hold the sample people (Juan, María) that earlier
-  builds wrote into storage. Removing the seed only affects fresh installs;
-  delete them by hand on a device that already has them.
-- `parseLegacyData` is untested against a real export from `pagos.html`.
-- Reminder scheduling has not been confirmed firing on a physical device.
-- The App Store description must state the 12-person limit before launch.
+- **Data layer** (`src/data/store.tsx`). AsyncStorage persistence, integer
+  cents throughout, schema v1, type-validated on load. Add / rename / delete /
+  restore all implemented. No fake seed data.
+- **Money formatting** (`src/data/format.ts`). Hand-rolled, not `Intl`: Spanish
+  reads `1.234,56`, English `1,234.56`. Deliberate — Hermes on device and Node
+  on the build machine disagree, and Spanish CLDR drops the grouping separator
+  for four-digit numbers. A settled balance renders as a plain `$0`.
+- **Currency** (`src/data/currencies.ts`). All 162 active ISO 4217 currencies,
+  generated by `scripts/generate-currencies.js` from Node's ICU data. Searchable
+  by code or name, accent-insensitive. `CurrencyCode` is a validated `string`,
+  widened from the old three-value union — old ledgers still load unmigrated.
+- **i18n** (`src/i18n/`). Language persists. `en` is typed as `typeof es`, so
+  **bilingual parity is compiler-enforced**: adding a string to one language
+  without the other fails the build.
+- **Screens.** Home, Person, New Entry. Options is a sheet, not a screen.
+- **Send balance** and **Share PDF** on the person screen.
+- **Backup / Restore** wired to real file pickers.
+- **Browser preview**: the app renders inside an iPhone 16 Pro frame. Run
+  `npm run web`.
 
-## Test and build status
+---
 
-- `npx tsc --noEmit`: PASS
-- `npx expo export --platform ios`: PASS
-- Money format/parse round trips: PASS (throwaway script, not committed)
-- No device QA was possible from this machine; every UI change needs a look on
-  the iPhone.
+## 3. Design decisions, and why — do not silently undo these
+
+Each of these was an explicit user decision. Reversing one without being asked
+would be a regression, not a cleanup.
+
+### Colour
+
+- **There is no green anywhere.** It existed briefly and was removed. Do not
+  reintroduce it for "positive" amounts.
+- **Red is the only accent**, and it means exactly one thing: *money
+  outstanding*. Home total, a person's card amount, their balance, the Borrowed
+  action. Nothing else may use it.
+- **Payment history is fully neutral.** Direction is carried by the `+`/`−`
+  sign and the words Prestado / Pagado, never by colour, so the ledger reads
+  correctly for colour-blind users.
+- A settled balance is muted grey, not red.
+
+### Layout
+
+- **No tab bar, and no People screen.** Home and People showed the same list;
+  the second was doing nothing and the bar ate screen height. The person count
+  line now sits where the tab bar used to be. Three screens only.
+- Person cards are **name left, amount right, on one baseline** — not stacked.
+- Home header glyphs (gear, plus) have **no circular backgrounds**. Same 48px
+  target on both; the plus simply draws larger (34px vs 26px).
+
+### Typography
+
+- **Inter across the whole app**, loaded via `@expo-google-fonts/inter`.
+  React Native selects a face by *family name*, not by numeric weight, so every
+  text style names its face explicitly (`font.regular` … `font.extrabold` in
+  `src/theme.ts`). Setting `fontWeight` alone will not work.
+- Amounts and the preview clock use tabular numerals.
+
+### Themes
+
+- **Light is the default**, and the theme is a **stored user choice, not the
+  system setting** — deliberately. `useThemePreference` in `src/theme.ts`.
+- Light mode's ground is a **warm off-white (`#F7F6F3`), never pure white** —
+  pure white read as a flashlight, and the target user is 50s–60s.
+- **Dark mode builds elevation from lightness, not shadow.** A black shadow is
+  nearly invisible against near-black, so each layer forward is a lighter fill:
+  bg `#000000` → sheet `#1A1A1C` → sheet cards `#2A2A2D`, plus
+  `sheetCardRaised` `#3A3A3E` for controls that carry no border. If dark mode
+  ever looks flat, **lift a fill — do not add a border.**
+- Contrast is verified numerically, not by eye. Text ≥ 4.5:1; control
+  boundaries and switch tracks ≥ 3:1.
+- One deliberate deviation from the mockup: it puts white on the red button,
+  which is 3.41:1 in dark mode. Dark flips that label to black (6.16:1).
+
+### Shadows — all three come from the mockup
+
+Defined once in `src/theme.ts` and commented with the CSS they came from.
+**These are the mockup's values. Do not soften them because they look strong.**
+
+| Token | Value | Applied to |
+|---|---|---|
+| `raised` | `0 4px 16px rgba(0,0,0,0.35)` | segment tracks, Backup/Restore group, Close button |
+| `sheet` | `0 -8px 40px rgba(0,0,0,0.6)` | the Options sheet (negative Y — casts upward) |
+| `pill` | `0 4px 14px rgba(0,0,0,0.55)` | the selected segment pill |
+
+Built by `makeShadow()`, which emits **`boxShadow` on web and `shadow*` on
+iOS from one set of numbers**, so the two cannot drift apart. See trap 3.
+
+The Options sheet boxes have **no borders** — shadow and fill carry the
+separation. That was an explicit decision after the shadows were fixed.
+
+### Segmented controls
+
+Selected pill **slides** 280ms on `cubic-bezier(.32, .72, 0, 1)` — not a fade,
+not a pop. Unselected labels sit at 45% opacity. Outward shadow only; an inset
+reads as "pressed", not "on". No checkmarks.
+
+### Product rules that keep biting
+
+- The 12-person cap is a **scope limit, never a rate limit**. Existing people
+  can always be logged against; only a brand-new person is refused at the cap.
+- Nothing may appear between opening the app and saving an entry.
+- Backup and restore are permanent features.
+
+---
+
+## 4. Release mechanics
+
+| | |
+|---|---|
+| Project | `@xangel1/pagos` · id `21c5fe80-6999-45e5-bd3d-ac38995042bd` |
+| Installed build | build 7, `9c0ddcf7-2882-4887-b6a5-6c37182e8537` |
+| Its runtime | `142551e9e769e7f380858105207a96ada4f12e46` |
+| Channel → branch | `preview` → `preview` |
+| Dev-client build | `61bede33-2d9a-4575-abd9-2dfc9745ca04` (may not be installed) |
+
+**Publish an OTA:**
+```
+npx eas-cli update --branch preview --platform ios --message "..." --environment preview --non-interactive
+```
+`--platform ios` is required — without it the command also bundles for web.
+`--environment` is required in non-interactive mode.
+
+**Before publishing, always check the fingerprint still matches the installed
+build.** If it does not, the update will not reach the phone and a new install
+is required:
+```
+npx expo-updates fingerprint:generate --platform ios
+```
+
+**Install links.** `expo.dev` build pages are a single-page app: they return
+HTTP 200 and *then* render "page not found" if the phone's Safari session is
+signed out. The login-free path is the `itms-services` manifest, which
+re-signs its artifact URL on every request and does not go stale:
+```
+itms-services://?action=download-manifest&url=https://api.expo.dev/v2/projects/21c5fe80-6999-45e5-bd3d-ac38995042bd/builds/<BUILD_ID>/manifest.plist
+```
+It must be pasted into Safari's address bar in full — if it is truncated at the
+first `&`, iOS reports "not found".
+
+**On-device OTA behaviour:** the app uses the cached bundle on launch and
+downloads in the background, so the user must close and reopen **twice**.
+
+---
+
+## 5. Broken / open
+
+**New Entry screen — reported by the user, not yet diagnosed.** This is the
+next task.
+
+- Currency button reported missing. **The control does exist in source**
+  (`app/entry.tsx`, the `styles.currency` Pressable next to the amount input),
+  so this is a rendering or layout problem, not missing code.
+- Person picker reported dead.
+- Due-date picker reported dead. **Partly expected in the browser**:
+  `@expo/ui/community/datetime-picker` is a native component and renders
+  nothing on web. Whether it is also dead on device is unknown.
+- No keypad. Worth noting the mockup drew an on-screen keypad; this app
+  deliberately uses the native iOS numeric keyboard instead. In a browser there
+  is no on-screen keypad at all — you type with the physical keyboard. This may
+  be a misunderstanding rather than a bug, but it has not been confirmed either
+  way.
+
+Do not assume these are four separate bugs, and do not assume they are all real
+app bugs rather than browser-preview artefacts. Reproduce on both surfaces
+first.
+
+**12-person limit is enforced but there is no way to pay.** At 12 people a
+13th is refused with a message telling the user to delete someone. There is no
+purchase flow, no ads, no IAP code anywhere in the project. This is a dead end
+for a real user and stays one until the $4.99 unlock exists.
+
+**No monetization code exists at all.** Hard rule 8 in `CLAUDE.md` (nothing
+between opening the app and saving an entry) is currently satisfied by there
+being nothing to show.
+
+---
+
+## 6. Unverified on device
+
+Do not claim these work. They are written and they compile; nobody has watched
+them run on the phone.
+
+- **Due-date reminders firing.** Scheduling is implemented in
+  `src/data/reminders.ts` and wired into the entry screen. Nobody has confirmed
+  a notification actually arrives, or that the permission prompt appears.
+- **Legacy import.** `parseLegacyData` in `src/data/files.ts` reads the old
+  `pagos.html` JSON backup shape. It has never been run against a real old file.
+- **Share PDF** and **Send balance** were built and bundled but have not been
+  watched end-to-end on the device share sheet.
+
+---
+
+## 7. Traps that have already cost hours
+
+These are not theory. Each one was hit in this project.
+
+1. **Editing `package.json` `scripts` changes the iOS fingerprint and silently
+   kills OTA.** `packageJson:scripts` is a fingerprint input. A cosmetic edit to
+   the `start` script changed the runtime version, so an entire update
+   published to a runtime the installed build did not have and never arrived.
+   The phone was not broken and there was no error — the update simply did not
+   apply. `dependencies` are *not* an input (only autolinking is), so adding a
+   JS-only package is safe; touching `scripts` is not.
+
+2. **A stale Metro process on port 8081 serves an old bundle.** `expo start`
+   will refuse the port, print "Skipping dev server", and exit — while the old
+   server keeps answering on 8081. Screenshots then show old code and you can
+   "verify" a fix that never ran. Kill the listener on 8081 and restart with
+   `--clear` before trusting any visual check.
+
+3. **`shadow*` style props are deprecated in react-native-web** and no longer
+   paint reliably; the console warns. Use `boxShadow` on web. This is why
+   `makeShadow()` exists.
+
+4. **`overflow: 'hidden'` clips an element's own shadow** — flush at its border,
+   on *both* platforms (CSS does it; iOS does the same via `clipsToBounds`).
+   This produced hard-edged, boxed shadows that looked like a colour problem.
+   If a shadow looks like a drawn rectangle, check for `overflow: 'hidden'` on
+   the same node before touching any values.
+
+5. **`elevation` is dead code here.** It is Android-only. iOS ignores it and
+   react-native-web lists it in `ignoredProps`. It rides along in `makeShadow`
+   for a possible future Android build and does nothing today. Do not expect it
+   to produce a shadow.
+
+6. **`Alert` is a no-op on react-native-web** — literally
+   `class Alert { static alert() {} }` — and `ActionSheetIOS` does not exist
+   there. In the browser those flows are silently inert. `src/components/
+   dialogs.tsx` / `dialogs.web.tsx` split this: native uses the real OS dialogs,
+   web renders themed in-frame equivalents. Call `showAlert` / `showPrompt` /
+   `showActions`, never `Alert` directly.
+
+7. **React Native's `Modal` portals to the document root on web**, escaping the
+   phone frame entirely — no ancestor can clip it. `Sheet.tsx` /
+   `Sheet.web.tsx` split this: native uses `Modal`, web portals into a host node
+   inside the frame. Use `Sheet`, never `Modal` directly.
+
+8. **`app/+html.tsx` is ignored unless `web.output` is `"static"`.** This
+   project is a default SPA, so a custom HTML shell silently does nothing.
+   Do not fix that by setting `web.output` — the Expo config is a fingerprint
+   input (see trap 1). The frame is a React wrapper instead
+   (`src/components/DeviceFrame.tsx`).
+
+9. **Verify by screenshot, not by reasoning.** Repeatedly, a change was
+   confirmed correct at the source and computed-style level and was still
+   invisible on screen. A `box-shadow` can be present, non-empty, unclipped —
+   and still paint nothing perceptible against a background 1.07:1 away from
+   the card fill. Reading the computed value proves the plumbing; only a
+   screenshot proves the result.
+
+**How to do a visual check** (Playwright is not a dependency; install it
+temporarily and remove it afterwards):
+```
+npm i -D playwright && npx playwright install chromium
+# ... kill anything on 8081, `npx expo start --web --clear`, script the check ...
+npm uninstall playwright && rm -rf "$LOCALAPPDATA/ms-playwright"
+```
+
+---
+
+## 8. Browser preview limitations — not bugs
+
+Do not chase these in the browser; they are native-only capabilities.
+
+- Backup / Restore (file system + document picker)
+- Send balance, Share PDF (native share sheet, `expo-print`)
+- Contacts import
+- Due-date reminders (local notifications)
+- The native date/time picker (`@expo/ui`) renders nothing on web
+- One console warning is expected and is not ours:
+  `[expo-notifications] Listening to push token changes is not yet fully
+  supported on web.`
+
+---
+
+## 9. Verification status
+
+As of HEAD `7fb67f2`:
+
+- `npx tsc --noEmit` — passes
+- `npx expo export --platform ios` — passes
+- `npx expo export --platform web` — passes
+- Fingerprint `142551e9…` — matches the installed build
+- Shadows confirmed visible in both themes by browser screenshot
+- No automated test suite exists
+- No iOS simulator is available (Windows-only machine, no Mac)
