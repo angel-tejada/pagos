@@ -27,11 +27,12 @@ function Framed({ children }: { children: ReactNode }) {
 }
 
 /**
- * The browser preview renders inside an iPhone 16 Pro frame, so the web build
- * is handed the same insets the real device reports. Native reads its own.
+ * The frame already reserves the status bar and home indicator, so the web
+ * build reports no insets of its own. Anything else double-insets and pushes
+ * the header down into a gap. Native reads its real insets.
  */
 const WEB_METRICS: Metrics = {
-  insets: { top: 62, bottom: 21, left: 0, right: 0 },
+  insets: { top: 0, bottom: 0, left: 0, right: 0 },
   frame: { x: 0, y: 0, width: 402, height: 874 },
 };
 
