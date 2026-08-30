@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react';
-import { FlatList, Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { CURRENCY_LIST, type CurrencyEntry } from '../data/currencies';
 import { useLang } from '../i18n';
 import { font, layout, radius, tabular, type, useColors, useStyles, type Palette } from '../theme';
+import { Sheet } from './Sheet';
 import { Button } from './ui';
 
 /** Strips accents so "dolar" finds "Dólar". */
@@ -53,7 +54,7 @@ export function CurrencyPicker({
   };
 
   return (
-    <Modal visible={visible} animationType="slide" onRequestClose={close} presentationStyle="pageSheet">
+    <Sheet visible={visible} onClose={close} presentation="page">
       <SafeAreaView edges={['top', 'bottom']} style={styles.screen}>
         <View style={styles.header}>
           <Text style={styles.title}>{t.chooseCurrency}</Text>
@@ -94,7 +95,7 @@ export function CurrencyPicker({
           <Button label={t.cancel} tone="outline" onPress={close} />
         </View>
       </SafeAreaView>
-    </Modal>
+    </Sheet>
   );
 }
 

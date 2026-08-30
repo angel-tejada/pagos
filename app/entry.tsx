@@ -5,7 +5,6 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
   Keyboard,
-  Modal,
   Platform,
   Pressable,
   ScrollView,
@@ -18,6 +17,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { CurrencyPicker } from '../src/components/CurrencyPicker';
+import { Sheet } from '../src/components/Sheet';
 import { Button, FieldLabel } from '../src/components/ui';
 import { currencySymbol, formatDate, formatMoney, parseAmountToCents } from '../src/data/format';
 import { scheduleDueReminder } from '../src/data/reminders';
@@ -338,7 +338,7 @@ function PersonPicker({
   const exact = people.some((person) => normalizeName(person.name) === normalizeName(trimmed));
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+    <Sheet visible={visible} onClose={onClose}>
       <View style={styles.modalRoot}>
         <Pressable style={styles.backdrop} onPress={onClose} />
         <SafeAreaView edges={['bottom']} style={styles.pickerSheet}>
@@ -383,7 +383,7 @@ function PersonPicker({
           <Button label={t.orFromContacts} tone="outline" onPress={onPhoneBook} />
         </SafeAreaView>
       </View>
-    </Modal>
+    </Sheet>
   );
 }
 

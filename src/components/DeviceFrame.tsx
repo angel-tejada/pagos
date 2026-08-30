@@ -2,6 +2,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 
 import { font, useColors } from '../theme';
+import { OverlayHostContext } from './overlayHost';
 
 /**
  * Browser-only iPhone 16 Pro frame.
@@ -38,6 +39,7 @@ const CONTENT_BOTTOM = HOME_BOTTOM + HOME_H + 8; // 21
 
 export function DeviceFrame({ children }: { children: ReactNode }) {
   const c = useColors();
+  const [overlayHost, setOverlayHost] = useState<unknown>(null);
   const { width, height } = useWindowDimensions();
 
   // Shrink to fit the window; never blow the frame up past life size.
@@ -47,8 +49,19 @@ export function DeviceFrame({ children }: { children: ReactNode }) {
     <View style={styles.page}>
       <View style={[styles.device, { transform: [{ scale }] }]}>
         <View style={[styles.screen, { backgroundColor: c.bg }]}>
-          {/* The app lives between the status bar and the home indicator. */}
-          <View style={styles.content}>{children}</View>
+          <OverlayHostContext.Provider value={overlayHost}>
+            {/* The app lives between the status bar and the home indicator. */}
+            <View style={styles.content}>{children}</View>
+
+            {/* Sheets mount here, so the screen's overflow and radius clip
+                them. Below the chrome: on a real phone the island and home
+                indicator sit above everything. */}
+            <View
+              ref={(node) => setOverlayHost(node)}
+              pointerEvents="box-none"
+              style={styles.overlayHost}
+            />
+          </OverlayHostContext.Provider>
 
           <StatusBar color={c.ink} />
           <View pointerEvents="none" style={styles.island} />
@@ -149,6 +162,15 @@ const styles = StyleSheet.create({
     bottom: CONTENT_BOTTOM,
     left: 0,
     right: 0,
+  },
+
+  overlayHost: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 5,
   },
 
   statusBar: {

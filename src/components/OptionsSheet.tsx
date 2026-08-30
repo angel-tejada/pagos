@@ -1,10 +1,11 @@
-import { Alert, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { pickRestoreFile, shareBackup } from '../data/files';
 import { useData } from '../data/store';
 import { useLang } from '../i18n';
 import { font, layout, radius, shadows, spacing, type, useStyles, useThemeControl, type Palette } from '../theme';
+import { Sheet } from './Sheet';
 import { Button, Segment } from './ui';
 
 export function OptionsSheet({ visible, onClose }: { visible: boolean; onClose: () => void }) {
@@ -38,7 +39,7 @@ export function OptionsSheet({ visible, onClose }: { visible: boolean; onClose: 
   };
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose} statusBarTranslucent>
+    <Sheet visible={visible} onClose={onClose}>
       <View style={styles.modal}>
         <Pressable accessibilityLabel={t.close} style={styles.backdrop} onPress={onClose} />
         {/* Nothing in this sheet ever animates its opacity. A translucent sheet
@@ -85,7 +86,7 @@ export function OptionsSheet({ visible, onClose }: { visible: boolean; onClose: 
           </ScrollView>
         </SafeAreaView>
       </View>
-    </Modal>
+    </Sheet>
   );
 }
 
