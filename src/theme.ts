@@ -42,6 +42,15 @@ export type Palette = {
   sheet: string;
   /** Cards inside the sheet, one layer in front of the sheet. */
   sheetCard: string;
+  /**
+   * A control that used to carry a border and now relies on fill and shadow
+   * alone (the segment tracks, the Backup/Restore group, the Close button).
+   * Equal to `sheetCard` in light, where the shadow already reads clearly
+   * against a bright, uniform ground. Stepped a shade lighter in dark,
+   * where a black shadow is nearly invisible against near-black and the
+   * fill step has to do the separating on its own.
+   */
+  sheetCardRaised: string;
   /** Boundary of a control inside the sheet. Also clears 3:1. */
   sheetLine: string;
   /** Soft separator between rows inside the sheet. */
@@ -74,6 +83,7 @@ export const lightColors: Palette = {
   track: '#E6E4DE',
   sheet: '#F7F6F3',
   sheetCard: '#EFEEEA',
+  sheetCardRaised: '#EFEEEA',
   sheetLine: '#8C8474',
   sheetDivider: '#DCDAD4',
   edge: 'rgba(0,0,0,.06)',
@@ -100,6 +110,7 @@ export const darkColors: Palette = {
   track: '#3A3A3C',
   sheet: '#1A1A1C',
   sheetCard: '#2A2A2D',
+  sheetCardRaised: '#3A3A3E',
   sheetLine: '#787882',
   sheetDivider: '#3E3E42',
   edge: 'rgba(255,255,255,.10)',

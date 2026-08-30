@@ -149,10 +149,12 @@ const makeStyles = (c: Palette) =>
     // cut off this view's own shadow flush at its border — CSS and iOS's
     // clipsToBounds both do that when a shadow and overflow:hidden sit on
     // the same node — which is exactly the hard-edged look being fixed.
+    //
+    // No border either: the shadow (and, in dark mode, the raised fill)
+    // separates this from the sheet behind it. The line between the two
+    // rows inside stays — that divides two rows, it does not outline a box.
     group: {
-      backgroundColor: c.sheetCard,
-      borderWidth: 1,
-      borderColor: c.sheetLine,
+      backgroundColor: c.sheetCardRaised,
       borderRadius: radius.xl,
       marginBottom: spacing.sm,
       ...shadows.raised,

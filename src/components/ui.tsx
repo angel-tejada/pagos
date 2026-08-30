@@ -174,7 +174,9 @@ const makeStyles = (c: Palette) =>
     buttonDebt: { backgroundColor: c.red },
     buttonPayment: { backgroundColor: c.ink },
     buttonOutline: { backgroundColor: c.card, borderWidth: 1, borderColor: c.line },
-    buttonSheet: { backgroundColor: c.sheetCard, borderWidth: 1, borderColor: c.sheetLine, ...shadows.raised },
+    // No border: the shadow (and, in dark mode, the raised fill) separates
+    // this from the sheet behind it.
+    buttonSheet: { backgroundColor: c.sheetCardRaised, ...shadows.raised },
     buttonText: { fontFamily: font.extrabold, fontSize: type.bodyLarge, letterSpacing: -0.18 },
     buttonTextDebt: { color: c.redOn },
     buttonTextPayment: { color: c.inkOn },
@@ -203,12 +205,12 @@ const makeStyles = (c: Palette) =>
       textAlign: 'center',
     },
 
+    // No border on the track: the shadow (and, in dark mode, the raised
+    // fill) separates it from the sheet behind it.
     segment: {
       flexDirection: 'row',
-      backgroundColor: c.sheetCard,
+      backgroundColor: c.sheetCardRaised,
       borderRadius: radius.lg,
-      borderWidth: 1,
-      borderColor: c.sheetLine,
       padding: SEGMENT_PAD,
       ...shadows.raised,
     },
