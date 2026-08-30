@@ -143,12 +143,17 @@ const makeStyles = (c: Palette) =>
     caption: { color: c.ink, fontFamily: font.bold, fontSize: type.caption, letterSpacing: 1.2, marginBottom: 10 },
     segmentWrap: { marginBottom: 24 },
 
+    // No overflow:'hidden' here: the rows inside paint no background of
+    // their own (the group's fill shows through everywhere already), so
+    // nothing needs clipping to the rounded corners. Clipping would also
+    // cut off this view's own shadow flush at its border — CSS and iOS's
+    // clipsToBounds both do that when a shadow and overflow:hidden sit on
+    // the same node — which is exactly the hard-edged look being fixed.
     group: {
       backgroundColor: c.sheetCard,
       borderWidth: 1,
       borderColor: c.sheetLine,
       borderRadius: radius.xl,
-      overflow: 'hidden',
       marginBottom: spacing.sm,
       ...shadows.raised,
     },

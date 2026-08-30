@@ -227,22 +227,29 @@ export const layout = {
 
 /**
  * Outward shadows only. An inset never reads as "selected", and on dark the
- * lightness steps above carry elevation instead.
+ * lightness steps above carry elevation instead (these are barely visible
+ * against pure black, which is expected).
+ *
+ * Soft and diffuse: a small offset with a much larger blur, at low opacity,
+ * so it reads as depth rather than a drawn rectangle. `elevation` is kept
+ * for a possible future Android build, but it is inert today — iOS ignores
+ * it, and react-native-web ignores it too (only the shadow* props above are
+ * read on web, converted straight into a CSS box-shadow).
  */
 export const shadows = {
   raised: {
     shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 16,
-    elevation: 6,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 28,
+    elevation: 3,
   },
   pill: {
     shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.55,
-    shadowRadius: 14,
-    elevation: 8,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.16,
+    shadowRadius: 20,
+    elevation: 4,
   },
 } as const;
 

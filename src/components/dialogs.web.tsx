@@ -215,12 +215,14 @@ const makeStyles = (c: Palette) =>
     destructiveText: { color: c.red },
 
     actionsWrap: { position: 'absolute', left: 8, right: 8, bottom: 8, gap: 8 },
+    // No overflow:'hidden': rows below paint no background of their own,
+    // so nothing needs clipping to the rounded corners, and clipping would
+    // cut this view's own shadow off flush at its border on both platforms.
     actionGroup: {
       backgroundColor: c.sheetCard,
       borderWidth: 1,
       borderColor: c.sheetLine,
       borderRadius: radius.lg,
-      overflow: 'hidden',
       ...shadows.raised,
     },
     actionTitleRow: { paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: c.sheetDivider },

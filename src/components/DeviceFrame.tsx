@@ -43,6 +43,8 @@ export function DeviceFrame({ children }: { children: ReactNode }) {
   const [overlayHost, setOverlayHost] = useState<unknown>(null);
   const { width, height } = useWindowDimensions();
 
+  useEffect(injectFocusRingStyle, []);
+
   // Shrink to fit the window; never blow the frame up past life size.
   const scale = Math.min(1, (width - MARGIN) / DEVICE_W, (height - MARGIN) / DEVICE_H);
 
@@ -134,6 +136,31 @@ function clockLabel(): string {
   const date = new Date();
   const hour = date.getHours() % 12 || 12;
   return `${hour}:${String(date.getMinutes()).padStart(2, '0')}`;
+}
+
+/**
+ * Every RNW Pressable that can take focus renders as a plain
+ * `<div tabindex="0">` (regardless of accessibilityRole), which is why the
+ * gear button showed the browser's default focus rectangle rather than
+ * anything themed. This swaps that default for a visible ring that only
+ * appears for keyboard navigation (:focus-visible), never for a mouse or
+ * touch tap, and leaves real inputs (TextInput) alone.
+ */
+const FOCUS_RING_STYLE_ID = 'pagos-focus-ring';
+
+function injectFocusRingStyle(): void {
+  if (typeof document === 'undefined' || document.getElementById(FOCUS_RING_STYLE_ID)) return;
+  const style = document.createElement('style');
+  style.id = FOCUS_RING_STYLE_ID;
+  style.textContent = `
+    div[tabindex]:focus { outline: none; }
+    div[tabindex]:focus-visible {
+      outline: 2px solid #0A84FF;
+      outline-offset: 2px;
+      border-radius: 8px;
+    }
+  `;
+  document.head.appendChild(style);
 }
 
 const styles = StyleSheet.create({
