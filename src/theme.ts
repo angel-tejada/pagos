@@ -12,6 +12,7 @@
  */
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { Platform, type ViewStyle } from 'react-native';
 
 export type Palette = {
   /** App ground. */
@@ -236,32 +237,44 @@ export const layout = {
   minTapTarget: 44,
 } as const;
 
+type ShadowSpec = { offsetY: number; opacity: number; radius: number; elevation: number };
+
+/**
+ * One set of numbers, two renderings. iOS reads shadowColor/shadowOffset/
+ * shadowOpacity/shadowRadius, which react-native-web now only warns about
+ * ("shadow* style props are deprecated. Use boxShadow.") without reliably
+ * painting anything, so web gets a `boxShadow` string built from the exact
+ * same offsetY/opacity/radius instead. Whichever platform a bundle targets,
+ * only one of the two ever ships — this never sends the web-only key to
+ * native or vice versa.
+ */
+function makeShadow(spec: ShadowSpec): ViewStyle {
+  const { offsetY, opacity, radius, elevation } = spec;
+  return Platform.select<ViewStyle>({
+    web: { boxShadow: `0px ${offsetY}px ${radius}px rgba(0, 0, 0, ${opacity})` },
+    default: {
+      shadowColor: '#000000',
+      shadowOffset: { width: 0, height: offsetY },
+      shadowOpacity: opacity,
+      shadowRadius: radius,
+      elevation,
+    },
+  });
+}
+
 /**
  * Outward shadows only. An inset never reads as "selected", and on dark the
  * lightness steps above carry elevation instead (these are barely visible
  * against pure black, which is expected).
  *
  * Soft and diffuse: a small offset with a much larger blur, at low opacity,
- * so it reads as depth rather than a drawn rectangle. `elevation` is kept
- * for a possible future Android build, but it is inert today — iOS ignores
- * it, and react-native-web ignores it too (only the shadow* props above are
- * read on web, converted straight into a CSS box-shadow).
+ * so it reads as depth rather than a drawn rectangle. `elevation` only ever
+ * matters on Android, which this app does not ship to yet; it rides along
+ * for a possible future build and is inert everywhere today.
  */
 export const shadows = {
-  raised: {
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 28,
-    elevation: 3,
-  },
-  pill: {
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.16,
-    shadowRadius: 20,
-    elevation: 4,
-  },
+  raised: makeShadow({ offsetY: 2, opacity: 0.1, radius: 28, elevation: 3 }),
+  pill: makeShadow({ offsetY: 2, opacity: 0.16, radius: 20, elevation: 4 }),
 } as const;
 
 /** Segment pill slide and theme crossfade, per the approved mockup. */

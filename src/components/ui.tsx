@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import {
   Animated,
   Easing,
+  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -115,7 +116,10 @@ export function Segment<T extends string>({
       toValue: index,
       duration: motion.segmentMs,
       easing: Easing.bezier(...motion.segmentEasing),
-      useNativeDriver: true,
+      // react-native-web has no native driver and warns on every animation
+      // that asks for one; native keeps it, since offloading this transform
+      // to the UI thread is a real benefit there.
+      useNativeDriver: Platform.OS !== 'web',
     }).start();
   }, [index, position]);
 
@@ -134,10 +138,7 @@ export function Segment<T extends string>({
   return (
     <View style={styles.segment} onLayout={onLayout}>
       {cell > 0 ? (
-        <Animated.View
-          pointerEvents="none"
-          style={[styles.segmentPill, { width: cell, transform: [{ translateX }] }]}
-        />
+        <Animated.View style={[styles.segmentPill, { width: cell, transform: [{ translateX }] }]} />
       ) : null}
       {options.map((option) => {
         const active = option.value === value;
@@ -221,6 +222,7 @@ const makeStyles = (c: Palette) =>
       left: SEGMENT_PAD,
       borderRadius: radius.md,
       backgroundColor: c.ink,
+      pointerEvents: 'none',
       ...shadows.pill,
     },
     segmentButton: { flex: 1, minHeight: 52, alignItems: 'center', justifyContent: 'center' },

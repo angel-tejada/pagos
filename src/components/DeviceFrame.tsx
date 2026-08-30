@@ -59,21 +59,17 @@ export function DeviceFrame({ children }: { children: ReactNode }) {
             {/* Sheets mount here, so the screen's overflow and radius clip
                 them. Below the chrome: on a real phone the island and home
                 indicator sit above everything. */}
-            <View
-              ref={(node) => setOverlayHost(node)}
-              pointerEvents="box-none"
-              style={styles.overlayHost}
-            />
+            <View ref={(node) => setOverlayHost(node)} style={styles.overlayHost} />
             {/* Above sheets: an alert raised from inside a sheet must sit
                 on top of it. */}
-            <View pointerEvents="box-none" style={styles.dialogHost}>
+            <View style={styles.dialogHost}>
               <DialogHost />
             </View>
           </OverlayHostContext.Provider>
 
           <StatusBar color={c.ink} />
-          <View pointerEvents="none" style={styles.island} />
-          <View pointerEvents="none" style={[styles.home, { backgroundColor: c.ink }]} />
+          <View style={styles.island} />
+          <View style={[styles.home, { backgroundColor: c.ink }]} />
         </View>
       </View>
     </View>
@@ -94,7 +90,7 @@ function StatusBar({ color }: { color: string }) {
   }, []);
 
   return (
-    <View pointerEvents="none" style={styles.statusBar}>
+    <View style={styles.statusBar}>
       <View style={styles.statusLeft}>
         <Text style={[styles.time, { color }]}>{now}</Text>
       </View>
@@ -204,6 +200,7 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     zIndex: 5,
+    pointerEvents: 'box-none',
   },
 
   dialogHost: {
@@ -213,6 +210,7 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     zIndex: 6,
+    pointerEvents: 'box-none',
   },
 
   statusBar: {
@@ -222,6 +220,7 @@ const styles = StyleSheet.create({
     right: 0,
     height: STATUS_H,
     zIndex: 7,
+    pointerEvents: 'none',
   },
   statusLeft: {
     position: 'absolute',
@@ -259,6 +258,7 @@ const styles = StyleSheet.create({
     borderRadius: ISLAND_H / 2,
     backgroundColor: '#000000',
     zIndex: 8,
+    pointerEvents: 'none',
   },
   home: {
     position: 'absolute',
@@ -269,5 +269,6 @@ const styles = StyleSheet.create({
     borderRadius: HOME_H / 2,
     opacity: 0.85,
     zIndex: 8,
+    pointerEvents: 'none',
   },
 });

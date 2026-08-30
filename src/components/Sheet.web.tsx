@@ -36,7 +36,9 @@ export function Sheet({
       toValue: visible ? 0 : 1,
       duration: visible ? 300 : 220,
       easing: Easing.bezier(0.32, 0.72, 0, 1),
-      useNativeDriver: true,
+      // This file only ever renders on web, which has no native driver and
+      // warns on every animation that asks for one.
+      useNativeDriver: false,
     });
     animation.start(({ finished }) => {
       if (finished && !visible) setMounted(false);
