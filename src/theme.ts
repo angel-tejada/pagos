@@ -273,7 +273,11 @@ export function makeShadow(spec: ShadowSpec): ViewStyle {
  * for a possible future build and is inert everywhere today.
  */
 export const shadows = {
-  raised: makeShadow({ offsetY: 2, opacity: 0.2, radius: 16, elevation: 3 }),
+  /** Mockup: box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35) */
+  raised: makeShadow({ offsetY: 4, opacity: 0.35, radius: 16, elevation: 6 }),
+  /** Mockup: box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.6) — cast upward, so a
+   *  sheet anchored to the bottom edge lifts off the screen behind it. */
+  sheet: makeShadow({ offsetY: -8, opacity: 0.6, radius: 40, elevation: 16 }),
   pill: makeShadow({ offsetY: 2, opacity: 0.16, radius: 20, elevation: 4 }),
 } as const;
 

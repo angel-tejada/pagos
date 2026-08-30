@@ -137,6 +137,7 @@ const makeStyles = (c: Palette) =>
       // A hairline along the top edge separates the sheet from the screen.
       borderTopWidth: 1,
       borderTopColor: c.edge,
+      ...shadows.sheet,
     },
     grabber: { width: 40, height: 5, borderRadius: 3, backgroundColor: c.chip, alignSelf: 'center', marginBottom: spacing.xl },
     title: { color: c.ink, fontFamily: font.extrabold, fontSize: type.sheetTitle, letterSpacing: -0.6, marginBottom: 22 },
