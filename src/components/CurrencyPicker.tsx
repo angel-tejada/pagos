@@ -167,7 +167,7 @@ const makeStyles = (c: Palette) =>
       width: 46,
       height: 34,
       borderRadius: radius.sm,
-      backgroundColor: c.sheetLine,
+      backgroundColor: c.chip,
       alignItems: 'center',
       justifyContent: 'center',
     },

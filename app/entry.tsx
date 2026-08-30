@@ -500,7 +500,7 @@ const makeStyles = (c: Palette) =>
       paddingBottom: 12,
       gap: 12,
     },
-    grabber: { width: 40, height: 5, borderRadius: 3, backgroundColor: c.sheetLine, alignSelf: 'center', marginBottom: 8 },
+    grabber: { width: 40, height: 5, borderRadius: 3, backgroundColor: c.chip, alignSelf: 'center', marginBottom: 8 },
     search: {
       height: 52,
       borderRadius: radius.md,
@@ -521,7 +521,7 @@ const makeStyles = (c: Palette) =>
       paddingVertical: 15,
       paddingHorizontal: 4,
       borderBottomWidth: 1,
-      borderBottomColor: c.sheetLine,
+      borderBottomColor: c.sheetDivider,
     },
     pickSymbol: { width: 34, color: c.mute, fontFamily: font.semibold, fontSize: type.body },
     pickName: { flex: 1, color: c.ink, fontFamily: font.semibold, fontSize: type.body, letterSpacing: -0.17 },

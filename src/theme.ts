@@ -18,8 +18,11 @@ export type Palette = {
   bg: string;
   /** Cards, fields and other raised surfaces on the app ground. */
   card: string;
-  /** Hairlines on cards and fields. */
+  /** Boundary of a card or field. Carries identification, so it clears 3:1
+   *  against both the surface it edges and the ground behind it. */
   line: string;
+  /** Soft separator between rows inside a group. Decorative, not a boundary. */
+  divider: string;
   /** Foreground: primary text, and the fill for neutral solid buttons. */
   ink: string;
   /** Text/glyph colour on top of an `ink` fill. */
@@ -39,8 +42,10 @@ export type Palette = {
   sheet: string;
   /** Cards inside the sheet, one layer in front of the sheet. */
   sheetCard: string;
-  /** Hairlines inside the sheet. */
+  /** Boundary of a control inside the sheet. Also clears 3:1. */
   sheetLine: string;
+  /** Soft separator between rows inside the sheet. */
+  sheetDivider: string;
   /** Hairline along the sheet's top edge. */
   edge: string;
   /** Scrim behind the sheet, so the screen behind clearly recedes. */
@@ -59,7 +64,8 @@ export type Palette = {
 export const lightColors: Palette = {
   bg: '#F7F6F3',
   card: '#EFEEEA',
-  line: '#DCDAD4',
+  line: '#8C8474',
+  divider: '#DCDAD4',
   ink: '#000000',
   inkOn: '#F7F6F3',
   mute: '#6E6C66',
@@ -68,7 +74,8 @@ export const lightColors: Palette = {
   track: '#E6E4DE',
   sheet: '#F7F6F3',
   sheetCard: '#EFEEEA',
-  sheetLine: '#DCDAD4',
+  sheetLine: '#8C8474',
+  sheetDivider: '#DCDAD4',
   edge: 'rgba(0,0,0,.06)',
   scrim: 'rgba(0,0,0,.35)',
   chip: '#DCDAD4',
@@ -81,7 +88,8 @@ export const lightColors: Palette = {
 export const darkColors: Palette = {
   bg: '#000000',
   card: '#1C1C1E',
-  line: '#3A3A3C',
+  line: '#6A6A73',
+  divider: '#3A3A3C',
   ink: '#FFFFFF',
   inkOn: '#000000',
   mute: '#C9C9CE',
@@ -92,7 +100,8 @@ export const darkColors: Palette = {
   track: '#3A3A3C',
   sheet: '#1A1A1C',
   sheetCard: '#2A2A2D',
-  sheetLine: '#3E3E42',
+  sheetLine: '#787882',
+  sheetDivider: '#3E3E42',
   edge: 'rgba(255,255,255,.10)',
   scrim: 'rgba(0,0,0,.7)',
   chip: '#3A3A3C',
