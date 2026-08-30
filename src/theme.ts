@@ -278,7 +278,8 @@ export const shadows = {
   /** Mockup: box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.6) — cast upward, so a
    *  sheet anchored to the bottom edge lifts off the screen behind it. */
   sheet: makeShadow({ offsetY: -8, opacity: 0.6, radius: 40, elevation: 16 }),
-  pill: makeShadow({ offsetY: 2, opacity: 0.16, radius: 20, elevation: 4 }),
+  /** Mockup: box-shadow: 0 4px 14px rgba(0, 0, 0, 0.55) */
+  pill: makeShadow({ offsetY: 4, opacity: 0.55, radius: 14, elevation: 8 }),
 } as const;
 
 /** Segment pill slide and theme crossfade, per the approved mockup. */
