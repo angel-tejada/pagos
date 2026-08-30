@@ -238,7 +238,13 @@ export default function EntryScreen() {
         </ScrollView>
 
         <SafeAreaView edges={['bottom']} style={styles.footer}>
-          <Button label={isPayment ? t.addPayment : t.addDebt} onPress={() => void submit()} />
+          {/* Matches the direction the user came in on, so the colour that
+              started the action is the colour that commits it. */}
+          <Button
+            label={isPayment ? t.addPayment : t.addDebt}
+            tone={isPayment ? 'down' : 'up'}
+            onPress={() => void submit()}
+          />
         </SafeAreaView>
       </KeyboardAvoidingView>
 
