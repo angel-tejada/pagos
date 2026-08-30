@@ -54,11 +54,14 @@ export default function RootLayout() {
   return (
     <ThemeControlProvider value={control}>
       <ThemeContextProvider value={palette}>
-        <Framed>
-          <GestureHandlerRootView style={{ flex: 1, backgroundColor: palette.bg }}>
-            <SafeAreaProvider initialMetrics={Platform.OS === 'web' ? WEB_METRICS : undefined}>
-              <DataProvider>
-                <LangProvider>
+        {/* Data and language sit above the frame: the preview's dialog host
+            lives inside DeviceFrame and reads the active language, so it has
+            to be under LangProvider. */}
+        <DataProvider>
+          <LangProvider>
+            <Framed>
+              <GestureHandlerRootView style={{ flex: 1, backgroundColor: palette.bg }}>
+                <SafeAreaProvider initialMetrics={Platform.OS === 'web' ? WEB_METRICS : undefined}>
                   <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
                   <Stack
                     screenOptions={{
@@ -69,11 +72,11 @@ export default function RootLayout() {
                     <Stack.Screen name="person/[id]" options={{ animation: 'slide_from_right' }} />
                     <Stack.Screen name="entry" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
                   </Stack>
-                </LangProvider>
-              </DataProvider>
-            </SafeAreaProvider>
-          </GestureHandlerRootView>
-        </Framed>
+                </SafeAreaProvider>
+              </GestureHandlerRootView>
+            </Framed>
+          </LangProvider>
+        </DataProvider>
       </ThemeContextProvider>
     </ThemeControlProvider>
   );
