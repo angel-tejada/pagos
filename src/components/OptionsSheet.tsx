@@ -46,7 +46,15 @@ export function OptionsSheet({ visible, onClose }: { visible: boolean; onClose: 
         {/* Nothing in this sheet ever animates its opacity. A translucent sheet
             lets the screen behind show through and reads as broken. */}
         <SafeAreaView edges={['bottom']} style={styles.sheet}>
-          <ScrollView showsVerticalScrollIndicator={false}>
+          {/* The horizontal padding lives on the CONTENT, not on the sheet.
+              An iOS ScrollView clips to its bounds, so when the sheet carried
+              the padding the ScrollView's edges landed exactly on the boxes'
+              edges and sliced every shadow off flush — hard vertical lines
+              down both sides and hard corners. Full-width scroller + padded
+              content gives each shadow `screenPadding` of room inside the
+              clip. The mockup gets this for free: its padding is on the
+              scrolling element itself, and CSS clips at the padding box. */}
+          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
             <View style={styles.grabber} />
             <Text style={styles.title}>{t.options}</Text>
 
@@ -131,7 +139,6 @@ const makeStyles = (c: Palette) =>
       backgroundColor: c.sheet,
       borderTopLeftRadius: radius.sheet,
       borderTopRightRadius: radius.sheet,
-      paddingHorizontal: layout.screenPadding,
       paddingTop: spacing.sm,
       paddingBottom: spacing.xl,
       // A hairline along the top edge separates the sheet from the screen.
@@ -139,6 +146,7 @@ const makeStyles = (c: Palette) =>
       borderTopColor: c.edge,
       ...shadows.sheet,
     },
+    scrollContent: { paddingHorizontal: layout.screenPadding },
     grabber: { width: 40, height: 5, borderRadius: 3, backgroundColor: c.chip, alignSelf: 'center', marginBottom: spacing.xl },
     title: { color: c.ink, fontFamily: font.extrabold, fontSize: type.sheetTitle, letterSpacing: -0.6, marginBottom: 22 },
     caption: { color: c.ink, fontFamily: font.bold, fontSize: type.caption, letterSpacing: 1.2, marginBottom: 10 },
