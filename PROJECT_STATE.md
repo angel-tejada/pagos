@@ -208,17 +208,44 @@ the `StatusBar` style and the date-picker's `themeVariant` (`entry.tsx`,
 unrelated screen). So a layout-code cause for the ORIGINAL report, if one
 exists independent of the reverted fix, has not been located.
 
+**Confirmed the revert alone did NOT fix it** — user reports the jump still
+happens identically after `contentInsetAdjustmentBehavior` was reverted. So
+the original bug is real and independent of that prop.
+
+**Second candidate applied, with an on-screen numeric fallback this time.**
+The selected segment label switches font weight (`font.semibold` →
+`font.extrabold`) on every tap, with no `numberOfLines` set. CoreText renders
+Inter's extrabold measurably wider than semibold for the same string — a
+real divergence already documented in section 8, and the likely reason this
+never reproduced in the browser preview. If the bold width ever exceeds the
+button on a real device, an unclamped `Text` wraps to a second line, growing
+that segment row's height and pushing everything below it down — on every
+tap that selects a wider word, in either segment. Clamped with
+`numberOfLines={1}` + `adjustsFontSizeToFit` in `ui.tsx`'s `Segment`.
+
+**Not claimed as confirmed** — two fixes have already failed today. A
+TEMPORARY on-screen debug line was added in `OptionsSheet.tsx` (red text,
+"DEBUG lang=NN appearance=NN") showing each segment row's measured height
+live. If the numberOfLines fix is wrong, those numbers will visibly change
+between taps — direct proof instead of another screenshot round. Delete the
+whole diagnostic block (marked in both files) once the cause is confirmed.
+
 **Exact next action:** the phone is **NOT attached** (`/json/list` returns
-`[]`) as of the last check — this has burned multiple rounds today, check
-before asking the user to look at anything. Once attached, get a **fresh,
-isolated retest** now that the bad fix is reverted: reload the app, open
-Options, tap a segment, report whether the jump still happens at all. If it
-does, this is back to an open bug with no located cause — next step is
-getting the user to send a short screen recording (words and even paired
-screenshots have not been enough to pin down the exact mechanism twice now),
-or adding an on-screen debug readout of the sheet's measured layout that
-updates on each tap, so the numbers can be compared directly instead of
-descriptions.
+`[]`) — check before asking the user to look at anything, this has burned
+many rounds today. Once attached: reload, open Options, note the two DEBUG
+numbers, tap a segment, check whether either DEBUG number changed AND whether
+the visible jump still happens.
+- **Jump gone, numbers stable** → confirmed fixed. Remove the debug overlay
+  and ship.
+- **Jump gone, numbers already stable before the tap too** → inconclusive,
+  the fix may have coincidentally helped; leave the debug overlay in one more
+  round if there's any doubt.
+- **Jump persists AND a DEBUG number visibly changes** → that number
+  identifies exactly which row is growing; work from there, not from another
+  guess.
+- **Jump persists, DEBUG numbers do NOT change** → the row heights are not
+  the mechanism at all; the cause is elsewhere (sheet-level, not segment-level)
+  and this fix should be reverted along with the debug overlay.
 
 Still open: four pieces of New Entry / shadow work sit in published OTAs with
 no explicit user confirmation. Nothing from this session's diagnostics is
