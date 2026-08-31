@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -27,18 +26,21 @@ export function OptionsSheet({ visible, onClose }: { visible: boolean; onClose: 
    * (state, handlers, and the <Text> that renders it) once the cause is
    * confirmed.
    */
-  const [debugHeights, setDebugHeights] = useState({ lang: 0, appearance: 0 });
-  // Guarded: a layout event replayed across a Fast Refresh reload arrived
-  // with a null nativeEvent and crashed the whole screen on device. This
-  // scratch diagnostic is not worth chasing that down for — bail out safely.
-  const onLangLayout = (e: LayoutChangeEvent) => {
-    const height = e?.nativeEvent?.layout?.height;
-    if (height != null) setDebugHeights((d) => ({ ...d, lang: Math.round(height) }));
+  // TEMPORARY diagnostic for the "sheet jumps on segment tap" report.
+  // console.log instead of on-screen text: it lands directly in the Metro
+  // terminal the user is already pasting to report bugs, instead of relying
+  // on them to read small red text on their phone while simultaneously
+  // watching for a jump. Guarded against a null nativeEvent — a layout event
+  // replayed across a Fast Refresh reload crashed the whole screen without
+  // this guard.
+  const logLayout = (label: string) => (e: LayoutChangeEvent) => {
+    const l = e?.nativeEvent?.layout;
+    if (l == null) return;
+    console.log(`[DEBUG ${label}] x=${Math.round(l.x)} y=${Math.round(l.y)} w=${Math.round(l.width)} h=${Math.round(l.height)}`);
   };
-  const onAppearanceLayout = (e: LayoutChangeEvent) => {
-    const height = e?.nativeEvent?.layout?.height;
-    if (height != null) setDebugHeights((d) => ({ ...d, appearance: Math.round(height) }));
-  };
+  const onSheetLayout = logLayout('sheet');
+  const onLangLayout = logLayout('langRow');
+  const onAppearanceLayout = logLayout('appearanceRow');
 
   const runBackup = () => {
     void shareBackup(data).then(markBackupComplete).catch(() => showAlert(t.backupFailed));
@@ -70,7 +72,7 @@ export function OptionsSheet({ visible, onClose }: { visible: boolean; onClose: 
         <Pressable accessibilityLabel={t.close} style={styles.backdrop} onPress={onClose} />
         {/* Nothing in this sheet ever animates its opacity. A translucent sheet
             lets the screen behind show through and reads as broken. */}
-        <SafeAreaView edges={['bottom']} style={styles.sheet}>
+        <SafeAreaView edges={['bottom']} style={styles.sheet} onLayout={onSheetLayout}>
           {/* The horizontal padding lives on the CONTENT, not on the sheet.
               An iOS ScrollView clips to its bounds, so when the sheet carried
               the padding the ScrollView's edges landed exactly on the boxes'
@@ -94,10 +96,6 @@ export function OptionsSheet({ visible, onClose }: { visible: boolean; onClose: 
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
             <View style={styles.grabber} />
             <Text style={styles.title}>{t.options}</Text>
-
-            <Text style={styles.debugText}>
-              DEBUG lang={debugHeights.lang} appearance={debugHeights.appearance}
-            </Text>
 
             <Text style={styles.caption}>{t.language}</Text>
             <View style={styles.segmentWrap} onLayout={onLangLayout}>
@@ -226,8 +224,6 @@ const makeStyles = (c: Palette) =>
     rowTitle: { color: c.ink, fontFamily: font.bold, fontSize: type.body, letterSpacing: -0.17 },
     rowDetail: { color: c.mute, fontFamily: font.regular, fontSize: type.label, marginTop: 2 },
     chevron: { color: c.mute, fontSize: 22, fontFamily: font.regular },
-    // TEMPORARY, see the diagnostic comment near the top of this file.
-    debugText: { color: '#FF0000', fontFamily: font.bold, fontSize: 13, marginBottom: 8 },
 
     pressed: { opacity: 0.7 },
   });
