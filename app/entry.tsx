@@ -187,6 +187,9 @@ export default function EntryScreen() {
           <FieldLabel>{t.amount}</FieldLabel>
           <View style={styles.amountRow}>
             <TextInput
+              /* The only reason this screen exists is to take an amount, so the
+               * keypad is up on arrival rather than one tap away. */
+              autoFocus
               value={amount}
               onChangeText={setAmount}
               keyboardType="decimal-pad"
@@ -408,6 +411,11 @@ const makeStyles = (c: Palette) =>
     amountRow: { flexDirection: 'row', gap: 12, marginBottom: 30 },
     amountInput: {
       flex: 1,
+      /* CSS gives a flex item `min-width: auto`, so on web the <input> refuses
+       * to shrink below its intrinsic ~20-character width and shoves the
+       * currency button off the screen entirely. Yoga has no such rule, so this
+       * is inert on iOS. See trap 10. */
+      minWidth: 0,
       height: layout.controlHeight,
       borderWidth: 1,
       borderColor: c.line,
@@ -421,6 +429,7 @@ const makeStyles = (c: Palette) =>
     },
     amountEmpty: { fontFamily: font.bold },
     currency: {
+      flexShrink: 0,
       height: layout.controlHeight,
       flexDirection: 'row',
       alignItems: 'center',

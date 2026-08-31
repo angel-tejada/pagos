@@ -4,7 +4,9 @@
 It is the handoff snapshot between sessions. It is not a diary: replace stale
 statements rather than appending to them.
 
-Last updated: 2026-08-31 · HEAD `7fb67f2` · branch `main` · worktree clean
+Last updated: 2026-08-30 · HEAD `752fca8` · branch `main` · worktree has three
+uncommitted files (`app/entry.tsx`, `src/components/DeviceFrame.tsx`,
+`src/components/Sheet.web.tsx`) — the New Entry fixes below, not yet committed.
 
 ---
 
@@ -12,13 +14,19 @@ Last updated: 2026-08-31 · HEAD `7fb67f2` · branch `main` · worktree clean
 
 The app runs on a real iPhone and in a browser preview. The v1 feature list in
 `CLAUDE.md` is largely implemented. The current work is a **design pass
-converging the app onto the approved mockup**, and the immediate blocker is the
-New Entry screen (section 5).
+converging the app onto the approved mockup**.
 
-**Exact next action:** diagnose the New Entry screen. The user reports the
-currency button missing, the person picker and due-date picker dead, and no
-keypad. None of that has been diagnosed yet — see section 5 for what is known
-and what is only suspected.
+The four New Entry reports have been diagnosed and the two real defects are
+fixed — see section 5. One of the four (the missing keypad) was resolved by an
+interpretation, not by evidence, and needs the user to confirm it.
+
+**Exact next action:** publish an OTA to `preview` and check New Entry on the
+phone. Confirm (a) the currency button is on screen next to the amount, (b) the
+numeric keypad is now up the moment New Entry opens — this is the change made
+on interpretation, and if the user actually wanted the mockup's *drawn* keypad
+rather than the native one, that is a separate decision to take, and (c) the
+due-date picker, which renders nothing on web by design, is alive on device.
+The fingerprint still matches the installed build, so an OTA will arrive.
 
 ---
 
@@ -172,25 +180,50 @@ downloads in the background, so the user must close and reopen **twice**.
 
 ## 5. Broken / open
 
-**New Entry screen — reported by the user, not yet diagnosed.** This is the
-next task.
+**New Entry screen — diagnosed and fixed in the browser; unconfirmed on
+device.** The four reports were not four bugs. Reproduced in Chromium against a
+cleared Metro cache, and each one checked by screenshot:
 
-- Currency button reported missing. **The control does exist in source**
-  (`app/entry.tsx`, the `styles.currency` Pressable next to the amount input),
-  so this is a rendering or layout problem, not missing code.
-- Person picker reported dead.
-- Due-date picker reported dead. **Partly expected in the browser**:
-  `@expo/ui/community/datetime-picker` is a native component and renders
-  nothing on web. Whether it is also dead on device is unknown.
-- No keypad. Worth noting the mockup drew an on-screen keypad; this app
-  deliberately uses the native iOS numeric keyboard instead. In a browser there
-  is no on-screen keypad at all — you type with the physical keyboard. This may
-  be a misunderstanding rather than a bug, but it has not been confirmed either
-  way.
+1. **Currency button missing — real, fixed.** The `styles.currency` Pressable
+   was rendering, but off screen. `amountRow` is a flex row and the amount
+   `TextInput` is `flex: 1`; on web that becomes an `<input>`, and CSS gives a
+   flex item `min-width: auto`, so it refused to shrink below its intrinsic
+   ~20-character width. Measured: a 362px row containing a 413px input, with
+   the currency button starting at x=884 against a row that ends at x=821.
+   Fixed with `minWidth: 0` on the input and `flexShrink: 0` on the button —
+   both inert on iOS, where Yoga has no automatic-minimum-size rule. See trap
+   10.
+2. **Person picker dead — not reproducible; it works.** Opening it, typing a
+   name, creating that person and having it land back on the field all work in
+   the preview. No change made.
+3. **Due-date picker dead — expected, not a bug.** The switch works and the row
+   label updates to the date. `@expo/ui/community/datetime-picker` is native,
+   so on web its container renders at height 0 and there is nothing to drag.
+   Section 8. Still unconfirmed on device.
+4. **No keypad — interpretation, not a diagnosis.** A browser has no on-screen
+   keypad; you type with the physical keyboard, and `keyboardType="decimal-pad"`
+   does reach the DOM correctly (`inputmode="decimal"`). On device the real
+   cause was that nothing was focused on arrival, so the keypad only appeared
+   after a tap. The amount field is now `autoFocus`, so the keypad is up
+   immediately. **This is a guess at what the user meant.** The mockup drew its
+   own keypad; this app deliberately uses the native iOS one instead, so a
+   drawn keypad would be a design reversal and was not built. Confirm with the
+   user.
 
-Do not assume these are four separate bugs, and do not assume they are all real
-app bugs rather than browser-preview artefacts. Reproduce on both surfaces
-first.
+**Also fixed, revealed by fix 1:** the currency picker's title rendered under
+the Dynamic Island in the preview. The web `Sheet` mounts into `DeviceFrame`'s
+overlay host, which is deliberately full-screen so a scrim can cover the
+chrome — but that means a `presentation="page"` sheet was measuring its `top`
+from the top of the glass, not from below the status bar. It now offsets by the
+frame's chrome (`PREVIEW_CHROME`, exported from `DeviceFrame.tsx`). Preview
+only: on device a `pageSheet` Modal is already inset and reports real safe-area
+insets.
+
+Known and deliberately left alone: bottom-anchored overlay sheets (the person
+picker) sit flush against the frame's bottom edge in the preview, because web
+safe-area insets are zeroed by design (`WEB_METRICS` in `app/_layout.tsx`) and
+the overlay host must stay full-screen. On device the sheet's own
+`SafeAreaView edges={['bottom']}` handles it. Cosmetic, preview only.
 
 **12-person limit is enforced but there is no way to pay.** At 12 people a
 13th is refused with a message telling the user to delete someone. There is no
@@ -276,13 +309,34 @@ These are not theory. Each one was hit in this project.
    the card fill. Reading the computed value proves the plumbing; only a
    screenshot proves the result.
 
-**How to do a visual check** (Playwright is not a dependency; install it
-temporarily and remove it afterwards):
+10. **On web, a `flex: 1` child will not shrink below its own content.** CSS
+    gives every flex item `min-width: auto`; Yoga does not implement that rule,
+    so a row that lays out correctly on iOS can overflow and push a sibling
+    clean off the screen on web. This is what hid the currency button on New
+    Entry for an entire session. It is invisible in a diff and invisible in the
+    source — the element is present, styled and mounted, it is just at
+    x=884 on an x=821 row. **Any `flex: 1` `TextInput` in a row needs
+    `minWidth: 0`.** Measure `getBoundingClientRect()` on the row and its
+    children before concluding an element "is not rendering".
+
+**How to do a visual check.** Playwright is not a project dependency and must
+not become one — install it in the scratchpad, *outside* the repo, so
+`package.json` and `package-lock.json` are never touched (see trap 1 for why
+edits there are dangerous), and delete it afterwards:
 ```
-npm i -D playwright && npx playwright install chromium
+mkdir -p "$SCRATCH/pw" && cd "$SCRATCH/pw" && npm init -y && npm i playwright
+npx playwright install chromium
 # ... kill anything on 8081, `npx expo start --web --clear`, script the check ...
-npm uninstall playwright && rm -rf "$LOCALAPPDATA/ms-playwright"
+rm -rf "$SCRATCH/pw/node_modules" "$LOCALAPPDATA/ms-playwright"
 ```
+
+**Editing source with a script? Preserve the line endings.** The TypeScript
+sources are CRLF on disk; this file is LF. Python's `open()` in text mode
+converts CRLF to bare LF on read and writes it back that way, silently
+rewriting every line ending in the file. `core.autocrlf` is `true`, so git
+normalises it away and the diff still looks clean — but the working tree is
+then inconsistent with every file you did not touch. Read and write
+`'rb'`/`'wb'`, or detect the ending and restore it afterwards.
 
 ---
 
@@ -303,12 +357,19 @@ Do not chase these in the browser; they are native-only capabilities.
 
 ## 9. Verification status
 
-As of HEAD `7fb67f2`:
+As of HEAD `752fca8` plus the three uncommitted New Entry files:
 
 - `npx tsc --noEmit` — passes
 - `npx expo export --platform ios` — passes
 - `npx expo export --platform web` — passes
-- Fingerprint `142551e9…` — matches the installed build
+- Fingerprint — re-generated after the change and still
+  `142551e9e769e7f380858105207a96ada4f12e46`, so it matches the installed
+  build and an OTA will reach the phone
 - Shadows confirmed visible in both themes by browser screenshot
+- New Entry confirmed by browser screenshot: currency button on screen, its
+  picker opens clear of the island, USD → MXN round-trips back to the amount
+  row with the typed amount intact, person picker creates and selects a person,
+  due-date switch flips the row to the date
+- **Nothing in this session was checked on the device.** No OTA was published.
 - No automated test suite exists
 - No iOS simulator is available (Windows-only machine, no Mac)

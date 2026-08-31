@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { Animated, Easing, StyleSheet, View } from 'react-native';
 
+import { PREVIEW_CHROME } from './DeviceFrame';
 import { useOverlayHost } from './overlayHost';
 
 /**
@@ -62,5 +63,13 @@ export function Sheet({
 const styles = StyleSheet.create({
   overlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
   // Mirrors iOS pageSheet, which leaves the screen visible behind the top.
-  page: { top: 24, borderTopLeftRadius: 12, borderTopRightRadius: 12, overflow: 'hidden' },
+  // Measured from below the frame's chrome, not from the top of the glass, so
+  // the sheet's own header clears the status bar and the island.
+  page: {
+    top: PREVIEW_CHROME.top + 12,
+    bottom: PREVIEW_CHROME.bottom,
+    borderTopLeftRadius: 12,
+    borderTopRightRadius: 12,
+    overflow: 'hidden',
+  },
 });

@@ -38,6 +38,16 @@ const HOME_BOTTOM = 8;
 /** Matches the frame's `.content` bottom: home inset plus its own clearance. */
 const CONTENT_BOTTOM = HOME_BOTTOM + HOME_H + 8; // 21
 
+/**
+ * What the frame reserves for its own chrome. `content` already sits inside
+ * this, but the overlay host deliberately does not — a scrim has to cover the
+ * whole screen, exactly as `statusBarTranslucent` does on the device. So a
+ * full-height sheet mounted in that host has to clear the chrome itself, or
+ * its title lands under the Dynamic Island. Native needs none of this: a
+ * pageSheet Modal is already inset and reports real safe-area insets.
+ */
+export const PREVIEW_CHROME = { top: STATUS_H, bottom: CONTENT_BOTTOM } as const;
+
 export function DeviceFrame({ children }: { children: ReactNode }) {
   const c = useColors();
   const [overlayHost, setOverlayHost] = useState<unknown>(null);
