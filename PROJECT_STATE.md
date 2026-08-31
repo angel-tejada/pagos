@@ -63,9 +63,11 @@ confirm the user actually sees the pill's hard edge gone. If the section group
 still shows a rectangle, run the A/B described in the Shadows subsection
 (strip `raised` entirely, look, restore) rather than adjusting its value; no
 source-level cause for the group has been found and guessing has already cost
-three rounds. Note this change is dev-only so far — **it has not been
-committed or shipped as an OTA**, so the `preview` build the user normally
-runs still has the two-shadow pill. Separately, the shadow rewrite is still sitting in an
+three rounds. The pill fix is committed (`45c0d43`) but
+**deliberately not shipped as an OTA yet** — the dev client shows it
+instantly, and holding off avoids adding a fourth unconfirmed OTA while the
+group is still open. OTA it once the user confirms. Until then the `preview`
+build the user normally runs still has the two-shadow pill. Separately, the shadow rewrite is still sitting in an
 OTA (group `95b1d47f-8be6-4082-9277-0776b26e91a9`) with no user confirmation
 on file — ideally checked against `pagos-current.html` opened directly in a
 browser, since that's now an actual available reference. **Four** separate
