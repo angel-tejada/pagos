@@ -4,7 +4,7 @@
 It is the handoff snapshot between sessions. It is not a diary: replace stale
 statements rather than appending to them.
 
-Last updated: 2026-08-30 · HEAD `PENDING` on `main`, pushed to `origin` ·
+Last updated: 2026-08-30 · HEAD `7420627` on `main`, pushed to `origin` ·
 worktree clean.
 
 ---
@@ -51,16 +51,16 @@ PROJECT_STATE entry ever justified `.35`, so it was an oversight, and a
 plausible real contributor — a shadow has to cover a much bigger brightness
 jump against a barely-dimmed background than against a properly-dimmed one.
 
-**Exact next action:** commit, push, and OTA the shadow rewrite (`boxShadow`
-everywhere, mockup-literal `raised`/`sheet`/`pill` values, corrected light
-scrim), then get the user to confirm it on the phone against
-`pagos-current.html` rendered in an actual browser — which is now possible
-and should be the actual reference, not a description of a reference.
-**Four** separate pieces of New Entry/shadow work are now sitting in OTAs
-with no explicit "yes this is right" from the user on file: the currency
-button fix, and three rounds of shadow changes. Treat every one as open until
-the user says so. After that, the next item is the dead end in section 5 —
-the 12-person limit with no way to pay.
+**Exact next action:** the shadow rewrite is published as an OTA (group
+`95b1d47f-8be6-4082-9277-0776b26e91a9`) at the matching runtime. Get the user
+to confirm it on the phone — ideally against `pagos-current.html` opened
+directly in a browser on some device, since that is now an actual available
+reference, not a description of one. **Four** separate pieces of New
+Entry/shadow work are sitting in OTAs with no explicit "yes this is right"
+from the user on file: the currency button fix, and three rounds of shadow
+changes. Treat every one as open until the user says so. After that, the
+next item is the dead end in section 5 — the 12-person limit with no way
+to pay.
 
 ---
 
@@ -237,8 +237,9 @@ reads as "pressed", not "on". No checkmarks.
 | Its runtime | `142551e9e769e7f380858105207a96ada4f12e46` |
 | Channel → branch | `preview` → `preview` |
 | Dev-client build | `61bede33-2d9a-4575-abd9-2dfc9745ca04` (may not be installed) |
-| Latest OTA | group `655672b6-0994-4126-8245-277c7858195b`, iOS update `01a0555d-bdfc-7d78-8ea2-9497236e0c91`, from commit `caddd77` (raised/pill shadow fix) |
-| Prior OTA | group `87fb7401-2959-44fb-8890-c4b12cdd69c0`, from commit `d6eaaf6` (sheet shadow fix) |
+| Latest OTA | group `95b1d47f-8be6-4082-9277-0776b26e91a9`, iOS update `01a05570-f6a9-70f6-9770-af67c9e959b4`, from commit `7420627` (boxShadow rewrite, mockup-literal values, scrim fix) |
+| Prior OTA | group `655672b6-0994-4126-8245-277c7858195b`, from commit `caddd77` (raised/pill opacity retune — superseded, values reverted) |
+| Prior OTA | group `87fb7401-2959-44fb-8890-c4b12cdd69c0`, from commit `d6eaaf6` (sheet shadow fix — superseded, values reverted) |
 | Prior OTA | group `d3cd8a9c-4eee-4b59-9817-44fe8038a8da`, from commit `984316f` (New Entry fix) |
 
 **Publish an OTA:**
@@ -607,7 +608,7 @@ the rest is an honest map of what a browser screenshot can and cannot tell you.
 
 ## 9. Verification status
 
-As of the commit pending push on top of `caddd77` on `main`:
+As of HEAD `7420627` on `main`, pushed to `origin`:
 
 - `npx tsc --noEmit` — passes
 - `npx expo export --platform ios` — passes
