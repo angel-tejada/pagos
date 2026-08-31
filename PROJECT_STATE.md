@@ -4,9 +4,9 @@
 It is the handoff snapshot between sessions. It is not a diary: replace stale
 statements rather than appending to them.
 
-Last updated: 2026-08-30 · HEAD `83b6600` on `main`, pushed to `origin` ·
-worktree has two uncommitted files (`src/components/DeviceFrame.tsx`,
-`app/entry.tsx`) plus this file — a preview-fidelity audit, see section 8.
+Last updated: 2026-08-30 · HEAD `31fcc7c` on `main`, pushed to `origin` ·
+worktree has one uncommitted file (`src/theme.ts`, the `raised`/`pill` shadow
+correction below) plus this file.
 
 ---
 
@@ -36,13 +36,25 @@ see section 8, rewritten from a 6-line "these are native-only" list into a
 verified, evidence-backed map. Found and fixed two more real gaps in the
 process (bottom safe-area inset off by 13px; the `Switch` control rendering
 at roughly half its real iOS size) — both preview-only, zero behavior change
-on iOS, so no OTA is needed for them.
+on iOS, so no OTA is needed for them. Committed and pushed as `31fcc7c`.
 
-**Exact next action:** commit and push the two fidelity fixes plus this file.
-Separately, the shadow-fix OTA (group `87fb7401-2959-44fb-8890-c4b12cdd69c0`)
-is still unconfirmed on the phone — get the user to check it against their
-reference. After that, the next open item is the dead end in section 5 — the
-12-person limit with no way to pay.
+The user then checked the shadow-fix OTA on the phone and reported the
+Options sheet's **segment pills and section boxes** (`shadows.pill` and
+`shadows.raised`) as solid dark rectangles, not shadows — too much opacity
+relative to too little blur, a different failure mode from `sheet`'s
+offset/blur-ratio bug but the same symptom. The user supplied corrected
+values from on-device observation and instructed explicitly not to soften
+them back up based on how they look anywhere but the phone. Applied verbatim
+— see the Shadows subsection under section 3. The user did not report on
+`sheet` itself either way in this round; treat it as still only browser-
+verified, not confirmed fixed on device, until said otherwise.
+
+**Exact next action:** commit, push, and publish an OTA for the `raised`/
+`pill` correction, then get the user to confirm on the phone. At that point
+three separate pieces of New Entry / shadow work will all be sitting in
+OTAs the user hasn't explicitly confirmed as correct — treat each as open
+until they say so, not as done because it shipped. After that, the next open
+item is the dead end in section 5 — the 12-person limit with no way to pay.
 
 ---
 
@@ -137,9 +149,9 @@ just corrected.**
 
 | Token | Value | Applied to |
 |---|---|---|
-| `raised` | `0 4px 16px rgba(0,0,0,0.35)` | segment tracks, Backup/Restore group, Close button |
+| `raised` | `0 2px 14px rgba(0,0,0,0.12)` | segment tracks, Backup/Restore group, Close button |
 | `sheet` | `0 -24px 60px rgba(0,0,0,0.6)` | the Options sheet (negative Y — casts upward) |
-| `pill` | `0 4px 14px rgba(0,0,0,0.55)` | the selected segment pill |
+| `pill` | `0 2px 12px rgba(0,0,0,0.18)` | the selected segment pill |
 
 `sheet` was `0 -8px 40px .6` and looked like a hard-edged box on the real
 device despite having real blur — not a clipping bug (verified: the node is
@@ -150,10 +162,25 @@ at the object's own edge, so the strip that most needed to look "grounded"
 instead looked like the shadow just stopped. Raising the offset to a real
 fraction of the blur radius (24 of 60) fixed it — confirmed by sampling actual
 rendered pixel values in the browser preview at several y-coordinates, not
-by re-checking the arithmetic. See trap 11. `raised` and `pill` were not
-touched: no complaint exists against them and they render fine in both themes
-in the current screenshots, so per section on unverified changes, leave
-settled values alone without a reason.
+by re-checking the arithmetic. See trap 11.
+
+`raised` and `pill` were left alone at that point (values `0 4px 16px .35` and
+`0 4px 14px .55`) because nothing complained about them and they rendered fine
+in browser screenshots. **The user then reported, on the real device, that
+both looked like solid dark rectangles** — a different failure mode from
+`sheet`'s: not an offset/blur ratio problem, just too much opacity relative to
+too little blur, so the mostly-unblurred core read as an opaque block. The
+user supplied the corrected values directly from on-device observation, which
+is the highest-confidence source available (better than anything a browser
+screenshot could confirm — see section 8's caveat that CSS/iOS shadow
+blur equivalence is an inference, not a proven identity). Applied verbatim,
+verified only that `makeShadow()` translates them losslessly to
+`shadowOffset:{height:2}, shadowOpacity, shadowRadius` on iOS — no browser
+screenshot taken for these, deliberately, on the user's explicit instruction
+not to judge them by how they look in this environment.
+**Do not soften/retune `raised` or `pill` upward because a browser render
+looks weak. Weak is correct here. Get on-device confirmation before touching
+either again.**
 
 Built by `makeShadow()`, which emits **`boxShadow` on web and `shadow*` on
 iOS from one set of numbers**, so the two cannot drift apart. See trap 3.
@@ -531,34 +558,42 @@ the rest is an honest map of what a browser screenshot can and cannot tell you.
 
 ## 9. Verification status
 
-As of the pending commit on top of `83b6600` on `main`:
+As of the pending commit on top of `31fcc7c` on `main`:
 
 - `npx tsc --noEmit` — passes
 - `npx expo export --platform ios` — passes
 - `npx expo export --platform web` — passes
-- The two fidelity fixes (safe-area inset, Switch size) touch only
-  `DeviceFrame.tsx` (web-only file) and one `Platform.OS === 'web'`-gated
-  style line in `entry.tsx` — zero behavior change on iOS by construction, so
-  no fingerprint check or OTA is needed for them.
+- Fingerprint re-checked immediately before this OTA, still
+  `142551e9e769e7f380858105207a96ada4f12e46` — matches the installed build
+- `makeShadow()`'s translation checked by reading the function directly: the
+  new `raised`/`pill` values (`offsetY:2, opacity:.12/.18, radius:14/12`)
+  become `shadowOffset:{height:2}`, `shadowOpacity`, `shadowRadius` on iOS
+  with no lossy step in between. Not re-verified by browser screenshot —
+  deliberately, on the user's explicit instruction, since they are the one
+  checking on-device and a browser render of a value tuned to look "weak" is
+  not useful evidence either way.
+- The two fidelity fixes from the prior commit (safe-area inset, Switch size)
+  touch only `DeviceFrame.tsx` (web-only) and one `Platform.OS === 'web'`-
+  gated style line in `entry.tsx` — zero behavior change on iOS by
+  construction, so they needed no fingerprint check or OTA.
 - New Entry confirmed by browser screenshot: currency button on screen, its
   picker opens clear of the island, USD → MXN round-trips back to the amount
   row with the typed amount intact, person picker creates and selects a
   person, due-date switch flips the row to the date
-- Options sheet shadow confirmed by browser screenshot AND by sampling actual
-  rendered pixel color values along a vertical strip above the sheet, in both
-  themes — this is a stronger check than the screenshot-only verification
-  used earlier in this file, and should be the bar for any future shadow work
 - Section 8's fidelity claims are backed by: reading react-native-web's own
   source for `Switch` and the ellipsis/`fontVariant` CSS translation,
   confirming the real iPhone 16 Pro's safe-area figures against an external
   source, and measuring real DOM rects for a 51-character name on three
   screens. Not verified: whether Core Animation's shadow blur is pixel-
-  identical to Chromium's at the specific radius now in use — flagged
-  explicitly in section 8 as an inference, not a proven identity.
-- **Two OTAs are published (New Entry, Options sheet shadow) and neither has
-  been confirmed on the device.** The app uses its cached bundle on launch and
-  downloads in the background, so each takes two close-and-reopen cycles to
-  appear. Nothing in this file about New Entry or the Options sheet shadow
-  should be treated as done until the user has actually looked at the phone.
+  identical to Chromium's at any given radius — flagged explicitly in
+  section 8 as an inference, not a proven identity. This round's `raised`/
+  `pill` bug (device: solid rectangle; browser screenshot: looked fine two
+  turns ago) is a concrete instance of that gap actually mattering.
+- **Three shadow/New-Entry OTAs are now published and none has an explicit
+  user confirmation of "this is correct" on file** — the New Entry currency
+  fix, the `sheet` shadow fix, and this `raised`/`pill` fix. The app uses its
+  cached bundle on launch and downloads in the background, so each takes two
+  close-and-reopen cycles to appear. Treat every one of these as open until
+  the user says so, not as done because it shipped.
 - No automated test suite exists
 - No iOS simulator is available (Windows-only machine, no Mac)

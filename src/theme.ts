@@ -273,8 +273,17 @@ export function makeShadow(spec: ShadowSpec): ViewStyle {
  * for a possible future build and is inert everywhere today.
  */
 export const shadows = {
-  /** Mockup: box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35) */
-  raised: makeShadow({ offsetY: 4, opacity: 0.35, radius: 16, elevation: 6 }),
+  /**
+   * User-specified after seeing it on a real iPhone as a solid dark
+   * rectangle, not a shadow: `0 4px 16px .35` was too dark and too tight —
+   * enough opacity that the mostly-unblurred core read as an opaque block
+   * with a visible straight edge, the same failure mode as `sheet` before it
+   * was fixed, just via high opacity this time instead of a bad offset/blur
+   * ratio. Corrected value came from the user, verified on device, not
+   * derived here — do not retune this back up because a screenshot looks
+   * weak; weak is correct.
+   */
+  raised: makeShadow({ offsetY: 2, opacity: 0.12, radius: 14, elevation: 2 }),
   /**
    * Cast upward, so a sheet anchored to the bottom edge lifts off the screen
    * behind it. The offset magnitude (24) has to be a real fraction of the
@@ -288,8 +297,10 @@ export const shadows = {
    * not by re-deriving the arithmetic — see PROJECT_STATE.md.
    */
   sheet: makeShadow({ offsetY: -24, opacity: 0.6, radius: 60, elevation: 16 }),
-  /** Mockup: box-shadow: 0 4px 14px rgba(0, 0, 0, 0.55) */
-  pill: makeShadow({ offsetY: 4, opacity: 0.55, radius: 14, elevation: 8 }),
+  /** Same fix as `raised`, same reason: `0 4px 14px .55` read as a solid
+   *  block on device, not depth. User-specified correction, verified on
+   *  device. Do not retune upward. */
+  pill: makeShadow({ offsetY: 2, opacity: 0.18, radius: 12, elevation: 3 }),
 } as const;
 
 /** Segment pill slide and theme crossfade, per the approved mockup. */
