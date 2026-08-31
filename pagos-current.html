@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pagos — current</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --screen-w: 402px;
+    --screen-h: 874px;
+    --bezel: 12px;
+    --screen-r: 55px;
+    --device-r: calc(var(--screen-r) + var(--bezel));
+    --device-w: calc(var(--screen-w) + var(--bezel) * 2);
+    --device-h: calc(var(--screen-h) + var(--bezel) * 2);
+    --status-h: 62px;
+    --island-w: 125px;
+    --island-h: 37px;
+    --island-top: 11px;
+    --home-w: 139px;
+    --home-h: 5px;
+    --home-bottom: 8px;
+    --scale: 1;
+
+    --bg:#000000;
+    --card:#1C1C1E;
+    --line:#3A3A3C;
+    --ink:#FFFFFF;
+    --mute:#C9C9CE;
+    --green:#32D74B;
+    --red:#FF453A;
+    --offtxt:#FFFFFF;
+    --track:#0E0E10;
+    --sheet:#1A1A1C;
+    --sheetcard:#2A2A2D;
+    --sheetline:#3E3E42;
+    --edge:rgba(255,255,255,.10);
+  }
+
+  *{ box-sizing: border-box; }
+  html, body{ height: 100%; }
+  body{
+    margin:0; background:#dcdcdf;
+    display:grid; place-items:center;
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display","Helvetica Neue",Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased; overflow:hidden;
+  }
+
+  .stage{ position:relative; width:calc(var(--device-w)*var(--scale)); height:calc(var(--device-h)*var(--scale)); }
+  .device{
+    position:absolute; top:0; left:0;
+    width:var(--device-w); height:var(--device-h);
+    padding:var(--bezel); background:#000; border-radius:var(--device-r);
+    transform:scale(var(--scale)); transform-origin:top left;
+    box-shadow:0 0 0 .5px rgba(255,255,255,.14), 0 30px 60px -20px rgba(0,0,0,.45);
+  }
+  .screen{
+    position:relative; width:var(--screen-w); height:var(--screen-h);
+    background:var(--bg); border-radius:var(--screen-r); overflow:hidden; color:var(--ink);
+  }
+  .screen.light{
+    --bg:#F7F6F3; --card:#EFEEEA; --line:#DCDAD4; --ink:#000000; --mute:#6E6C66;
+    --green:#1B7F4C; --red:#B4322A; --offtxt:#3A3833; --track:#E6E4DE;
+    --sheet:#F7F6F3; --sheetcard:#EFEEEA; --sheetline:#DCDAD4; --edge:rgba(0,0,0,.06);
+  }
+
+  .status-bar{ position:absolute; inset:0 0 auto 0; height:var(--status-h); color:var(--ink); pointer-events:none; z-index:6; }
+  .status-left,.status-right{ position:absolute; top:var(--island-top); height:var(--island-h); display:flex; align-items:center; }
+  .status-left{ left:0; width:calc((var(--screen-w) - var(--island-w))/2); justify-content:center; }
+  .time{ font-size:17px; font-weight:600; letter-spacing:.1px; font-variant-numeric:tabular-nums; line-height:1; }
+  .status-right{ right:21px; gap:6px; }
+  .status-right svg{ display:block; }
+  .island{ position:absolute; top:var(--island-top); left:50%; transform:translateX(-50%); width:var(--island-w); height:var(--island-h); background:#000; border-radius:calc(var(--island-h)/2); z-index:7; }
+  .home-indicator{ position:absolute; bottom:var(--home-bottom); left:50%; transform:translateX(-50%); width:var(--home-w); height:var(--home-h); background:var(--ink); opacity:.85; border-radius:calc(var(--home-h)/2); z-index:7; }
+
+  .content{ position:absolute; top:var(--status-h); right:0; bottom:calc(var(--home-bottom) + var(--home-h) + 8px); left:0; background:var(--bg); }
+
+  .view{ position:absolute; inset:0; display:none; flex-direction:column; background:var(--bg); }
+  .view.on{ display:flex; }
+
+  /* header */
+  .hdr{ display:flex; align-items:center; padding:6px 20px 10px; flex-shrink:0; }
+  .circ{
+    width:48px; height:48px; border:none; background:transparent; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; font-family:inherit;
+    flex-shrink:0; color:var(--ink); font-size:26px; font-weight:400; padding:0;
+  }
+  .circ.add{ font-size:34px; font-weight:300; }
+  .circ:active{ opacity:.45; }
+  .hdr-t{ flex:1; text-align:center; font-size:19px; font-weight:700; }
+
+  /* total */
+  .total{ text-align:center; padding:24px 20px 34px; flex-shrink:0; }
+  .total-v{ font-size:56px; font-weight:800; letter-spacing:-2.5px; line-height:1; color:var(--red); }
+
+  .sect{ padding:0 20px 12px; font-size:19px; font-weight:700; flex-shrink:0; }
+  .scroll{ flex:1; overflow-y:auto; padding:0 20px; }
+
+  .card{
+    background:var(--card); border:1px solid var(--line); border-radius:16px;
+    padding:16px 18px; margin-bottom:12px; display:flex; align-items:center; gap:12px;
+    cursor:pointer; width:100%; text-align:left; font-family:inherit; color:var(--ink);
+  }
+  .card:active{ opacity:.7; }
+  .card-m{ flex:1; min-width:0; }
+  .c-nm{ font-size:17px; font-weight:600; }
+  .c-amt{ font-size:26px; font-weight:800; color:var(--red); letter-spacing:-.8px; margin-top:2px; }
+  .c-amt.zero{ color:var(--mute); font-size:20px; font-weight:600; }
+  .c-dots{
+    width:38px; height:38px; border-radius:50%; background:var(--line);
+    display:flex; align-items:center; justify-content:center; color:var(--mute);
+    font-size:15px; letter-spacing:.5px; flex-shrink:0;
+  }
+
+  .limit{ text-align:center; font-size:14px; color:var(--mute); padding:14px 0; flex-shrink:0; }
+
+
+  /* person */
+  .pbar{ display:flex; align-items:center; padding:6px 20px 10px; flex-shrink:0; }
+  .pback{ background:none; border:none; color:var(--ink); font-size:26px; cursor:pointer; font-family:inherit; padding:0; width:40px; text-align:left; }
+  .ptitle{ flex:1; text-align:center; font-size:19px; font-weight:700; }
+  .pdots{ background:none; border:none; color:var(--ink); font-size:20px; cursor:pointer; font-family:inherit; width:40px; letter-spacing:1px; }
+  .pbal{ text-align:center; padding:24px 20px 26px; flex-shrink:0; }
+  .pbal-v{ font-size:56px; font-weight:800; letter-spacing:-2.5px; line-height:1; color:var(--red); }
+  .pacts{ display:flex; gap:12px; padding:0 20px 30px; flex-shrink:0; }
+  .pact{
+    flex:1; height:56px; border-radius:14px; border:none; cursor:pointer; font-family:inherit;
+    font-size:17px; font-weight:700;
+  }
+  .pact.solid{ background:var(--card); color:var(--ink); border:1px solid var(--line); }
+  .pact.soft{ background:var(--card); color:var(--ink); border:1px solid var(--line); }
+  .pact:active{ opacity:.7; }
+
+  .ent{
+    background:var(--card); border:1px solid var(--line); border-radius:16px;
+    padding:14px 16px; margin-bottom:12px; display:flex; align-items:center; gap:14px;
+  }
+  .mark{
+    width:40px; height:40px; border-radius:50%; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center;
+    font-size:18px; font-weight:700;
+    background:var(--line); color:var(--ink);
+  }
+  .ent-m{ flex:1; min-width:0; }
+  .ent-t{ font-size:16px; font-weight:700; }
+  .ent-d{ font-size:13px; color:var(--mute); margin-top:2px; }
+  .ent-r{ text-align:right; flex-shrink:0; }
+  .ent-a{ font-size:19px; font-weight:800; letter-spacing:-.4px; }
+  .ent-x{ font-size:14px; color:var(--mute); margin-top:3px; }
+  .ent-a.up, .ent-a.down{ color:var(--ink); }
+
+  .dock{ display:flex; gap:12px; padding:14px 20px 14px; flex-shrink:0; }
+  .big{ flex:1; height:60px; border-radius:14px; border:none; font-size:18px; font-weight:800; cursor:pointer; font-family:inherit; }
+  .big.u{ background:var(--red); color:#fff; } .big.d{ background:var(--ink); color:var(--bg); }
+  .big:active{ opacity:.8; }
+
+  /* entry */
+  .ehdr{ display:flex; align-items:center; padding:6px 20px 24px; flex-shrink:0; }
+  .ecancel{ background:none; border:none; color:var(--ink); font-size:18px; font-weight:600; cursor:pointer; font-family:inherit; padding:0; }
+  .etitle{ flex:1; text-align:center; font-size:19px; font-weight:700; margin-right:56px; }
+  .form{ flex:1; overflow-y:auto; padding:0 20px 16px; }
+  .lbl{ font-size:22px; font-weight:800; margin:0 0 12px; letter-spacing:-.4px; }
+  .lbl.sp{ margin-top:30px; }
+  .frow{ display:flex; gap:12px; }
+  .fbox{
+    flex:1; height:66px; border:1px solid var(--line); border-radius:14px; background:var(--card);
+    padding:0 18px; font-size:26px; font-weight:700; color:var(--ink); display:flex; align-items:center;
+  }
+  .fbox.ph{ color:var(--mute); }
+  .cur{
+    height:66px; border:1px solid var(--line); border-radius:14px; background:var(--card);
+    padding:0 18px; color:var(--ink); font-size:19px; font-weight:700; cursor:pointer; font-family:inherit;
+    display:flex; align-items:center; gap:8px; flex-shrink:0;
+  }
+  .pwide{
+    width:100%; height:66px; border:1px solid var(--line); border-radius:14px; background:var(--card);
+    padding:0 18px; cursor:pointer; font-family:inherit;
+    display:flex; align-items:center; gap:14px; color:var(--mute); font-size:18px; font-weight:600;
+  }
+  .pplus{ width:34px; height:34px; border-radius:50%; background:var(--ink); color:var(--bg); display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0; }
+  .tog{
+    width:100%; height:66px; border:1px solid var(--line); border-radius:14px; background:var(--card);
+    padding:0 18px; cursor:pointer; font-family:inherit;
+    display:flex; align-items:center; justify-content:space-between; color:var(--ink); font-size:18px; font-weight:600;
+  }
+  .sw{ width:52px; height:32px; border-radius:16px; background:var(--line); position:relative; flex-shrink:0; }
+  .sw::after{ content:''; position:absolute; top:3px; left:3px; width:26px; height:26px; border-radius:50%; background:var(--ink); transition:left .16s; }
+  .sw.on{ background:var(--ink); }
+  .sw.on::after{ left:23px; }
+  .nbox:empty:before{ content:attr(data-ph); color:var(--mute); }
+  .nbox{ width:100%; height:110px; border:1px solid var(--line); border-radius:14px; background:var(--card); padding:16px 18px; color:var(--mute); font-size:18px; }
+  .pad{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; padding:10px 20px 0; flex-shrink:0; }
+  .key{ height:52px; border-radius:12px; border:1px solid var(--line); background:var(--card); color:var(--ink); font-size:24px; font-weight:600; cursor:pointer; font-family:inherit; }
+  .key:active{ opacity:.6; }
+
+  /* sheet */
+  .scrim{ position:absolute; inset:0; background:rgba(0,0,0,.7); display:none; align-items:flex-end; z-index:5; }
+  .scrim.on{ display:flex; }
+  .sheet{
+    width:100%; background:var(--sheet); opacity:1;
+    border-radius:26px 26px 0 0; padding:12px 20px 30px;
+    max-height:86%; overflow-y:auto;
+    border-top:1px solid var(--edge);
+    box-shadow:0 -8px 40px rgba(0,0,0,.6);
+  }
+  .grab{ width:40px; height:5px; border-radius:3px; background:var(--sheetline); margin:0 auto 20px; }
+  .sh-h{ font-size:28px; font-weight:800; letter-spacing:-.6px; margin-bottom:22px; }
+  .cap{ font-size:13px; font-weight:700; color:var(--ink); letter-spacing:1.2px; margin-bottom:10px; }
+  .seg{
+    display:flex; background:var(--sheetcard); border-radius:14px; padding:5px;
+    margin-bottom:24px; gap:5px; border:1px solid var(--sheetline);
+    box-shadow:0 4px 16px rgba(0,0,0,.35);
+  }
+  .seg button{
+    flex:1; height:52px; border:none; border-radius:11px;
+    background:transparent; color:var(--offtxt);
+    font-size:17px; font-weight:600; cursor:pointer; font-family:inherit;
+    opacity:.45;
+  }
+  .seg button.on{
+    background:var(--ink); color:var(--bg); font-weight:800; opacity:1;
+    box-shadow:0 4px 14px rgba(0,0,0,.55), 0 1px 3px rgba(0,0,0,.4);
+  }
+  .mgrp{ background:var(--sheetcard); border:1px solid var(--sheetline); border-radius:16px; overflow:hidden; margin-bottom:20px; box-shadow:0 4px 16px rgba(0,0,0,.35); }
+  .mrow{ display:flex; align-items:center; gap:14px; padding:18px; cursor:pointer; }
+  .mrow + .mrow{ border-top:1px solid var(--sheetline); }
+  .mico{ width:44px; height:44px; border-radius:12px; background:var(--sheetline); display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0; }
+  .m-t{ flex:1; }
+  .m-n{ font-size:17px; font-weight:700; }
+  .m-d{ font-size:14px; color:var(--mute); margin-top:2px; }
+  .close{ width:100%; height:60px; border-radius:14px; background:var(--sheetcard); border:1px solid var(--sheetline); color:var(--ink); font-size:18px; font-weight:700; cursor:pointer; font-family:inherit; box-shadow:0 4px 16px rgba(0,0,0,.35); }
+
+
+  /* ================= segment animation variants ================= */
+  .seg{ position:relative; }
+  .seg button{ position:relative; z-index:2; }
+
+  /* the sliding indicator, used by variants that need it */
+  .slider{
+    position:absolute; top:5px; bottom:5px; z-index:1;
+    border-radius:11px; background:var(--ink);
+    pointer-events:none; opacity:0;
+  }
+
+  /* --- A: slide --- */
+  .anim-slide .seg button.on{ background:transparent; box-shadow:none; color:var(--bg); }
+  .anim-slide .slider{ opacity:1; transition:left .28s cubic-bezier(.32,.72,0,1), width .28s cubic-bezier(.32,.72,0,1); box-shadow:0 4px 14px rgba(0,0,0,.55); }
+
+
+
+
+
+  /* whole-screen theme crossfade, shared by all variants */
+  .screen, .view, .sheet, .card, .ent, .mgrp, .close, .seg, .fbox, .cur, .pwide, .tog, .nbox, .key{
+    transition:background-color .32s ease, color .32s ease, border-color .32s ease;
+  }
+
+  /* language swap: content settles in */
+
+
+
+  /* ================= typeface ================= */
+  .screen, .screen *{ font-family:'Inter',sans-serif; letter-spacing:-.01em; }
+  /* numerals stay aligned in every face */
+  .total-v,.pbal-v,.c-amt,.ent-a,.fbox,.time{ font-variant-numeric:tabular-nums; }
+
+
+
+  /* ================= card ================= */
+  .c-nm{ display:block; }
+  .c-amt{ display:block; }
+  .card{ align-items:center; }
+  .card-m{ display:flex; align-items:baseline; gap:10px; }
+  .c-nm{ flex:1; font-size:18px; font-weight:600; color:var(--ink); }
+  .c-amt{ font-size:21px; font-weight:700; letter-spacing:-.5px; margin:0; color:var(--red); }
+  .c-amt.zero{ color:var(--mute); font-size:18px; font-weight:600; }
+  .total-v{ color:var(--red); }
+
+
+
+  /* picker sheets */
+  .psheet{
+    width:100%; background:var(--sheet); border-radius:26px 26px 0 0;
+    padding:12px 20px 26px; max-height:80%; display:flex; flex-direction:column;
+    border-top:1px solid var(--edge); box-shadow:0 -8px 40px rgba(0,0,0,.6);
+  }
+  .srch{
+    width:100%; height:52px; border-radius:13px; border:1px solid var(--sheetline);
+    background:var(--sheetcard); color:var(--ink); padding:0 16px;
+    font-size:16px; font-family:inherit; margin-bottom:12px; outline:none;
+  }
+  .srch::placeholder{ color:var(--mute); }
+  .plist{ overflow-y:auto; flex:1; -webkit-overflow-scrolling:touch; }
+  .prow{
+    display:flex; align-items:center; gap:12px; padding:15px 4px;
+    border-bottom:1px solid var(--sheetline); cursor:pointer;
+    background:none; border-left:none; border-right:none; border-top:none;
+    width:100%; text-align:left; color:var(--ink); font-family:inherit; font-size:17px; font-weight:600;
+  }
+  .prow:active{ opacity:.5; }
+  .prow .code{ color:var(--mute); font-size:14px; font-weight:500; }
+  .prow .sym{ width:34px; font-size:17px; color:var(--mute); flex-shrink:0; }
+  .prow .bal{ margin-left:auto; color:var(--mute); font-size:15px; font-weight:600; }
+  .fbox.filled{ color:var(--ink); }
+  .pwide.filled{ color:var(--ink); }
+  .nbox[contenteditable]{ outline:none; }
+  .nbox.filled{ color:var(--ink); }
+  .big:disabled{ opacity:.3; cursor:default; }
+  .empty{ padding:60px 20px; text-align:center; color:var(--mute); font-size:16px; line-height:1.6; }
+
+  .hint{ position:fixed; left:0; right:0; bottom:14px; text-align:center; font-size:12px; color:#6E6C68; pointer-events:none; }
+</style>
+</head>
+<body class="anim-slide">
+
+<div class="stage" id="stage">
+  <div class="device">
+    <div class="screen" id="screen">
+
+      <div class="status-bar">
+        <div class="status-left"><span class="time">4:57</span></div>
+        <div class="status-right">
+          <svg width="18" height="12" viewBox="0 0 18 12"><rect x="0" y="7.5" width="3" height="4.5" rx="1.1" fill="currentColor"/><rect x="5" y="5.5" width="3" height="6.5" rx="1.1" fill="currentColor"/><rect x="10" y="3.2" width="3" height="8.8" rx="1.1" fill="currentColor"/><rect x="15" y="0.8" width="3" height="11.2" rx="1.1" fill="currentColor"/></svg>
+          <svg width="17" height="12" viewBox="0 0 17 12"><g fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M1.33 5.98 A8.75 8.75 0 0 1 15.67 5.98"/><path d="M4.12 7.93 A5.35 5.35 0 0 1 12.88 7.93"/></g><circle cx="8.5" cy="10.3" r="1.6" fill="currentColor"/></svg>
+          <svg width="26.5" height="13" viewBox="0 0 26.5 13"><rect x="0.5" y="0.5" width="24" height="12" rx="3.9" fill="none" stroke="currentColor" stroke-opacity=".35" stroke-width="1"/><path d="M25.4 4.6 a2.3 2.3 0 0 1 0 3.8 z" fill="currentColor" fill-opacity=".4"/><rect x="2" y="2" width="18" height="9" rx="2.5" fill="currentColor"/></svg>
+        </div>
+      </div>
+      <div class="island"></div>
+
+      <div class="content">
+
+        <!-- HOME -->
+        <div class="view on" id="v-home">
+          <div class="hdr">
+            <button class="circ" onclick="openSheet()">⚙</button>
+            <div class="hdr-t">Pagos</div>
+            <button class="circ add" onclick="startEntry('u')">＋</button>
+          </div>
+          <div class="total"><div class="total-v">$350.00</div></div>
+          <div class="sect" data-t="active">Active balances</div>
+          <div class="scroll" id="homelist"></div>
+          <div class="limit">3 of 12 people</div>
+        </div>
+
+        <!-- PERSON -->
+        <div class="view" id="v-person">
+          <div class="pbar">
+            <button class="pback" onclick="go('v-home')">‹</button>
+            <div class="ptitle" id="p-name">Derick</div>
+            <button class="pdots">•••</button>
+          </div>
+          <div class="pbal"><div class="pbal-v" id="p-v">$250.00</div></div>
+          <div class="pacts">
+            <button class="pact solid" data-t="send">Send balance</button>
+            <button class="pact soft" data-t="pdf">Share PDF</button>
+          </div>
+          <div class="sect" data-t="history">Payment History</div>
+          <div class="scroll" id="history"></div>
+          <div class="dock">
+            <button class="big u" data-t="borrowed" onclick="startEntry('u',curPerson)">Borrowed</button>
+            <button class="big d" data-t="paid" onclick="startEntry('d',curPerson)">Paid</button>
+          </div>
+        </div>
+
+        <!-- NEW ENTRY -->
+        <div class="view" id="v-entry">
+          <div class="ehdr">
+            <button class="ecancel" data-t="cancel" onclick="go(curPerson!==null?'v-person':'v-home')">Cancel</button>
+            <div class="etitle" data-t="newentry">New entry</div>
+          </div>
+          <div class="form">
+            <div class="lbl" data-t="amount">Amount</div>
+            <div class="frow">
+              <div class="fbox ph" id="amt">$0</div>
+              <button class="cur" id="curbtn" onclick="openCur()">$ USD ›</button>
+            </div>
+            <div class="lbl sp" data-t="person">Person</div>
+            <button class="pwide" id="pbtn" onclick="openPick()">
+              <span class="pplus">+</span><span id="pbtn-t" data-t="choose">Choose a person</span>
+            </button>
+            <div class="lbl sp" data-t="duedate">Due date</div>
+            <button class="tog" onclick="flip(this)">
+              <span data-t="noreminder">No reminder</span><span class="sw"></span>
+            </button>
+            <div class="lbl sp" data-t="note">Note (optional)</div>
+            <div class="nbox" id="notebox" contenteditable="true" data-ph="Enter your text"></div>
+          </div>
+          <div class="pad">
+            <button class="key" onclick="tap('1')">1</button><button class="key" onclick="tap('2')">2</button><button class="key" onclick="tap('3')">3</button>
+            <button class="key" onclick="tap('4')">4</button><button class="key" onclick="tap('5')">5</button><button class="key" onclick="tap('6')">6</button>
+            <button class="key" onclick="tap('7')">7</button><button class="key" onclick="tap('8')">8</button><button class="key" onclick="tap('9')">9</button>
+            <button class="key" onclick="tap('.')">.</button><button class="key" onclick="tap('0')">0</button><button class="key" onclick="tap('back')">⌫</button>
+          </div>
+          <div class="dock"><button class="big u" id="submit" onclick="commit()">Add debt</button></div>
+        </div>
+
+      </div>
+
+      <!-- OPTIONS -->
+      <div class="scrim" id="scrim" onclick="if(event.target===this)closeSheet()">
+        <div class="sheet">
+          <div class="grab"></div>
+          <div class="sh-h" data-t="options">Options</div>
+          <div class="cap" data-t="caplang">LANGUAGE</div>
+          <div class="seg">
+            <span class="slider"></span>
+            <button onclick="seg(this);applyLang('es')">Español</button>
+            <button class="on" onclick="seg(this);applyLang('en')">English</button>
+          </div>
+          <div class="cap" data-t="capappear">APPEARANCE</div>
+          <div class="seg">
+            <span class="slider"></span>
+            <button data-t="light" onclick="theme(this,'light')">Light</button>
+            <button class="on" data-t="dark" onclick="theme(this,'dark')">Dark</button>
+          </div>
+          <div class="mgrp">
+            <div class="mrow"><div class="mico">↓</div><div class="m-t"><div class="m-n" data-t="backup">Backup file</div><div class="m-d" data-t="backupd">File to load back into the app</div></div><span style="color:var(--mute)">›</span></div>
+            <div class="mrow"><div class="mico">↑</div><div class="m-t"><div class="m-n" data-t="restore">Restore from backup</div><div class="m-d" data-t="restored">Replaces everything with a backup file</div></div><span style="color:var(--mute)">›</span></div>
+          </div>
+          <button class="close" data-t="close" onclick="closeSheet()">Close</button>
+        </div>
+      </div>
+
+
+      <!-- PERSON PICKER -->
+      <div class="scrim" id="pickscrim" onclick="if(event.target===this)closePick()">
+        <div class="psheet">
+          <div class="grab"></div>
+          <input class="srch" id="pq" placeholder="Type a name" oninput="drawPick()">
+          <div class="plist" id="plist"></div>
+        </div>
+      </div>
+
+      <!-- CURRENCY PICKER -->
+      <div class="scrim" id="curscrim" onclick="if(event.target===this)closeCur()">
+        <div class="psheet">
+          <div class="grab"></div>
+          <input class="srch" id="cq" placeholder="Search currency" oninput="drawCur()">
+          <div class="plist" id="clist"></div>
+        </div>
+      </div>
+
+      <div class="home-indicator"></div>
+    </div>
+  </div>
+</div>
+
+<div class="hint">Fully working: add people, log amounts, pick currency, delete entries.</div>
+
+<script>
+  const stage=document.getElementById('stage');
+  const W=426,H=898,MARGIN=32;
+  function fit(){ stage.style.setProperty('--scale', Math.min(1,(innerWidth-MARGIN)/W,(innerHeight-MARGIN-30)/H)); }
+  fit(); addEventListener('resize',fit);
+
+
+  const T = {
+    en:{ active:'Active balances', history:'Payment History', send:'Send balance', pdf:'Share PDF',
+         borrowed:'Borrowed', paid:'Paid', cancel:'Cancel', newentry:'New entry',
+         amount:'Amount', person:'Person', duedate:'Due date', note:'Note (optional)',
+         noteph:'Enter your text', choose:'Choose a person', adddebt:'Add debt',
+         options:'Options', caplang:'LANGUAGE', capappear:'APPEARANCE',
+         light:'Light', dark:'Dark',
+         backup:'Backup file', backupd:'File to load back into the app',
+         restore:'Restore from backup', restored:'Replaces everything with a backup file',
+         close:'Close', noreminder:'No reminder',
+         limit:n=>n+' of 12 people', entB:'Borrowed', entP:'Paid', del:'Delete',
+         adddebt:'Add debt', addpay:'Add payment', owes:'', nobody:'Nobody yet.<br>Tap ＋ to add someone.',
+         typename:'Type a name', searchcur:'Search currency', newp:'New person', full:'You have reached 12 people.' },
+    es:{ active:'Saldos activos', history:'Historial de pagos', send:'Enviar saldo', pdf:'Compartir PDF',
+         borrowed:'Prestado', paid:'Pagado', cancel:'Cancelar', newentry:'Nuevo registro',
+         amount:'Cantidad', person:'Persona', duedate:'Fecha límite', note:'Nota (opcional)',
+         noteph:'Escribe aquí', choose:'Elige una persona', adddebt:'Agregar deuda',
+         options:'Opciones', caplang:'IDIOMA', capappear:'APARIENCIA',
+         light:'Claro', dark:'Oscuro',
+         backup:'Copia de seguridad', backupd:'Archivo para volver a cargar en la app',
+         restore:'Restaurar desde copia', restored:'Reemplaza todo con un archivo de copia',
+         close:'Cerrar', noreminder:'Sin recordatorio',
+         limit:n=>n+' de 12 personas', entB:'Prestado', entP:'Pagado', del:'Borrar',
+         adddebt:'Agregar deuda', addpay:'Agregar pago', owes:'', nobody:'Todavía no hay nadie.<br>Toca ＋ para agregar.',
+         typename:'Escribe un nombre', searchcur:'Buscar moneda', newp:'Persona nueva', full:'Ya tienes 12 personas.' }
+  };
+  let lang = 'en';
+
+  function applyLang(l){
+    lang = l;
+    const d = T[l];
+    document.querySelectorAll('[data-t]').forEach(el=>{
+      const v = d[el.dataset.t];
+      if(typeof v === 'string') el.textContent = v;
+    });
+    renderHome();
+    if(document.getElementById('v-person').classList.contains('on') && curPerson !== null)
+      openPerson(curPerson);
+    setTimeout(allSliders, 20);
+  }
+
+  let people=[
+    {name:'Derick', cur:'USD', hist:[{k:'u',ts:'Aug 30, 2026 at 3:54 PM',a:250}]},
+    {name:'Frank',  cur:'USD', hist:[{k:'u',ts:'Aug 28, 2026 at 1:12 PM',a:100}]},
+    {name:'María',  cur:'USD', hist:[{k:'d',ts:'Aug 22, 2026 at 9:40 AM',a:200},{k:'u',ts:'Aug 02, 2026 at 6:15 PM',a:200}]}
+  ];
+
+  const CUR={USD:'$',EUR:'€',GBP:'£',MXN:'$',JPY:'¥',CAD:'$',AUD:'$',BRL:'R$',ARS:'$',COP:'$',
+             CLP:'$',PEN:'S/',DOP:'RD$',GTQ:'Q',CRC:'₡',HNL:'L',NIO:'C$',PAB:'B/.',UYU:'$U',
+             VES:'Bs',BOB:'Bs',PYG:'₲',CUP:'$',CHF:'CHF',SEK:'kr',NOK:'kr',DKK:'kr',PLN:'zł',
+             CZK:'Kč',HUF:'Ft',RON:'lei',TRY:'₺',RUB:'₽',UAH:'₴',INR:'₹',CNY:'¥',KRW:'₩',
+             SGD:'$',HKD:'$',TWD:'NT$',THB:'฿',PHP:'₱',IDR:'Rp',MYR:'RM',VND:'₫',NZD:'$',
+             ZAR:'R',NGN:'₦',KES:'KSh',EGP:'E£',MAD:'DH',ILS:'₪',AED:'د.إ',SAR:'﷼',QAR:'﷼'};
+  const CURNAME={USD:'US Dollar',EUR:'Euro',GBP:'British Pound',MXN:'Mexican Peso',JPY:'Japanese Yen',
+    CAD:'Canadian Dollar',AUD:'Australian Dollar',BRL:'Brazilian Real',ARS:'Argentine Peso',
+    COP:'Colombian Peso',CLP:'Chilean Peso',PEN:'Peruvian Sol',DOP:'Dominican Peso',
+    GTQ:'Guatemalan Quetzal',CRC:'Costa Rican Colón',HNL:'Honduran Lempira',NIO:'Nicaraguan Córdoba',
+    PAB:'Panamanian Balboa',UYU:'Uruguayan Peso',VES:'Venezuelan Bolívar',BOB:'Bolivian Boliviano',
+    PYG:'Paraguayan Guaraní',CUP:'Cuban Peso',CHF:'Swiss Franc',SEK:'Swedish Krona',NOK:'Norwegian Krone',
+    DKK:'Danish Krone',PLN:'Polish Złoty',CZK:'Czech Koruna',HUF:'Hungarian Forint',RON:'Romanian Leu',
+    TRY:'Turkish Lira',RUB:'Russian Ruble',UAH:'Ukrainian Hryvnia',INR:'Indian Rupee',CNY:'Chinese Yuan',
+    KRW:'South Korean Won',SGD:'Singapore Dollar',HKD:'Hong Kong Dollar',TWD:'Taiwan Dollar',
+    THB:'Thai Baht',PHP:'Philippine Peso',IDR:'Indonesian Rupiah',MYR:'Malaysian Ringgit',
+    VND:'Vietnamese Dong',NZD:'New Zealand Dollar',ZAR:'South African Rand',NGN:'Nigerian Naira',
+    KES:'Kenyan Shilling',EGP:'Egyptian Pound',MAD:'Moroccan Dirham',ILS:'Israeli Shekel',
+    AED:'UAE Dirham',SAR:'Saudi Riyal',QAR:'Qatari Riyal'};
+
+  const bal = p => p.hist.reduce((n,h)=> n + (h.k==='u' ? h.a : -h.a), 0);
+  const money = (n,c) => (CUR[c]||'$') + Math.abs(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+
+
+  /* ---------- navigation & sheets ---------- */
+  function go(id){
+    document.querySelectorAll('.view').forEach(v=>v.classList.remove('on'));
+    document.getElementById(id).classList.add('on');
+  }
+  function openSheet(){ document.getElementById('scrim').classList.add('on'); setTimeout(allSliders,20); }
+  function closeSheet(){ document.getElementById('scrim').classList.remove('on'); }
+  function seg(b){
+    [...b.parentNode.querySelectorAll('button')].forEach(x=>x.classList.remove('on'));
+    b.classList.add('on');
+    moveSlider(b.parentNode);
+  }
+  function theme(b,m){
+    seg(b);
+    document.getElementById('screen').classList.toggle('light', m==='light');
+  }
+  function flip(btn){
+    const sw=btn.querySelector('.sw');
+    sw.classList.toggle('on');
+    btn.querySelector('span').textContent = sw.classList.contains('on') ? 'Sep 15, 2026' : T[lang].noreminder;
+  }
+
+  /* ---------- entry state ---------- */
+  let val='', eKind='u', ePerson=null, eNewName='', eCur='USD';
+
+  function renderHome(){
+    const total = people.reduce((n,p)=> n + Math.max(0, bal(p)), 0);
+    document.querySelector('.total-v').textContent = money(total,'USD');
+    const list = document.getElementById('homelist');
+    if(!people.length){
+      list.innerHTML = '<div class="empty">'+T[lang].nobody+'</div>';
+    } else {
+      list.innerHTML = people.map((p,i)=>{
+        const b = bal(p);
+        return `<button class="card" onclick="openPerson(${i})">
+          <span class="card-m">
+            <span class="c-nm">${p.name}</span>
+            <span class="c-amt ${b===0?'zero':''}">${b===0?(CUR[p.cur]||'$')+'0':money(b,p.cur)}</span>
+          </span>
+          <span class="c-dots">•••</span>
+        </button>`;
+      }).join('');
+    }
+    document.querySelector('.limit').textContent = T[lang].limit(people.length);
+  }
+
+  let curPerson=null;
+  function openPerson(i){
+    curPerson=i;
+    const p=people[i], b=bal(p);
+    document.getElementById('p-name').textContent=p.name;
+    document.getElementById('p-v').textContent = b===0 ? (CUR[p.cur]||'$')+'0' : money(b,p.cur);
+    document.getElementById('history').innerHTML = p.hist.map((h,j)=>`
+      <div class="ent">
+        <div class="mark">${h.k==='u'?'↑':'↓'}</div>
+        <div class="ent-m"><div class="ent-t">${h.k==='u'?T[lang].entB:T[lang].entP}</div><div class="ent-d">${h.ts}</div></div>
+        <div class="ent-r">
+          <div class="ent-a">${h.k==='u'?'+':'−'}${money(h.a,p.cur)}</div>
+          <div class="ent-x" onclick="event.stopPropagation();delEntry(${i},${j})">${T[lang].del}</div>
+        </div>
+      </div>`).join('');
+    go('v-person');
+  }
+
+  function delEntry(i,j){
+    people[i].hist.splice(j,1);
+    renderHome(); openPerson(i);
+  }
+
+  /* ---------- entry screen ---------- */
+  function startEntry(kind, personIndex){
+    eKind = kind || 'u';
+    ePerson = (personIndex===undefined) ? null : personIndex;
+    eNewName=''; val=''; eCur = ePerson!==null ? people[ePerson].cur : 'USD';
+    document.getElementById('notebox').textContent='';
+    document.querySelector('.sw').classList.remove('on');
+    document.querySelector('.tog span').textContent = T[lang].noreminder;
+    syncEntry();
+    go('v-entry');
+  }
+
+  function syncEntry(){
+    const pb = document.getElementById('pbtn-t');
+    if(ePerson!==null){ pb.textContent = people[ePerson].name; document.getElementById('pbtn').classList.add('filled'); }
+    else if(eNewName){ pb.textContent = eNewName; document.getElementById('pbtn').classList.add('filled'); }
+    else { pb.textContent = T[lang].choose; document.getElementById('pbtn').classList.remove('filled'); }
+
+    document.getElementById('curbtn').textContent = (CUR[eCur]||'$')+' '+eCur+' ›';
+    const sub = document.getElementById('submit');
+    sub.textContent = eKind==='u' ? T[lang].adddebt : T[lang].addpay;
+    sub.className = 'big ' + (eKind==='u' ? 'u' : 'd');
+    sub.disabled = !(parseFloat(val)>0 && (ePerson!==null || eNewName));
+    draw();
+  }
+
+  function commit(){
+    const amt = Math.round(parseFloat(val||'0')*100)/100;
+    if(!amt || amt<=0) return;
+    const now = new Date().toLocaleString('en-US',{month:'short',day:'2-digit',year:'numeric',hour:'numeric',minute:'2-digit'}).replace(',','').replace(/(\d{4})/,'$1 at');
+    let idx = ePerson;
+    if(idx===null){
+      if(people.length>=12){ alert(T[lang].full); return; }
+      people.push({name:eNewName, cur:eCur, hist:[]});
+      idx = people.length-1;
+    }
+    people[idx].hist.unshift({k:eKind, ts:now, a:amt});
+    people[idx].cur = eCur;
+    renderHome();
+    openPerson(idx);
+  }
+
+  /* ---------- person picker ---------- */
+  function openPick(){ document.getElementById('pq').value=eNewName; drawPick(); document.getElementById('pickscrim').classList.add('on'); setTimeout(()=>document.getElementById('pq').focus(),120); }
+  function closePick(){ document.getElementById('pickscrim').classList.remove('on'); }
+  function drawPick(){
+    const q = document.getElementById('pq').value.trim();
+    document.getElementById('pq').placeholder = T[lang].typename;
+    const hits = people.map((p,i)=>({p,i})).filter(o=>!q || o.p.name.toLowerCase().includes(q.toLowerCase()));
+    let html = '';
+    if(q && !people.some(p=>p.name.toLowerCase()===q.toLowerCase())){
+      html += `<button class="prow" onclick="chooseNew()"><span class="sym">+</span>${q}<span class="bal">${T[lang].newp}</span></button>`;
+    }
+    html += hits.map(o=>`<button class="prow" onclick="chooseExisting(${o.i})"><span class="sym">•</span>${o.p.name}<span class="bal">${money(bal(o.p),o.p.cur)}</span></button>`).join('');
+    document.getElementById('plist').innerHTML = html;
+  }
+  function chooseNew(){ eNewName = document.getElementById('pq').value.trim(); ePerson=null; closePick(); syncEntry(); }
+  function chooseExisting(i){ ePerson=i; eNewName=''; eCur=people[i].cur; closePick(); syncEntry(); }
+
+  /* ---------- currency picker ---------- */
+  function openCur(){ document.getElementById('cq').value=''; drawCur(); document.getElementById('curscrim').classList.add('on'); setTimeout(()=>document.getElementById('cq').focus(),120); }
+  function closeCur(){ document.getElementById('curscrim').classList.remove('on'); }
+  function drawCur(){
+    const q = document.getElementById('cq').value.trim().toLowerCase();
+    document.getElementById('cq').placeholder = T[lang].searchcur;
+    const codes = Object.keys(CUR).filter(c=> !q || c.toLowerCase().includes(q) || CURNAME[c].toLowerCase().includes(q));
+    document.getElementById('clist').innerHTML = codes.map(c=>
+      `<button class="prow" onclick="pickCur('${c}')"><span class="sym">${CUR[c]}</span>${CURNAME[c]}<span class="bal">${c}${c===eCur?' ✓':''}</span></button>`).join('');
+  }
+  function pickCur(c){ eCur=c; closeCur(); syncEntry(); }
+
+  renderHome();
+
+  function draw(){
+    const el=document.getElementById('amt');
+    const sym=(CUR[eCur]||'$');
+    if(!val){ el.textContent=sym+'0'; el.classList.add('ph'); el.classList.remove('filled'); }
+    else{
+      el.classList.remove('ph'); el.classList.add('filled');
+      const p=val.split('.');
+      el.textContent=sym+Number(p[0]||0).toLocaleString('en-US')+(p.length>1?'.'+p[1]:'');
+    }
+    const sub=document.getElementById('submit');
+    if(sub) sub.disabled = !(parseFloat(val)>0 && (ePerson!==null || eNewName));
+  }
+
+  function moveSlider(seg){
+    const sl = seg.querySelector('.slider');
+    const on = seg.querySelector('button.on');
+    if(!sl || !on) return;
+    sl.style.left  = on.offsetLeft + 'px';
+    sl.style.width = on.offsetWidth + 'px';
+  }
+  function allSliders(){ document.querySelectorAll('.seg').forEach(moveSlider); }
+
+
+
+  addEventListener('load', allSliders);
+  addEventListener('resize', allSliders);
+
+
+</script>
+
+</body>
+</html>

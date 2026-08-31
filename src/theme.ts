@@ -12,7 +12,7 @@
  */
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { Platform, type ViewStyle } from 'react-native';
+import type { ViewStyle } from 'react-native';
 
 export type Palette = {
   /** App ground. */
@@ -88,7 +88,18 @@ export const lightColors: Palette = {
   sheetLine: '#8C8474',
   sheetDivider: '#DCDAD4',
   edge: 'rgba(0,0,0,.06)',
-  scrim: 'rgba(0,0,0,.35)',
+  /**
+   * The mockup's `.scrim` is a flat `rgba(0,0,0,.7)` with no light-mode
+   * override at all — it never lightens. This was `.35` here with no
+   * comment and no PROJECT_STATE entry explaining a deliberate deviation,
+   * which means it was an oversight, not a decision: half the scrim the
+   * mockup specifies leaves the screen behind a sheet much brighter than it
+   * should be, so any shadow above the sheet has to cover a much larger
+   * brightness gap in the same blur distance — a likely real contributor to
+   * shadows reading as "boxy" specifically in light mode. Matched to the
+   * mockup exactly; do not soften it back down.
+   */
+  scrim: 'rgba(0,0,0,.7)',
   chip: '#DCDAD4',
   chipInk: '#6E6C66',
   avatarBg: '#DCDAD4',
@@ -240,67 +251,65 @@ export const layout = {
 export type ShadowSpec = { offsetY: number; opacity: number; radius: number; elevation: number };
 
 /**
- * One set of numbers, two renderings. iOS reads shadowColor/shadowOffset/
- * shadowOpacity/shadowRadius, which react-native-web now only warns about
- * ("shadow* style props are deprecated. Use boxShadow.") without reliably
- * painting anything, so web gets a `boxShadow` string built from the exact
- * same offsetY/opacity/radius instead. Whichever platform a bundle targets,
- * only one of the two ever ships — this never sends the web-only key to
- * native or vice versa.
+ * One shadow spec, one native `boxShadow` array entry — the SAME style
+ * property and the SAME field names (`offsetX/offsetY/blurRadius/color`) that
+ * CSS `box-shadow` uses, on both iOS and web. This used to branch on
+ * `Platform.OS`: web got a CSS `boxShadow` string and iOS got the legacy
+ * `shadowColor/shadowOffset/shadowOpacity/shadowRadius` quartet. Two rounds
+ * of "fix the numbers" (see PROJECT_STATE.md) failed to close a real gap
+ * between those two paths — the same numbers looked soft in an actual
+ * browser (verified directly against the approved mockup's own HTML/CSS
+ * source, which a real browser renders correctly with these exact values)
+ * but boxy on the device, regardless of what the opacity was retuned to.
+ * `boxShadow` has been a real, cross-platform Fabric prop since RN 0.75+
+ * (confirmed: `BoxShadowPropsConversions.h` is shared C++, and iOS's
+ * `RCTViewComponentView.mm` paints it) — using it everywhere removes the
+ * legacy iOS path entirely, so there is no second implementation left to
+ * drift out of sync with the CSS the mockup was authored against.
  */
 export function makeShadow(spec: ShadowSpec): ViewStyle {
   const { offsetY, opacity, radius, elevation } = spec;
-  return Platform.select<ViewStyle>({
-    web: { boxShadow: `0px ${offsetY}px ${radius}px rgba(0, 0, 0, ${opacity})` },
-    default: {
-      shadowColor: '#000000',
-      shadowOffset: { width: 0, height: offsetY },
-      shadowOpacity: opacity,
-      shadowRadius: radius,
-      elevation,
-    },
-  });
+  return {
+    boxShadow: [{ offsetX: 0, offsetY, blurRadius: radius, color: `rgba(0, 0, 0, ${opacity})` }],
+    elevation,
+  };
 }
 
 /**
  * Outward shadows only. An inset never reads as "selected", and on dark the
  * lightness steps above carry elevation instead (these are barely visible
- * against pure black, which is expected).
+ * against pure black, which is expected). `elevation` only ever matters on
+ * Android, which this app does not ship to yet; it rides along for a
+ * possible future build and is inert everywhere today.
  *
- * Soft and diffuse: a small offset with a much larger blur, at low opacity,
- * so it reads as depth rather than a drawn rectangle. `elevation` only ever
- * matters on Android, which this app does not ship to yet; it rides along
- * for a possible future build and is inert everywhere today.
+ * Values below are the approved mockup's literal CSS (`pagos-current.html`,
+ * supplied directly by the user — the file this repo's `pagos.html` is not a
+ * copy of, despite the similar name; see the provenance note this replaces).
+ * Two prior rounds moved these away from the mockup's own numbers while
+ * trying to fix a boxy on-device look — do not retune them again without a
+ * value taken directly from that file or from the user.
  */
 export const shadows = {
+  /** Mockup: `.seg`, `.mgrp`, `.close` — `box-shadow: 0 4px 16px rgba(0,0,0,.35)` */
+  raised: makeShadow({ offsetY: 4, opacity: 0.35, radius: 16, elevation: 6 }),
+  /** Mockup: `.sheet`, `.psheet` — `box-shadow: 0 -8px 40px rgba(0,0,0,.6)`,
+   *  cast upward so a sheet anchored to the bottom edge lifts off the screen
+   *  behind it. */
+  sheet: makeShadow({ offsetY: -8, opacity: 0.6, radius: 40, elevation: 16 }),
   /**
-   * User-specified after seeing it on a real iPhone as a solid dark
-   * rectangle, not a shadow: `0 4px 16px .35` was too dark and too tight —
-   * enough opacity that the mostly-unblurred core read as an opaque block
-   * with a visible straight edge, the same failure mode as `sheet` before it
-   * was fixed, just via high opacity this time instead of a bad offset/blur
-   * ratio. Corrected value came from the user, verified on device, not
-   * derived here — do not retune this back up because a screenshot looks
-   * weak; weak is correct.
+   * Mockup: `.seg button.on` — TWO stacked shadows, a soft one plus a tight
+   * contact shadow grounding the pill against the track:
+   *   box-shadow: 0 4px 14px rgba(0,0,0,.55), 0 1px 3px rgba(0,0,0,.4)
+   * `makeShadow()` only builds one layer, so this is written out directly —
+   * the array form is exactly what a second `boxShadow` entry looks like.
    */
-  raised: makeShadow({ offsetY: 2, opacity: 0.12, radius: 14, elevation: 2 }),
-  /**
-   * Cast upward, so a sheet anchored to the bottom edge lifts off the screen
-   * behind it. The offset magnitude (24) has to be a real fraction of the
-   * blur radius (60), not a token few-pixel nudge: with a single box-shadow,
-   * the visible strip closest to the sheet's own edge can only get as dark as
-   * however far past the blur's midpoint that offset carries it. A small
-   * offset (this was -8) leaves that strip sitting right at the midpoint —
-   * the shadow LOOKS like it stops working exactly where it matters most,
-   * which reads as a hard-edged box rather than a soft one no matter how
-   * large the blur radius is. Confirmed by sampling actual rendered pixels,
-   * not by re-deriving the arithmetic — see PROJECT_STATE.md.
-   */
-  sheet: makeShadow({ offsetY: -24, opacity: 0.6, radius: 60, elevation: 16 }),
-  /** Same fix as `raised`, same reason: `0 4px 14px .55` read as a solid
-   *  block on device, not depth. User-specified correction, verified on
-   *  device. Do not retune upward. */
-  pill: makeShadow({ offsetY: 2, opacity: 0.18, radius: 12, elevation: 3 }),
+  pill: {
+    boxShadow: [
+      { offsetX: 0, offsetY: 4, blurRadius: 14, color: 'rgba(0, 0, 0, 0.55)' },
+      { offsetX: 0, offsetY: 1, blurRadius: 3, color: 'rgba(0, 0, 0, 0.4)' },
+    ],
+    elevation: 8,
+  } as ViewStyle,
 } as const;
 
 /** Segment pill slide and theme crossfade, per the approved mockup. */

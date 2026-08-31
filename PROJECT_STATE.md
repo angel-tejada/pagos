@@ -4,7 +4,7 @@
 It is the handoff snapshot between sessions. It is not a diary: replace stale
 statements rather than appending to them.
 
-Last updated: 2026-08-30 · HEAD `caddd77` on `main`, pushed to `origin` ·
+Last updated: 2026-08-30 · HEAD `PENDING` on `main`, pushed to `origin` ·
 worktree clean.
 
 ---
@@ -13,48 +13,53 @@ worktree clean.
 
 The app runs on a real iPhone and in a browser preview. The v1 feature list in
 `CLAUDE.md` is largely implemented. The current work is a **design pass
-converging the app onto the approved mockup**.
+converging the app onto the approved mockup** — which, as of this session,
+finally means an actual mockup file the assistant has read, not a filename
+referenced in a comment. See "The mockup file" below.
 
-All four New Entry reports are resolved, confirmed on `main`, and shipped as
-an OTA — see section 5.
+**New Entry** (currency button, person picker, due-date picker, keypad focus)
+is fixed, on `main`, and shipped as an OTA. Not yet explicitly confirmed by
+the user on the phone — see section 9.
 
-The user then reported the Options sheet's shadow still looked like a hard
-box, not the soft glow in the approved mockup, on the real device. Diagnosed
-and fixed — see the Shadows section under section 3 and section 5. **This
-was not the clipping bug it resembled.** The shadow's own node has
-`overflow: visible` and nothing clips it; verified by sampling actual
-rendered pixel values in the browser preview, not by re-reading the code (see
-trap 11). The real defect was arithmetic: a single CSS box-shadow with a small
-negative offset cannot get dark right next to the object it's shadowing, no
-matter how large the blur radius is, so the values in place since commit
-`e635c5d` were structurally incapable of producing a soft-but-grounded look.
+**The mockup file.** `pagos-current.html` — the file `theme.ts` has named in
+a comment since before this session started — was never actually in this
+repo. A differently-named-but-similar file, `pagos.html`, was, and an earlier
+round of this session mistook it for the same thing, concluded the real file
+"doesn't exist," and spent two more rounds tuning shadow values by guesswork
+and on-device trial and error. The user then pasted the actual file's full
+source directly into chat. It is now saved at the repo root as
+`pagos-current.html`, so this does not happen again. **If a design value is
+ever in question, read this file before touching numbers based on reasoning
+or a screenshot.**
 
-The user then asked for a full audit of where the browser preview diverges
-from the real device, since they make design decisions in the browser. Done —
-see section 8, rewritten from a 6-line "these are native-only" list into a
-verified, evidence-backed map. Found and fixed two more real gaps in the
-process (bottom safe-area inset off by 13px; the `Switch` control rendering
-at roughly half its real iOS size) — both preview-only, zero behavior change
-on iOS, so no OTA is needed for them. Committed and pushed as `31fcc7c`.
+**Shadows — the real fix, after three wrong ones.** Reading the actual
+mockup source revealed that `raised`/`sheet`/`pill` had all drifted away from
+its literal CSS values across two earlier rounds, while a plain browser
+renders those exact original numbers as a correctly soft shadow. The numbers
+were never the bug. `makeShadow()` used to send iOS through a *different
+implementation* than web — legacy `shadowColor/Offset/Opacity/Radius`
+props instead of the CSS `boxShadow` the mockup and the web build both use —
+on the unverified assumption the two render identically. They may not; Apple
+does not publish the exact blur formula for `CALayer.shadowRadius`. Fixed by
+making `makeShadow()` emit the same cross-platform `boxShadow` array style
+(a real Fabric prop since RN 0.75+, confirmed in `node_modules` source, not
+web-only) on every platform, and restoring all three tokens to the mockup's
+literal values — see the Shadows subsection under section 3, and traps 11-12.
+Also found and fixed in the same pass: light mode's scrim was `.35`; the
+mockup's is a flat `.7` with no light-mode override at all. No comment or
+PROJECT_STATE entry ever justified `.35`, so it was an oversight, and a
+plausible real contributor — a shadow has to cover a much bigger brightness
+jump against a barely-dimmed background than against a properly-dimmed one.
 
-The user then checked the shadow-fix OTA on the phone and reported the
-Options sheet's **segment pills and section boxes** (`shadows.pill` and
-`shadows.raised`) as solid dark rectangles, not shadows — too much opacity
-relative to too little blur, a different failure mode from `sheet`'s
-offset/blur-ratio bug but the same symptom. The user supplied corrected
-values from on-device observation and instructed explicitly not to soften
-them back up based on how they look anywhere but the phone. Applied verbatim
-— see the Shadows subsection under section 3. The user did not report on
-`sheet` itself either way in this round; treat it as still only browser-
-verified, not confirmed fixed on device, until said otherwise.
-
-**Exact next action:** the `raised`/`pill` correction is published as an OTA
-(group `655672b6-0994-4126-8245-277c7858195b`) at the matching runtime. Get
-the user to confirm it on the phone. Three separate pieces of New Entry /
-shadow work are now sitting in OTAs with no explicit user confirmation on
-file — the currency-button fix, the `sheet` shadow fix, and this `raised`/
-`pill` fix — treat each as open until the user says so, not as done because
-it shipped. After that, the next open item is the dead end in section 5 —
+**Exact next action:** commit, push, and OTA the shadow rewrite (`boxShadow`
+everywhere, mockup-literal `raised`/`sheet`/`pill` values, corrected light
+scrim), then get the user to confirm it on the phone against
+`pagos-current.html` rendered in an actual browser — which is now possible
+and should be the actual reference, not a description of a reference.
+**Four** separate pieces of New Entry/shadow work are now sitting in OTAs
+with no explicit "yes this is right" from the user on file: the currency
+button fix, and three rounds of shadow changes. Treat every one as open until
+the user says so. After that, the next item is the dead end in section 5 —
 the 12-person limit with no way to pay.
 
 ---
@@ -138,53 +143,72 @@ would be a regression, not a cleanup.
 
 ### Shadows
 
-Defined once in `src/theme.ts`. **Provenance warning:** these were long
-commented as coming verbatim from an approved mockup file
-(`pagos-current.html`), but that file is not in this repo — only `pagos.html`
-is, and it contains exactly one `box-shadow` declaration (on `.fab`, a
-floating button this app doesn't have), none of the three values below. Where
-the original numbers actually came from is unknown. **Do not trust the "from
-the mockup" framing as verified fact for any of these three; verify by
-screenshot against whatever reference the user gives you, the way `sheet` was
-just corrected.**
+Defined once in `src/theme.ts`. **The approved mockup file
+(`pagos-current.html`) exists and the user supplied its full source directly
+in chat** — the earlier "provenance warning" in this file (this file is not
+in the repo, the values' origin is unknown) was based on `pagos.html`, a
+*different, older* file with a similar name that happened to be the only one
+actually checked into the repo. That was a real gap: two rounds of "fix the
+shadow" happened without ever reading the file the values were supposedly
+from. If a similar mismatch ever resurfaces, ask the user for the file rather
+than assuming a similarly-named one in the repo is the same thing.
 
 | Token | Value | Applied to |
 |---|---|---|
-| `raised` | `0 2px 14px rgba(0,0,0,0.12)` | segment tracks, Backup/Restore group, Close button |
-| `sheet` | `0 -24px 60px rgba(0,0,0,0.6)` | the Options sheet (negative Y — casts upward) |
-| `pill` | `0 2px 12px rgba(0,0,0,0.18)` | the selected segment pill |
+| `raised` | `0 4px 16px rgba(0,0,0,0.35)` | segment tracks, Backup/Restore group, Close button |
+| `sheet` | `0 -8px 40px rgba(0,0,0,0.6)` | the Options sheet (negative Y — casts upward) |
+| `pill` | `0 4px 14px rgba(0,0,0,0.55), 0 1px 3px rgba(0,0,0,0.4)` | the selected segment pill (two stacked shadows) |
 
-`sheet` was `0 -8px 40px .6` and looked like a hard-edged box on the real
-device despite having real blur — not a clipping bug (verified: the node is
-`overflow: visible` and nothing upstream clips it). A single box-shadow's
-near-edge darkness is capped by how far past the blur's midpoint the offset
-carries it; an 8px offset against a 40px blur left that midpoint sitting right
-at the object's own edge, so the strip that most needed to look "grounded"
-instead looked like the shadow just stopped. Raising the offset to a real
-fraction of the blur radius (24 of 60) fixed it — confirmed by sampling actual
-rendered pixel values in the browser preview at several y-coordinates, not
-by re-checking the arithmetic. See trap 11.
+**These are the mockup's exact literal numbers, unmodified.** Two prior
+rounds moved all three away from these values while trying to fix a "boxy"
+on-device look:
+- Round 1 changed `sheet`'s offset from -8 to -24, reasoning that a single
+  box-shadow's near-edge darkness is capped by how far past the blur's
+  midpoint the offset carries it, and an 8px offset against a 40px blur
+  wasn't far enough. That reasoning is still mathematically true in general,
+  but it was solving a problem the mockup's own numbers don't actually have
+  — confirmed by reading `pagos-current.html`'s CSS directly: a plain browser
+  renders `0 -8px 40px rgba(0,0,0,.6)` as a soft shadow, not a hard box, using
+  those exact original numbers.
+- Round 2 dropped `raised`/`pill`'s opacity (.35/.55 → .12/.18) on the user's
+  own on-device report that they looked like solid rectangles. The user then
+  reported the *softened* values **still** looked like solid rectangles on
+  the phone — which is the tell that this was never an opacity problem.
+  Retuning a value that renders structurally wrong just makes a fainter
+  version of the same wrong thing.
 
-`raised` and `pill` were left alone at that point (values `0 4px 16px .35` and
-`0 4px 14px .55`) because nothing complained about them and they rendered fine
-in browser screenshots. **The user then reported, on the real device, that
-both looked like solid dark rectangles** — a different failure mode from
-`sheet`'s: not an offset/blur ratio problem, just too much opacity relative to
-too little blur, so the mostly-unblurred core read as an opaque block. The
-user supplied the corrected values directly from on-device observation, which
-is the highest-confidence source available (better than anything a browser
-screenshot could confirm — see section 8's caveat that CSS/iOS shadow
-blur equivalence is an inference, not a proven identity). Applied verbatim,
-verified only that `makeShadow()` translates them losslessly to
-`shadowOffset:{height:2}, shadowOpacity, shadowRadius` on iOS — no browser
-screenshot taken for these, deliberately, on the user's explicit instruction
-not to judge them by how they look in this environment.
-**Do not soften/retune `raised` or `pill` upward because a browser render
-looks weak. Weak is correct here. Get on-device confirmation before touching
-either again.**
+**The actual bug, found by finally reading the mockup source:** `makeShadow()`
+used to branch on platform — web got a CSS `boxShadow` string, iOS got the
+legacy `shadowColor`/`shadowOffset`/`shadowOpacity`/`shadowRadius` quartet.
+Both were assumed equivalent "per spec," but that was never verified for iOS
+specifically (CSS's blur-radius-to-Gaussian-sigma formula is spec-mandated;
+Apple does not publicly document `CALayer.shadowRadius` using the identical
+formula — flagged as an open inference in section 8 before this was found).
+`makeShadow()` now emits the **same cross-platform `boxShadow` array style
+on every platform** — confirmed to be a real, non-web-only Fabric prop
+(`BoxShadowPropsConversions.h` is shared C++; iOS's own
+`RCTViewComponentView.mm` paints it) available since RN 0.75+, using the exact
+same field names (`offsetX/offsetY/blurRadius/color`) CSS `box-shadow` and the
+mockup use. There is no second implementation left to drift out of sync with
+what the mockup was authored against.
 
-Built by `makeShadow()`, which emits **`boxShadow` on web and `shadow*` on
-iOS from one set of numbers**, so the two cannot drift apart. See trap 3.
+**Also found while re-reading the mockup: `lightColors.scrim` was `.35`; the
+mockup's `.scrim` is a flat `rgba(0,0,0,.7)` with no light-mode override at
+all.** No comment or PROJECT_STATE entry ever explained `.35` as a deliberate
+choice, which means it was an oversight. Fixed to match. This is a plausible
+real contributor on its own: a shadow has to cover a much bigger brightness
+gap, in the same blur distance, against a barely-dimmed light-mode background
+than against a properly-dimmed one — which can make an objectively-correct
+shadow read as harsher/boxier specifically in light mode.
+
+**Do not retune any of these three values again without a number taken
+directly from `pagos-current.html` or from the user.** If this still looks
+wrong on device after this round, the next thing to question is not the
+numbers a third time — it's whether something else entirely (a stray
+`overflow:'hidden'` newly introduced elsewhere, a compositing quirk specific
+to `Animated.View` + `useNativeDriver` on the sliding pill, or genuinely a gap
+between RN's `boxShadow` Fabric implementation and CSS) is at fault. See
+trap 12.
 
 The Options sheet boxes have **no borders** — shadow and fill carry the
 separation. That was an explicit decision after the shadows were fixed.
@@ -348,8 +372,13 @@ These are not theory. Each one was hit in this project.
    `--clear` before trusting any visual check.
 
 3. **`shadow*` style props are deprecated in react-native-web** and no longer
-   paint reliably; the console warns. Use `boxShadow` on web. This is why
-   `makeShadow()` exists.
+   paint reliably; the console warns. This is why `makeShadow()` exists —
+   though it no longer branches by platform to work around it. It builds a
+   `boxShadow` array (`{offsetX, offsetY, blurRadius, color}` per layer),
+   which is a real cross-platform Fabric prop as of RN 0.75+ and renders
+   identically on iOS and web from the same style object. There is no
+   platform-specific shadow code left in this app; if you find yourself
+   writing `Platform.select` for a shadow again, something has regressed.
 
 4. **`overflow: 'hidden'` clips an element's own shadow** — flush at its border,
    on *both* platforms (CSS does it; iOS does the same via `clipsToBounds`).
@@ -398,22 +427,40 @@ These are not theory. Each one was hit in this project.
     children before concluding an element "is not rendering".
 
 11. **A shadow that "looks boxy" is not automatically the clipping bug in trap
-    4.** Before assuming a shadow is being clipped, check whether the node
-    carrying it (and everything above it) actually has `overflow: 'hidden'` —
-    if none does, it isn't clipped, and adding more blur radius alone will not
-    fix it. The real failure mode here was arithmetic: a single upward
-    box-shadow (negative Y offset) can only get as dark as the blur's midpoint
-    right next to the object unless the offset magnitude is a real fraction of
-    the blur radius — an 8px offset against a 40px blur left the darkest
-    visible point sitting at roughly 50% strength exactly where the eye
-    expects it to be near-solid, which reads as "the shadow stops working" at
-    the object's edge, i.e. a hard box. **To actually verify which failure
-    mode you're looking at, sample rendered pixels, don't just read the
-    styles:** `page.evaluate` a vertical strip of `getPixel`-equivalent color
-    values (a canvas draw of the screenshot, or PIL on the saved PNG) from well
-    above the shadow down through it. A smooth monotonic gradient that just
-    never gets very dark is the arithmetic problem; a flat region that cuts to
-    zero in 1-2px is the clipping bug.
+    4** — check whether the node carrying it, and everything above it,
+    actually has `overflow: 'hidden'` before assuming it's clipped. **This
+    trap's original conclusion (an offset/blur ratio problem, fixed by moving
+    `sheet` from -8/40 to -24/60) turned out to be incomplete — see trap 12.**
+    The pixel-sampling technique below is still good practice and still the
+    right way to tell a gradual-fade problem from an abrupt-cutoff one; it
+    just wasn't sampling the actual root cause that round, because the
+    comparison was against reasoning about CSS math in the abstract, not
+    against the mockup's own rendered output. `page.evaluate` a vertical
+    strip of pixel color values (a canvas draw of the screenshot, or PIL on
+    the saved PNG) from well above a shadow down through it. A smooth
+    monotonic gradient that never gets very dark points at values or opacity;
+    a flat region that cuts to zero in 1-2px points at clipping. Neither
+    rules out trap 12.
+
+12. **"The math should be equivalent" is not the same as "I checked the file
+    the math was supposed to match."** Two rounds of shadow fixes (trap 11's
+    offset/blur retune, then an opacity retune based on a correct-in-isolation
+    user report) both happened without anyone reading `pagos-current.html`,
+    despite `theme.ts` naming that exact file in a comment the whole time.
+    When it was finally read, its literal CSS numbers turned out to be close
+    to the *original*, pre-any-of-this-session's-changes values — and a
+    plain browser renders those original numbers correctly. The actual bug
+    was that `makeShadow()` sent iOS through a *different code path*
+    (legacy `shadowColor/Offset/Opacity/Radius`) than the one the mockup was
+    designed against and than web used (CSS `boxShadow`), on the unverified
+    assumption that the two were numerically identical. They may not be —
+    Apple does not publish the exact blur formula for `CALayer.shadowRadius`.
+    Switching both platforms to the same `boxShadow` array style (a real
+    cross-platform Fabric prop, not a web-only convenience) removes the
+    second implementation entirely, so there is nothing left to have quietly
+    drifted. **When a design element still looks wrong after a values-only
+    fix, stop tuning numbers and go find the actual reference file or asset
+    before touching them a third time.**
 
 **How to do a visual check.** Playwright is not a project dependency and must
 not become one — install it in the scratchpad, *outside* the repo, so
@@ -560,41 +607,34 @@ the rest is an honest map of what a browser screenshot can and cannot tell you.
 
 ## 9. Verification status
 
-As of HEAD `caddd77` on `main`, pushed to `origin`:
+As of the commit pending push on top of `caddd77` on `main`:
 
 - `npx tsc --noEmit` — passes
 - `npx expo export --platform ios` — passes
 - `npx expo export --platform web` — passes
-- Fingerprint re-checked immediately before this OTA, still
+- Fingerprint re-checked immediately before this change's OTA, still
   `142551e9e769e7f380858105207a96ada4f12e46` — matches the installed build
-- `makeShadow()`'s translation checked by reading the function directly: the
-  new `raised`/`pill` values (`offsetY:2, opacity:.12/.18, radius:14/12`)
-  become `shadowOffset:{height:2}`, `shadowOpacity`, `shadowRadius` on iOS
-  with no lossy step in between. Not re-verified by browser screenshot —
-  deliberately, on the user's explicit instruction, since they are the one
-  checking on-device and a browser render of a value tuned to look "weak" is
-  not useful evidence either way.
-- The two fidelity fixes from the prior commit (safe-area inset, Switch size)
-  touch only `DeviceFrame.tsx` (web-only) and one `Platform.OS === 'web'`-
-  gated style line in `entry.tsx` — zero behavior change on iOS by
-  construction, so they needed no fingerprint check or OTA.
-- New Entry confirmed by browser screenshot: currency button on screen, its
-  picker opens clear of the island, USD → MXN round-trips back to the amount
-  row with the typed amount intact, person picker creates and selects a
-  person, due-date switch flips the row to the date
-- Section 8's fidelity claims are backed by: reading react-native-web's own
-  source for `Switch` and the ellipsis/`fontVariant` CSS translation,
-  confirming the real iPhone 16 Pro's safe-area figures against an external
-  source, and measuring real DOM rects for a 51-character name on three
-  screens. Not verified: whether Core Animation's shadow blur is pixel-
-  identical to Chromium's at any given radius — flagged explicitly in
-  section 8 as an inference, not a proven identity. This round's `raised`/
-  `pill` bug (device: solid rectangle; browser screenshot: looked fine two
-  turns ago) is a concrete instance of that gap actually mattering.
-- **Three shadow/New-Entry OTAs are now published and none has an explicit
-  user confirmation of "this is correct" on file** — the New Entry currency
-  fix, the `sheet` shadow fix, and this `raised`/`pill` fix. The app uses its
-  cached bundle on launch and downloads in the background, so each takes two
+  (a pure-JS shadow/style change; no native module touched)
+- The new `boxShadow` array style confirmed to actually render on web (not
+  just typecheck): loaded the Options sheet in the browser preview and read
+  `getComputedStyle(...).boxShadow` directly off the DOM. It reproduces the
+  mockup's CSS byte-for-byte, including the pill's two comma-separated
+  shadows (`rgba(0,0,0,.55) 0px 4px 14px, rgba(0,0,0,.4) 0px 1px 3px`). No
+  page errors from the new array-based style, which this codebase had not
+  used before (only the string form).
+- **Deliberately not screenshotted or judged for "does it look right" in the
+  browser** — the user is the verifier for this one, on the actual device,
+  and section 8 already documents why a browser render can't stand in for
+  that even when the plumbing is confirmed correct.
+- The previous round's `raised`/`pill` opacity retune (`.12`/`.18`) is fully
+  reverted; those tokens are back to the mockup's literal `.35`/`.55`, now
+  carried through the corrected cross-platform code path instead of the old
+  per-platform one.
+- **Four shadow/New-Entry OTAs will have been published by the end of this
+  round, and none has an explicit user confirmation of "this is correct" on
+  file** — the New Entry currency fix, and three rounds of shadow changes
+  (offset/blur retune, opacity retune, this rewrite). The app uses its cached
+  bundle on launch and downloads in the background, so each takes two
   close-and-reopen cycles to appear. Treat every one of these as open until
   the user says so, not as done because it shipped.
 - No automated test suite exists
