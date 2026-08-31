@@ -4,9 +4,12 @@
 It is the handoff snapshot between sessions. It is not a diary: replace stale
 statements rather than appending to them.
 
-Last updated: 2026-08-30 · HEAD `752fca8` · branch `main` · worktree has three
-uncommitted files (`app/entry.tsx`, `src/components/DeviceFrame.tsx`,
-`src/components/Sheet.web.tsx`) — the New Entry fixes below, not yet committed.
+Last updated: 2026-08-30 · HEAD `984316f` · branch
+`fix/new-entry-currency-button` · worktree clean
+
+**Not on `main`.** The New Entry fix is committed on a branch and `main` is
+still at `752fca8`. Nothing has been pushed to `origin`. Merging or
+fast-forwarding `main` is the user's call.
 
 ---
 
@@ -17,16 +20,18 @@ The app runs on a real iPhone and in a browser preview. The v1 feature list in
 converging the app onto the approved mockup**.
 
 The four New Entry reports have been diagnosed and the two real defects are
-fixed — see section 5. One of the four (the missing keypad) was resolved by an
-interpretation, not by evidence, and needs the user to confirm it.
+fixed and shipped as an OTA — see sections 5 and 4. One of the four (the
+missing keypad) was resolved by an interpretation, not by evidence, and the
+user has not yet confirmed which of the two readings they meant.
 
-**Exact next action:** publish an OTA to `preview` and check New Entry on the
-phone. Confirm (a) the currency button is on screen next to the amount, (b) the
-numeric keypad is now up the moment New Entry opens — this is the change made
-on interpretation, and if the user actually wanted the mockup's *drawn* keypad
-rather than the native one, that is a separate decision to take, and (c) the
-due-date picker, which renders nothing on web by design, is alive on device.
-The fingerprint still matches the installed build, so an OTA will arrive.
+**Exact next action:** the user is checking the OTA on the phone. Confirm with
+them (a) the currency button is on screen next to the amount, (b) the due-date
+picker, which renders nothing on web by design, is alive on device, and (c)
+**which keypad they meant** — the answer decides whether the `autoFocus` on the
+amount field is the fix or whether the mockup's *drawn* keypad has to be built.
+Building it would reverse a settled decision to use the native iOS keypad
+(section 3, "Words over icons. Native iOS feel."), so do not start it without
+an explicit instruction.
 
 ---
 
@@ -148,6 +153,7 @@ reads as "pressed", not "on". No checkmarks.
 | Its runtime | `142551e9e769e7f380858105207a96ada4f12e46` |
 | Channel → branch | `preview` → `preview` |
 | Dev-client build | `61bede33-2d9a-4575-abd9-2dfc9745ca04` (may not be installed) |
+| Latest OTA | group `d3cd8a9c-4eee-4b59-9817-44fe8038a8da`, iOS update `01a05521-7ff7-72d5-b969-8af9fd1853df`, from commit `984316f` |
 
 **Publish an OTA:**
 ```
@@ -357,7 +363,7 @@ Do not chase these in the browser; they are native-only capabilities.
 
 ## 9. Verification status
 
-As of HEAD `752fca8` plus the three uncommitted New Entry files:
+As of HEAD `984316f` on `fix/new-entry-currency-button`:
 
 - `npx tsc --noEmit` — passes
 - `npx expo export --platform ios` — passes
@@ -370,6 +376,13 @@ As of HEAD `752fca8` plus the three uncommitted New Entry files:
   picker opens clear of the island, USD → MXN round-trips back to the amount
   row with the typed amount intact, person picker creates and selects a person,
   due-date switch flips the row to the date
-- **Nothing in this session was checked on the device.** No OTA was published.
+- **OTA published** to `preview` at runtime
+  `142551e9e769e7f380858105207a96ada4f12e46`, which matches the installed
+  build, so it will reach the phone. The app uses its cached bundle on launch
+  and downloads in the background, so it takes **two** close-and-reopen cycles
+  to appear.
+- **Nothing has been confirmed on the device.** Published is not verified: no
+  screenshot or user confirmation from the phone exists yet for any of the New
+  Entry changes.
 - No automated test suite exists
 - No iOS simulator is available (Windows-only machine, no Mac)
