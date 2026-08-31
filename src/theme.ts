@@ -290,69 +290,29 @@ export function makeShadow(spec: ShadowSpec): ViewStyle {
  * value taken directly from that file or from the user.
  */
 /**
- * ======================== TEMPORARY DIAGNOSTIC =========================
- * `SHADOW_MODE` decides what `raised` and `pill` emit. `sheet` is never
- * affected — it is a different element and acts as an untouched control.
+ * `sheet` is the only RN shadow left in this app.
  *
- *   'mockup'  — the real values from `pagos-current.html`. THE END STATE.
- *   'off'     — emit nothing. Already run: both rectangles disappeared,
- *                which confirmed the shadow is the source of the hard edge.
- *   'maxblur' — zero offset, very large blur, moderate opacity. Running now.
+ * `raised` and `pill` used to live here too. They are gone because on iOS
+ * neither React Native shadow API blurs these boxes at all: a 0-offset, 40pt
+ * blur, 45% shadow — a shape that cannot have a straight edge if any blurring
+ * is happening — still rendered as a hard rectangle on device. Three rounds
+ * of retuning the values failed before that test was run, so this is not a
+ * numbers problem and must not be "fixed" by putting values back.
  *
- * Why 'maxblur': a hard-edged rectangle appeared under BOTH the legacy
- * `shadow*` props and the `boxShadow` prop, and the same CSS numbers render
- * softly in a real browser. Rather than guess at values a fourth time, this
- * isolates one variable — blur — with the offset removed entirely. A
- * 0-offset 40pt blur cannot produce a straight edge if iOS is blurring at
- * all, so the result is unambiguous:
+ * Those two are now drawn by `<Elevated>` (`src/components/Elevated.tsx`),
+ * which stacks translucent rounded rects and never asks iOS to blur
+ * anything. Do not reintroduce `shadows.raised` / `shadows.pill`.
  *
- *   soft grey halo, no edges  -> iOS blur works. The bug is in how offset /
- *                                opacity interact, not the blur, and the
- *                                mockup values can be reintroduced and tuned
- *                                against a known-good blur.
- *   still a hard rectangle    -> iOS is not blurring these at all. Stop using
- *                                RN's shadow props for this and render the
- *                                shadow another way.
- *
- * Flip back to 'mockup' before anything ships.
- * ======================================================================
+ * `sheet` is kept as-is only because it was never part of the report and has
+ * not been checked. If the Options sheet's own drop shadow ever turns out to
+ * have the same hard edge, move it to `<Elevated>` too rather than adjusting
+ * its numbers.
  */
-type ShadowMode = 'mockup' | 'off' | 'maxblur';
-const SHADOW_MODE: ShadowMode = 'maxblur';
-
-function diagnostic(spec: ShadowSpec): ViewStyle {
-  if (SHADOW_MODE === 'off') return {};
-  if (SHADOW_MODE === 'maxblur') {
-    return makeShadow({ offsetY: 0, opacity: 0.45, radius: 40, elevation: spec.elevation });
-  }
-  return makeShadow(spec);
-}
-
 export const shadows = {
-  /** Mockup: `.seg`, `.mgrp`, `.close` — `box-shadow: 0 4px 16px rgba(0,0,0,.35)` */
-  raised: diagnostic({ offsetY: 4, opacity: 0.35, radius: 16, elevation: 6 }),
   /** Mockup: `.sheet`, `.psheet` — `box-shadow: 0 -8px 40px rgba(0,0,0,.6)`,
    *  cast upward so a sheet anchored to the bottom edge lifts off the screen
    *  behind it. */
   sheet: makeShadow({ offsetY: -8, opacity: 0.6, radius: 40, elevation: 16 }),
-  /**
-   * Mockup: `.anim-slide .slider` — `box-shadow: 0 4px 14px rgba(0,0,0,.55)`.
-   * ONE shadow, not two.
-   *
-   * The mockup's `.seg button.on` rule does list two
-   * (`0 4px 14px .55, 0 1px 3px .4`), and a previous round copied that pair
-   * here. That was wrong: the mockup ships `<body class="anim-slide">`, and
-   * `.anim-slide .seg button.on` sets `box-shadow: none`, moving the shadow
-   * onto the sliding `.slider` element with only the first of the two. This
-   * app implements the sliding pill, so `.slider` is the rule that applies.
-   *
-   * The spurious second layer is why the pill had a hard edge on device. RN's
-   * iOS renderer maps CSS `blurRadius` to `CALayer.shadowRadius` at half
-   * value (`RCTBoxShadow.mm`), so `3` became a 1.5pt blur — at 40% black,
-   * offset 1pt, that is not a shadow, it is a dark outline traced around the
-   * pill's shape. Do not reintroduce it.
-   */
-  pill: diagnostic({ offsetY: 4, opacity: 0.55, radius: 14, elevation: 8 }),
 } as const;
 
 /** Segment pill slide and theme crossfade, per the approved mockup. */

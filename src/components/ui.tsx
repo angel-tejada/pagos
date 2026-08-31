@@ -14,7 +14,7 @@ import {
   type ViewStyle,
 } from 'react-native';
 
-import { font, layout, motion, radius, shadows, spacing, type, useStyles, type Palette } from '../theme';
+import { font, layout, motion, radius, spacing, type, useStyles, type Palette } from '../theme';
 
 type ButtonTone = 'debt' | 'payment' | 'outline' | 'sheet';
 
@@ -175,9 +175,11 @@ const makeStyles = (c: Palette) =>
     buttonDebt: { backgroundColor: c.red },
     buttonPayment: { backgroundColor: c.ink },
     buttonOutline: { backgroundColor: c.card, borderWidth: 1, borderColor: c.line },
-    // No border: the shadow (and, in dark mode, the raised fill) separates
-    // this from the sheet behind it.
-    buttonSheet: { backgroundColor: c.sheetCardRaised, ...shadows.raised },
+    // No border: the raised fill plus the <Elevated> shadow behind it
+    // separate this from the sheet. The shadow is NOT applied here — the
+    // caller wraps the button, because a shadow nested inside the box it
+    // shadows would paint on top of that box's own fill.
+    buttonSheet: { backgroundColor: c.sheetCardRaised },
     buttonText: { fontFamily: font.extrabold, fontSize: type.bodyLarge, letterSpacing: -0.18 },
     buttonTextDebt: { color: c.redOn },
     buttonTextPayment: { color: c.inkOn },
@@ -206,14 +208,15 @@ const makeStyles = (c: Palette) =>
       textAlign: 'center',
     },
 
-    // No border on the track: the shadow (and, in dark mode, the raised
-    // fill) separates it from the sheet behind it.
+    // No border on the track: the raised fill plus the <Elevated> shadow
+    // behind it separate it from the sheet. The shadow is applied by the
+    // caller wrapping <Segment>, not here — see Elevated.tsx for why it
+    // cannot be a child of the box it shadows.
     segment: {
       flexDirection: 'row',
       backgroundColor: c.sheetCardRaised,
       borderRadius: radius.lg,
       padding: SEGMENT_PAD,
-      ...shadows.raised,
     },
     segmentPill: {
       position: 'absolute',
@@ -223,7 +226,10 @@ const makeStyles = (c: Palette) =>
       borderRadius: radius.md,
       backgroundColor: c.ink,
       pointerEvents: 'none',
-      ...shadows.pill,
+      // No shadow: the pill is solid ink against a light track, so it already
+      // reads as raised, and it is absolutely positioned and transform-
+      // animated, which <Elevated> cannot wrap cleanly. Revisit only if the
+      // user asks for depth on it specifically.
     },
     segmentButton: { flex: 1, minHeight: 52, alignItems: 'center', justifyContent: 'center' },
     segmentLabel: { fontSize: type.body, letterSpacing: -0.17 },

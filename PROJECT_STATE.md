@@ -61,37 +61,50 @@ the QR never appears where they can scan it.
 to check before assuming anything about JS changes not reaching the phone;
 it does not survive a machine restart or this terminal session ending.
 
-**A/B RESULT (2026-08-31, confirmed on device by the user): with `raised`
-and `pill` emitting nothing, BOTH rectangles disappeared.** The hard edge is
-genuinely produced by the shadow, not by a border, a wrapper fill, or layer
-compositing. That closes the structural hunt in section 3 — do not re-audit
-borders and fills again.
+**RESOLVED CAUSE (2026-08-31, both steps confirmed on device by the user):**
+1. With `raised`/`pill` emitting nothing, **both rectangles disappeared** —
+   so the hard edge was produced by the shadow, not a border, wrapper fill or
+   compositing.
+2. With a **0-offset, 40pt blur, 45%** shadow — a shape that cannot have a
+   straight edge if any blurring is happening — **the rectangles came back**.
 
-**Exact next action:** a second diagnostic is now live — `SHADOW_MODE` in
-`src/theme.ts` is `'maxblur'`, giving `raised` and `pill` a 0-offset, 40pt,
-45%-opacity shadow. `sheet` is untouched as a control. The point is to
-isolate blur from offset, because a 0-offset 40pt blur *cannot* produce a
-straight edge if iOS is blurring at all. Ask the user which they see:
+Therefore: **iOS does not blur these boxes at all**, under either the legacy
+`shadow*` quartet or the `boxShadow` prop, while the identical CSS blurs
+correctly in a real browser. The values were never the problem. Four separate
+rounds of retuning them failed before these two tests were run.
 
-- **Soft grey halo, no edges** → iOS blur works. The hard edge comes from how
-  offset and opacity interact at these sizes, so reintroduce the mockup values
-  (`SHADOW_MODE = 'mockup'`) and adjust from a known-good blur.
-- **Still a hard rectangle** → iOS is not blurring these at all, under either
-  shadow API. Stop using RN's shadow props for this element and render the
-  shadow another way entirely.
+**Fix: stop asking iOS to blur.** `shadows.raised` and `shadows.pill` are
+deleted. The segment tracks, the Backup/Restore group and the Close button
+now get their shadow from **`<Elevated>`** (`src/components/Elevated.tsx`),
+which stacks 8 concentric translucent rounded rects — plain Views with a
+backgroundColor and a borderRadius, no blur anywhere, so there is nothing
+that can fail to blur. Two useful properties: the layers must be *siblings
+rendered before* the box (a child always paints over its parent's own fill),
+and because they use the most ordinary paint path there is, **the browser
+preview is a trustworthy proxy for this effect** — unlike a real shadow.
 
-**`SHADOW_MODE` must be back to `'mockup'` before anything ships.** Nothing
-from either diagnostic has been OTA'd; the `preview` build is untouched.
+`shadows.sheet` survives untouched: it was never part of the report and has
+not been checked. `dialogs.web.tsx` keeps a real CSS shadow via its own local
+`WEB_DIALOG_SHADOW`, since that file only ever renders in the browser.
 
-Context that still matters: both the legacy `shadow*` quartet AND the
-`boxShadow` prop produced the same hard edge, and the mockup's identical CSS
-renders softly in a real browser. Whatever the cause is, it is not the
-numbers — three rounds of retuning them failed, which is what forced these
-diagnostics.
+**Exact next action:** the user is looking at `<Elevated>` on device via Fast
+Refresh. Confirm the boxes now read as a soft shadow with no straight edge.
+Watch specifically for **banding** — 8 discrete steps can show as rings if
+the opacity per layer is too high; raising `LAYERS` is the fix, not changing
+the total opacity. Once confirmed, this needs an OTA (it is a real fix, not a
+diagnostic — nothing is left flagged off).
 
-Still open regardless: four pieces of New Entry / shadow work sit in published
-OTAs with no explicit user confirmation. After the shadow work, the next item
-is the dead end in section 5 — the 12-person limit with no way to pay.
+Two follow-ups deliberately left undone, ask before doing either:
+- The **sliding pill** has no shadow at all now. It is solid ink on a light
+  track so it reads as raised anyway, and it is absolutely positioned and
+  transform-animated, which `<Elevated>` cannot wrap cleanly.
+- The **Options sheet's own** drop shadow still uses the RN prop. If it turns
+  out to have the same hard edge, move it to `<Elevated>` rather than
+  adjusting its numbers.
+
+Still open: four pieces of New Entry / shadow work sit in published OTAs with
+no explicit user confirmation. After this, the next item is the dead end in
+section 5 — the 12-person limit with no way to pay.
 
 ---
 
@@ -288,13 +301,11 @@ files quoted above — `RCTBoxShadow.mm`, `processBoxShadow.js` — are clean an
 internally consistent, but re-verify against a fresh install before betting
 anything large on a subtle reading of that source.)*
 
-> **CURRENTLY OVERRIDDEN.** `SHADOW_MODE` in `src/theme.ts` is `'maxblur'`,
-> so `raised` and `pill` ignore the values in the table above and emit a
-> 0-offset 40pt 45% shadow instead. That is the diagnostic described in
-> section 1. Set it to `'mockup'` to restore the real values.
->
-> The earlier `'off'` run already returned its answer: **both rectangles
-> vanished, so the shadow is confirmed as the source of the hard edge.**
+> **`raised` and `pill` NO LONGER EXIST as RN shadows.** Two on-device tests
+> proved iOS never blurs them (see section 1). They are now drawn by
+> `<Elevated>`, which stacks translucent rounded rects instead. The `raised`
+> row below is kept only to record the mockup value `<Elevated>` reproduces.
+> **Do not recreate these as `shadows.*` tokens.**
 
 **Do not retune any of these three values again without a number taken
 directly from `pagos-current.html` or from the user.** If this still looks

@@ -2,7 +2,16 @@ import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { useLang } from '../i18n';
-import { font, layout, radius, shadows, type, useColors, useStyles, type Palette } from '../theme';
+import { font, layout, makeShadow, radius, type, useColors, useStyles, type Palette } from '../theme';
+
+/**
+ * This file renders ONLY in the browser preview, where CSS `box-shadow`
+ * blurs correctly, so it keeps a real shadow rather than the stacked-rect
+ * `<Elevated>` the app uses on iOS. It is deliberately not shared with
+ * `shadows` in `theme.ts`: that token was retired precisely because iOS does
+ * not blur it, and nothing here ever runs on iOS.
+ */
+const WEB_DIALOG_SHADOW = makeShadow({ offsetY: 4, opacity: 0.35, radius: 16, elevation: 6 });
 
 export type DialogAction = {
   text: string;
@@ -185,7 +194,7 @@ const makeStyles = (c: Palette) =>
       borderRadius: radius.xl,
       paddingTop: 20,
       paddingHorizontal: 20,
-      ...shadows.raised,
+      ...WEB_DIALOG_SHADOW,
     },
     alertTitle: { color: c.ink, fontFamily: font.bold, fontSize: type.body, textAlign: 'center', letterSpacing: -0.17 },
     alertMessage: {
@@ -223,7 +232,7 @@ const makeStyles = (c: Palette) =>
       borderWidth: 1,
       borderColor: c.sheetLine,
       borderRadius: radius.lg,
-      ...shadows.raised,
+      ...WEB_DIALOG_SHADOW,
     },
     actionTitleRow: { paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: c.sheetDivider },
     actionTitle: { color: c.mute, fontFamily: font.semibold, fontSize: type.label, textAlign: 'center' },
@@ -243,7 +252,7 @@ const makeStyles = (c: Palette) =>
       borderWidth: 1,
       borderColor: c.sheetLine,
       borderRadius: radius.lg,
-      ...shadows.raised,
+      ...WEB_DIALOG_SHADOW,
     },
     cancelText: { color: c.ink, fontFamily: font.bold, fontSize: type.bodyLarge },
     pressed: { opacity: 0.7 },
