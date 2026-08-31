@@ -4,9 +4,8 @@
 It is the handoff snapshot between sessions. It is not a diary: replace stale
 statements rather than appending to them.
 
-Last updated: 2026-08-30 · HEAD `31fcc7c` on `main`, pushed to `origin` ·
-worktree has one uncommitted file (`src/theme.ts`, the `raised`/`pill` shadow
-correction below) plus this file.
+Last updated: 2026-08-30 · HEAD `caddd77` on `main`, pushed to `origin` ·
+worktree clean.
 
 ---
 
@@ -49,12 +48,14 @@ them back up based on how they look anywhere but the phone. Applied verbatim
 `sheet` itself either way in this round; treat it as still only browser-
 verified, not confirmed fixed on device, until said otherwise.
 
-**Exact next action:** commit, push, and publish an OTA for the `raised`/
-`pill` correction, then get the user to confirm on the phone. At that point
-three separate pieces of New Entry / shadow work will all be sitting in
-OTAs the user hasn't explicitly confirmed as correct — treat each as open
-until they say so, not as done because it shipped. After that, the next open
-item is the dead end in section 5 — the 12-person limit with no way to pay.
+**Exact next action:** the `raised`/`pill` correction is published as an OTA
+(group `655672b6-0994-4126-8245-277c7858195b`) at the matching runtime. Get
+the user to confirm it on the phone. Three separate pieces of New Entry /
+shadow work are now sitting in OTAs with no explicit user confirmation on
+file — the currency-button fix, the `sheet` shadow fix, and this `raised`/
+`pill` fix — treat each as open until the user says so, not as done because
+it shipped. After that, the next open item is the dead end in section 5 —
+the 12-person limit with no way to pay.
 
 ---
 
@@ -212,7 +213,8 @@ reads as "pressed", not "on". No checkmarks.
 | Its runtime | `142551e9e769e7f380858105207a96ada4f12e46` |
 | Channel → branch | `preview` → `preview` |
 | Dev-client build | `61bede33-2d9a-4575-abd9-2dfc9745ca04` (may not be installed) |
-| Latest OTA | group `87fb7401-2959-44fb-8890-c4b12cdd69c0`, iOS update `01a05536-5244-79df-a47c-f2f116acaa9f`, from commit `d6eaaf6` (shadow fix) |
+| Latest OTA | group `655672b6-0994-4126-8245-277c7858195b`, iOS update `01a0555d-bdfc-7d78-8ea2-9497236e0c91`, from commit `caddd77` (raised/pill shadow fix) |
+| Prior OTA | group `87fb7401-2959-44fb-8890-c4b12cdd69c0`, from commit `d6eaaf6` (sheet shadow fix) |
 | Prior OTA | group `d3cd8a9c-4eee-4b59-9817-44fe8038a8da`, from commit `984316f` (New Entry fix) |
 
 **Publish an OTA:**
@@ -558,7 +560,7 @@ the rest is an honest map of what a browser screenshot can and cannot tell you.
 
 ## 9. Verification status
 
-As of the pending commit on top of `31fcc7c` on `main`:
+As of HEAD `caddd77` on `main`, pushed to `origin`:
 
 - `npx tsc --noEmit` — passes
 - `npx expo export --platform ios` — passes
