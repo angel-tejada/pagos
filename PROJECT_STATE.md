@@ -185,21 +185,40 @@ Also this session: the local-storage reassurance text is removed from
 Options (tension with CLAUDE.md hard rule 5 — kept in `strings.ts` for reuse
 elsewhere per explicit user instruction).
 
-**NEW, UNCONFIRMED:** user reports tapping EITHER segment (Language or
-Appearance — confirmed both, ruling out theme-switching specifically) makes
-the sheet's content visibly jump position. Common factor between the two
-segments is `Segment`'s `Animated.timing` with `useNativeDriver` on iOS. Test
-fix applied: `contentInsetAdjustmentBehavior="never"` on the Options
-ScrollView, since this app already manages its own safe-area padding and
-iOS's automatic inset recalculation on relayout is a known trigger for
-exactly this symptom. **Marked as a hypothesis in the code — not confirmed.**
+**OPEN BUG — sheet jumps on segment tap. Root cause NOT yet found.** User
+reports tapping EITHER segment (Language or Appearance — confirmed both,
+ruling out theme-switching specifically) visibly shifts the sheet's content.
+
+First hypothesis fix (`contentInsetAdjustmentBehavior="never"` on the Options
+ScrollView) was tried and made things worse, not better — REVERTED. The
+user's own before/after screenshots pinned down its actual signature: normal
+on reload → tap ANY segment → sheet visibly settles shorter/lower → stays
+that way → close and reopen (remount) → back to normal → tap again → jumps
+again. That reload/settle/reset cycle is the documented behavior of
+`contentInsetAdjustmentBehavior="never"` itself — it drops the automatic top
+safe-area inset iOS adds to scroll content, but applies the drop lazily, on
+the first relayout after mount rather than immediately. Confirms the prop was
+at least partly responsible for what those specific screenshots showed; does
+NOT confirm anything about the original report before that fix went in. **Do
+not reintroduce this prop without a measured reason.**
+
+**A full grep for theme-conditional layout code came back empty** — nothing
+in `src/`/`app/` branches on `scheme` in a way that changes size/spacing, only
+the `StatusBar` style and the date-picker's `themeVariant` (`entry.tsx`,
+unrelated screen). So a layout-code cause for the ORIGINAL report, if one
+exists independent of the reverted fix, has not been located.
 
 **Exact next action:** the phone is **NOT attached** (`/json/list` returns
-`[]`) as of the last check. Do not ask the user to judge anything until it
-returns a runtime — this has burned multiple rounds today already. Once
-attached, have them: (1) look at the Options sheet's box shadows — no hard
-lines expected now, and (2) tap both segments and report whether the jump is
-gone. Either could still be wrong; don't declare victory before they say so.
+`[]`) as of the last check — this has burned multiple rounds today, check
+before asking the user to look at anything. Once attached, get a **fresh,
+isolated retest** now that the bad fix is reverted: reload the app, open
+Options, tap a segment, report whether the jump still happens at all. If it
+does, this is back to an open bug with no located cause — next step is
+getting the user to send a short screen recording (words and even paired
+screenshots have not been enough to pin down the exact mechanism twice now),
+or adding an on-screen debug readout of the sheet's measured layout that
+updates on each tap, so the numbers can be compared directly instead of
+descriptions.
 
 Still open: four pieces of New Entry / shadow work sit in published OTAs with
 no explicit user confirmation. Nothing from this session's diagnostics is
