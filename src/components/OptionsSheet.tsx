@@ -54,22 +54,19 @@ export function OptionsSheet({ visible, onClose }: { visible: boolean; onClose: 
               content gives each shadow `screenPadding` of room inside the
               clip. The mockup gets this for free: its padding is on the
               scrolling element itself, and CSS clips at the padding box. */}
-          {/* HYPOTHESIS, not confirmed: on iOS, ScrollView's default
-              contentInsetAdjustmentBehavior="automatic" recalculates insets
-              on any relayout of its ancestry — including the layout pass a
-              segment's Animated.timing triggers on the native thread when
-              useNativeDriver is true. This app manages its own safe-area
-              padding via SafeAreaView already, so automatic adjustment is
-              redundant at best. Reported bug: tapping EITHER segment (not
-              just Appearance) visibly shifts the sheet's content — pointing
-              at something both segments trigger in common (the animation),
-              not theme switching itself. Remove this comment once the user
-              confirms the jump is actually gone; if it persists, this was
-              not the cause. */}
-          <ScrollView
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={styles.scrollContent}
-            contentInsetAdjustmentBehavior="never">
+          {/* REVERTED: contentInsetAdjustmentBehavior="never" was tried here as
+              a hypothesis for a reported layout jump and made it WORSE. That
+              prop drops the automatic top safe-area inset iOS otherwise adds
+              to scroll content, but iOS applies the drop lazily — visually on
+              the first relayout after mount, not immediately. That matches
+              the reported symptom exactly: normal on reload, jumps on the
+              first segment tap (any relayout triggers the catch-up), stays
+              jumped, resets on close (remount), jumps again on the next tap.
+              Root cause of the ORIGINAL "content jumps" report is still open
+              — this only ruled out one guess by making the symptom worse in
+              a diagnosable way. Do not reintroduce this prop without a
+              measured reason. */}
+          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
             <View style={styles.grabber} />
             <Text style={styles.title}>{t.options}</Text>
 
