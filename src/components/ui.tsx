@@ -149,7 +149,24 @@ export function Segment<T extends string>({
             accessibilityState={{ selected: active }}
             onPress={() => onChange(option.value)}
             style={styles.segmentButton}>
-            <Text style={[styles.segmentLabel, active ? styles.segmentLabelOn : styles.segmentLabelOff]}>
+            {/* numberOfLines is load-bearing, not decorative: the selected
+                label switches to font.extrabold (weight 800), which CoreText
+                renders measurably wider than the unselected font.semibold
+                (weight 600) for the same string — a real, documented
+                iOS-vs-browser text-metrics divergence (PROJECT_STATE
+                section 8), which is also why this never reproduced in the
+                browser preview. If the bold width ever exceeds the button on
+                a real device, an unclamped Text wraps to a second line and
+                grows this row's height, pushing every element below it down
+                — on EVERY tap that selects a wider word, in either segment.
+                That matches the reported "sheet jumps on any segment tap"
+                exactly. Clamped here so a wrap is structurally impossible;
+                shrinks instead of wrapping if it's ever this tight. */}
+            <Text
+              style={[styles.segmentLabel, active ? styles.segmentLabelOn : styles.segmentLabelOff]}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.85}>
               {option.label}
             </Text>
           </Pressable>

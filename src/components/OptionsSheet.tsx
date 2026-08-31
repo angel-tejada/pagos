@@ -1,4 +1,5 @@
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { pickRestoreFile, shareBackup } from '../data/files';
@@ -14,6 +15,23 @@ export function OptionsSheet({ visible, onClose }: { visible: boolean; onClose: 
   const { t, lang, setLang } = useLang();
   const { data, restoreData, markBackupComplete } = useData();
   const { scheme, setScheme } = useThemeControl();
+
+  /**
+   * TEMPORARY diagnostic for the "sheet jumps on segment tap" report. Two
+   * fixes have already been tried and rejected on device (contentInset
+   * change made it worse; text-wrap clamp below is untested). Rather than
+   * guess a third time, this measures the two segment rows' real heights on
+   * every render and prints them on screen — if a row's height changes
+   * between taps, that is direct, numeric proof of what is pushing content
+   * down, instead of another screenshot comparison. Delete this whole block
+   * (state, handlers, and the <Text> that renders it) once the cause is
+   * confirmed.
+   */
+  const [debugHeights, setDebugHeights] = useState({ lang: 0, appearance: 0 });
+  const onLangLayout = (e: LayoutChangeEvent) =>
+    setDebugHeights((d) => ({ ...d, lang: Math.round(e.nativeEvent.layout.height) }));
+  const onAppearanceLayout = (e: LayoutChangeEvent) =>
+    setDebugHeights((d) => ({ ...d, appearance: Math.round(e.nativeEvent.layout.height) }));
 
   const runBackup = () => {
     void shareBackup(data).then(markBackupComplete).catch(() => showAlert(t.backupFailed));
@@ -70,8 +88,12 @@ export function OptionsSheet({ visible, onClose }: { visible: boolean; onClose: 
             <View style={styles.grabber} />
             <Text style={styles.title}>{t.options}</Text>
 
+            <Text style={styles.debugText}>
+              DEBUG lang={debugHeights.lang} appearance={debugHeights.appearance}
+            </Text>
+
             <Text style={styles.caption}>{t.language}</Text>
-            <View style={styles.segmentWrap}>
+            <View style={styles.segmentWrap} onLayout={onLangLayout}>
               <Segment
                 options={[
                   { value: 'es' as const, label: 'Español' },
@@ -83,7 +105,7 @@ export function OptionsSheet({ visible, onClose }: { visible: boolean; onClose: 
             </View>
 
             <Text style={styles.caption}>{t.appearance}</Text>
-            <View style={styles.segmentWrap}>
+            <View style={styles.segmentWrap} onLayout={onAppearanceLayout}>
               <Segment
                 options={[
                   { value: 'light' as const, label: t.themeLight },
@@ -197,6 +219,8 @@ const makeStyles = (c: Palette) =>
     rowTitle: { color: c.ink, fontFamily: font.bold, fontSize: type.body, letterSpacing: -0.17 },
     rowDetail: { color: c.mute, fontFamily: font.regular, fontSize: type.label, marginTop: 2 },
     chevron: { color: c.mute, fontSize: 22, fontFamily: font.regular },
+    // TEMPORARY, see the diagnostic comment near the top of this file.
+    debugText: { color: '#FF0000', fontFamily: font.bold, fontSize: 13, marginBottom: 8 },
 
     pressed: { opacity: 0.7 },
   });
