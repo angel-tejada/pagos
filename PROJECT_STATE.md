@@ -157,12 +157,49 @@ delivery evidence and is not disproven. But it was reached in a session where
 delivery was demonstrably unreliable, and the user does not accept it.
 **Re-establish or overturn it from the clean state; do not defend it.**
 
+**UPDATE — the shadow saga is resolved, root cause found, not `'maxblur'`.**
+Borders alone were not enough either. The user then reported hard lines down
+the vertical sides of the boxes and hard corners — a clipping signature, not
+a blur failure. Two real, confirmed causes, both fixed:
+
+1. **RN's iOS `boxShadow` clips itself.** `RCTBoxShadow.mm`'s
+   `RCTGetOutsetBoxShadowLayer` masks the shadow with a rounded rect expanded
+   by `2*(blurRadius+1)` but keeping the box's ORIGINAL corner radius — at
+   blur 16/radius 14 that's an almost-square mask, and Apple's wider-than-CSS
+   blur reaches it and gets sliced. `makeShadow()` now uses the unmasked
+   legacy `shadow*` props on iOS (no mask exists there) and keeps `boxShadow`
+   on web only, where it was measured pixel-identical to the mockup.
+2. **The ScrollView was clipping every box's shadow at its own edge.** The
+   sheet carried `paddingHorizontal`/`paddingBottom`, and the ScrollView sat
+   *inside* that padding, so the scroller's clip bounds landed exactly on the
+   boxes' edges. Padding moved onto `contentContainerStyle` so every shadow
+   has `screenPadding` of room before any clip boundary. This is also why the
+   `'maxblur'` conclusion doesn't hold up under the clean-state re-test: it
+   was never that iOS can't blur, it's that the clip was eating the blur
+   regardless of its values.
+
+This means **the `'maxblur'` finding is OVERTURNED, not confirmed.** Do not
+cite it going forward.
+
+Also this session: the local-storage reassurance text is removed from
+Options (tension with CLAUDE.md hard rule 5 — kept in `strings.ts` for reuse
+elsewhere per explicit user instruction).
+
+**NEW, UNCONFIRMED:** user reports tapping EITHER segment (Language or
+Appearance — confirmed both, ruling out theme-switching specifically) makes
+the sheet's content visibly jump position. Common factor between the two
+segments is `Segment`'s `Animated.timing` with `useNativeDriver` on iOS. Test
+fix applied: `contentInsetAdjustmentBehavior="never"` on the Options
+ScrollView, since this app already manages its own safe-area padding and
+iOS's automatic inset recalculation on relayout is a known trigger for
+exactly this symptom. **Marked as a hypothesis in the code — not confirmed.**
+
 **Exact next action:** the phone is **NOT attached** (`/json/list` returns
-`[]`). Do not ask the user to judge anything until it returns a runtime. When
-it does, have them reopen Options. If the boxes now read as crisp bordered
-cards with a soft shadow, this is done and needs an OTA. If the shadows still
-show a hard straight edge on a confirmed-attached device, the `'maxblur'`
-finding stands and only the shadow — not the borders — needs another approach.
+`[]`) as of the last check. Do not ask the user to judge anything until it
+returns a runtime — this has burned multiple rounds today already. Once
+attached, have them: (1) look at the Options sheet's box shadows — no hard
+lines expected now, and (2) tap both segments and report whether the jump is
+gone. Either could still be wrong; don't declare victory before they say so.
 
 Still open: four pieces of New Entry / shadow work sit in published OTAs with
 no explicit user confirmation. Nothing from this session's diagnostics is
