@@ -4,7 +4,7 @@
 It is the handoff snapshot between sessions. It is not a diary: replace stale
 statements rather than appending to them.
 
-Last updated: 2026-08-30 · HEAD `7420627` on `main`, pushed to `origin` ·
+Last updated: 2026-08-30 · HEAD `861a924` on `main`, pushed to `origin` ·
 worktree clean.
 
 ---
@@ -51,16 +51,23 @@ PROJECT_STATE entry ever justified `.35`, so it was an oversight, and a
 plausible real contributor — a shadow has to cover a much bigger brightness
 jump against a barely-dimmed background than against a properly-dimmed one.
 
-**Exact next action:** the shadow rewrite is published as an OTA (group
-`95b1d47f-8be6-4082-9277-0776b26e91a9`) at the matching runtime. Get the user
-to confirm it on the phone — ideally against `pagos-current.html` opened
-directly in a browser on some device, since that is now an actual available
-reference, not a description of one. **Four** separate pieces of New
-Entry/shadow work are sitting in OTAs with no explicit "yes this is right"
-from the user on file: the currency button fix, and three rounds of shadow
-changes. Treat every one as open until the user says so. After that, the
-next item is the dead end in section 5 — the 12-person limit with no way
-to pay.
+**A live dev-client Metro session is now the active workflow** — see
+"Live dev-client workflow" under section 4. Started this session, LAN IP
+`10.0.0.100` at the time. If it's not still running, that's the first thing
+to check before assuming anything about JS changes not reaching the phone;
+it does not survive a machine restart or this terminal session ending.
+
+**Exact next action:** confirm the dev-client connection actually reached the
+phone and Fast Refresh is working, since that was set up but never watched
+complete a round-trip. Separately, the shadow rewrite is still sitting in an
+OTA (group `95b1d47f-8be6-4082-9277-0776b26e91a9`) with no user confirmation
+on file — ideally checked against `pagos-current.html` opened directly in a
+browser, since that's now an actual available reference. **Four** separate
+pieces of New Entry/shadow work are sitting in OTAs with no explicit "yes
+this is right" from the user: the currency button fix, and three rounds of
+shadow changes. Treat every one as open until the user says so. After that,
+the next item is the dead end in section 5 — the 12-person limit with no
+way to pay.
 
 ---
 
@@ -236,7 +243,7 @@ reads as "pressed", not "on". No checkmarks.
 | Installed build | build 7, `9c0ddcf7-2882-4887-b6a5-6c37182e8537` |
 | Its runtime | `142551e9e769e7f380858105207a96ada4f12e46` |
 | Channel → branch | `preview` → `preview` |
-| Dev-client build | `61bede33-2d9a-4575-abd9-2dfc9745ca04` (may not be installed) |
+| Dev-client build | `61bede33-2d9a-4575-abd9-2dfc9745ca04`, fingerprint `142551e9e769e7f380858105207a96ada4f12e46` — **confirmed still matching current code** as of this session; every change since has been JS-only |
 | Latest OTA | group `95b1d47f-8be6-4082-9277-0776b26e91a9`, iOS update `01a05570-f6a9-70f6-9770-af67c9e959b4`, from commit `7420627` (boxShadow rewrite, mockup-literal values, scrim fix) |
 | Prior OTA | group `655672b6-0994-4126-8245-277c7858195b`, from commit `caddd77` (raised/pill opacity retune — superseded, values reverted) |
 | Prior OTA | group `87fb7401-2959-44fb-8890-c4b12cdd69c0`, from commit `d6eaaf6` (sheet shadow fix — superseded, values reverted) |
@@ -268,6 +275,58 @@ first `&`, iOS reports "not found".
 
 **On-device OTA behaviour:** the app uses the cached bundle on launch and
 downloads in the background, so the user must close and reopen **twice**.
+
+### Live dev-client workflow (Fast Refresh, no OTA)
+
+Set up this session because closing-and-reopening-twice per OTA was too slow
+for active design iteration. Requires the dev-client build above still
+installed on the phone, and the phone on the **same Wi-Fi network** as this
+machine.
+
+**Start it:** `npx expo start --dev-client --clear` (kill anything already on
+8081 first — a stale Metro serving an old bundle has cost real time twice
+in one day; always confirm the port is free before starting a new one). This
+machine's LAN IP was `10.0.0.100` when last checked; it can change if the
+router reassigns it, so re-check with `ipconfig` if the phone can't find the
+server.
+
+**On the phone:** open the existing dev-client app (a real app icon, not
+Expo Go — built from the `development` EAS profile, distinct from the
+`preview` build the user runs day to day). Its home screen lists detected
+Metro servers on the LAN; tap this project. If nothing is listed, enter the
+URL manually: `exp+pagos://expo-development-client/?url=http%3A%2F%2F<LAN-IP>%3A8081`
+(scheme is `pagos`, from `app.json`).
+
+**Once connected:** saving a file triggers Fast Refresh on the phone in
+roughly a second. No rebuild, no OTA, no reopening the app. This only works
+while this machine keeps the Metro process alive and both devices stay on the
+same network — it is a development-time tool, not a distribution mechanism;
+OTA is still how the `preview` build the user actually uses day to day gets
+updated.
+
+**Firewall:** an inbound rule named "Expo dev server (8081)" already exists
+and is enabled on this machine (`Get-NetFirewallRule -DisplayName "Expo dev
+server (8081)"`) — confirmed before relying on LAN mode, since Windows
+silently blocking this is a classic invisible failure and there is no way to
+click through a firewall prompt from a non-interactive terminal. If this ever
+needs recreating: `New-NetFirewallRule -DisplayName "Expo dev server (8081)"
+-Direction Inbound -LocalPort 8081 -Protocol TCP -Action Allow`.
+
+**Do not use `--tunnel` for this.** [[device-testing-via-eas-preview-builds]]
+records that ngrok died within a minute on this machine every time
+(`ERR_NGROK_3200`), which is why OTA became the default delivery path. If LAN
+mode ever fails to reach the phone (different networks, VPN, router
+isolation), that memory's guidance still applies — fall back to OTA rather
+than fighting the tunnel.
+
+**If the dev-client app is no longer on the phone**, no rebuild is needed
+(the fingerprint still matches) — reinstall the exact same build via its
+still-valid manifest link (expires 2026-09-13, well past today):
+```
+itms-services://?action=download-manifest&url=https://api.expo.dev/v2/projects/21c5fe80-6999-45e5-bd3d-ac38995042bd/builds/61bede33-2d9a-4575-abd9-2dfc9745ca04/manifest.plist
+```
+Same rule as the preview build's install link: paste the full URL into
+Safari's address bar, not a shortened or truncated version.
 
 ---
 
