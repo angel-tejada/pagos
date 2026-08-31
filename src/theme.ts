@@ -12,7 +12,7 @@
  */
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import type { ViewStyle } from 'react-native';
+import { Platform, type ViewStyle } from 'react-native';
 
 export type Palette = {
   /** App ground. */
@@ -269,11 +269,39 @@ export type ShadowSpec = { offsetY: number; opacity: number; radius: number; ele
  */
 export function makeShadow(spec: ShadowSpec): ViewStyle {
   const { offsetY, opacity, radius, elevation } = spec;
-  return {
-    boxShadow: [{ offsetX: 0, offsetY, blurRadius: radius, color: `rgba(0, 0, 0, ${opacity})` }],
-    elevation,
-  };
+  return Platform.select<ViewStyle>({
+    // Web: verified pixel-identical to the mockup. Measured the rendered
+    // shadow of `pagos-current.html` against the app's own preview at 3x,
+    // sampling above and below the box — every sample matched exactly.
+    web: {
+      boxShadow: [{ offsetX: 0, offsetY, blurRadius: radius, color: `rgba(0, 0, 0, ${opacity})` }],
+    },
+    // iOS: deliberately NOT `boxShadow`, because RN's implementation of it
+    // clips the shadow to a rectangle. In `RCTBoxShadow.mm`,
+    // `RCTGetOutsetBoxShadowLayer` masks the shadow layer with a rounded rect
+    // built as `CGRectInset(shadowRect, -2*(blurRadius+1), ...)` while
+    // keeping the box's ORIGINAL corner radius. At blur 16 / radius 14 that
+    // is a rect expanded 34pt on every side with only a 14pt corner — i.e. an
+    // almost square box. Anything the blur paints past that boundary is cut
+    // off flush, which shows up as hard straight lines down the vertical
+    // sides and hard corners. Apple's blur is wider than CSS's for the same
+    // number (RN's own source calls it "a bit overbearing"), so it reaches
+    // that boundary easily and gets sliced.
+    //
+    // The legacy shadow props set `layer.shadowOpacity/Radius/Offset`
+    // directly with no mask at all, so there is no boundary to cut against.
+    // `radius / 2` is the same CSS-blur-to-CALayer conversion RN itself
+    // applies in `RCTBoxShadow.mm`, so the two platforms stay in step.
+    default: {
+      shadowColor: '#000000',
+      shadowOffset: { width: 0, height: offsetY },
+      shadowOpacity: opacity,
+      shadowRadius: radius / 2,
+      elevation,
+    },
+  });
 }
+
 
 /**
  * Outward shadows only. An inset never reads as "selected", and on dark the
