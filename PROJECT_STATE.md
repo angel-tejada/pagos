@@ -396,6 +396,35 @@ mode ever fails to reach the phone (different networks, VPN, router
 isolation), that memory's guidance still applies — fall back to OTA rather
 than fighting the tunnel.
 
+### Expo Go is NOT an option for this project — verified, do not retry
+
+The user asked for plain Expo Go (scan a QR, no installs). It cannot work
+here, and **stripping native modules does not change that**:
+
+- **Expo Go on the Apple App Store stops at SDK 54.** This project is SDK
+  57 (`expo@57.0.18`). Per Expo's own troubleshooting docs, "Expo Go on the
+  Apple App Store stops at SDK 54, and SDK 55 and later are not available
+  there." That is a runtime/SDK version mismatch, not a module problem —
+  no amount of stubbing makes an SDK 54 client load an SDK 57 bundle.
+- Independently, `@expo/ui` (the due-date picker) ships real iOS Swift code
+  (`expo-module.config.json` declares the `ExpoUIModule` apple module and
+  `ios/` is full of `.swift`), so it could never be in Expo Go at any SDK.
+  It is the only import in `app/`+`src/` that is not a standard Expo Go
+  module, but it is the lesser blocker.
+
+The three real options, with honest costs:
+1. **Dev client** (status quo) — ONE install of build `61bede33` via the
+   manifest link below, then `npx expo start --dev-client` gives the QR +
+   Fast Refresh forever. Fingerprint still matches, no rebuild.
+2. **`sign.expo.dev`** — builds an Expo Go for SDK 55+ signed with a free
+   Apple ID. Still an install, more fiddly than option 1, and free-provisioned
+   apps expire in ~7 days. Strictly worse than option 1 here.
+3. **Downgrade the project to SDK 54** and drop `@expo/ui` — the only route
+   to literal App Store Expo Go with zero custom installs. Means moving
+   `expo`, `react-native` and every `expo-*` package back three majors on a
+   working app, and losing the native date picker. Large, risky, and would
+   invalidate the current preview/dev builds.
+
 **QR flow (what the user actually wants).** Leave port 8081 FREE and let the
 user run `npx expo start --dev-client` in their own terminal — the QR only
 appears in the terminal that owns the process, so starting Metro from a tool
