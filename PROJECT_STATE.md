@@ -4,12 +4,9 @@
 It is the handoff snapshot between sessions. It is not a diary: replace stale
 statements rather than appending to them.
 
-Last updated: 2026-08-30 · HEAD `984316f` · branch
-`fix/new-entry-currency-button` · worktree clean
-
-**Not on `main`.** The New Entry fix is committed on a branch and `main` is
-still at `752fca8`. Nothing has been pushed to `origin`. Merging or
-fast-forwarding `main` is the user's call.
+Last updated: 2026-08-30 · HEAD `60b9e6a` on `main`, pushed to `origin` ·
+worktree has one uncommitted file (`src/theme.ts`, the Options-sheet shadow
+fix below).
 
 ---
 
@@ -19,16 +16,26 @@ The app runs on a real iPhone and in a browser preview. The v1 feature list in
 `CLAUDE.md` is largely implemented. The current work is a **design pass
 converging the app onto the approved mockup**.
 
-All four New Entry reports are resolved and shipped as an OTA — see sections 5
-and 4.
+All four New Entry reports are resolved, confirmed on `main`, and shipped as
+an OTA — see section 5.
 
-**Exact next action:** the user is checking the OTA on the phone. Confirm with
-them that (a) the currency button is on screen next to the amount, (b) the
-native keypad is up the moment New Entry opens, and (c) the due-date picker,
-which renders nothing on web by design, is alive on device. If all three hold,
-the New Entry work is done and `fix/new-entry-currency-button` can go to
-`main`; the next open item is then the dead end in section 5 — the 12-person
-limit with no way to pay.
+The user then reported the Options sheet's shadow still looked like a hard
+box, not the soft glow in the approved mockup, on the real device. Diagnosed
+and fixed — see the Shadows section under section 3 and section 5. **This
+was not the clipping bug it resembled.** The shadow's own node has
+`overflow: visible` and nothing clips it; verified by sampling actual
+rendered pixel values in the browser preview, not by re-reading the code (see
+trap 11). The real defect was arithmetic: a single CSS box-shadow with a small
+negative offset cannot get dark right next to the object it's shadowing, no
+matter how large the blur radius is, so the values in place since commit
+`e635c5d` were structurally incapable of producing a soft-but-grounded look.
+
+**Exact next action:** publish an OTA with the shadow fix (fingerprint already
+re-checked and matching) and get the user to confirm it on the phone — this is
+the second round of OTA verification in a row for the New Entry / shadow work,
+and nothing in either has been confirmed on real hardware yet. After that,
+the next open item is the dead end in section 5 — the 12-person limit with no
+way to pay.
 
 ---
 
@@ -109,16 +116,37 @@ would be a regression, not a cleanup.
 - One deliberate deviation from the mockup: it puts white on the red button,
   which is 3.41:1 in dark mode. Dark flips that label to black (6.16:1).
 
-### Shadows — all three come from the mockup
+### Shadows
 
-Defined once in `src/theme.ts` and commented with the CSS they came from.
-**These are the mockup's values. Do not soften them because they look strong.**
+Defined once in `src/theme.ts`. **Provenance warning:** these were long
+commented as coming verbatim from an approved mockup file
+(`pagos-current.html`), but that file is not in this repo — only `pagos.html`
+is, and it contains exactly one `box-shadow` declaration (on `.fab`, a
+floating button this app doesn't have), none of the three values below. Where
+the original numbers actually came from is unknown. **Do not trust the "from
+the mockup" framing as verified fact for any of these three; verify by
+screenshot against whatever reference the user gives you, the way `sheet` was
+just corrected.**
 
 | Token | Value | Applied to |
 |---|---|---|
 | `raised` | `0 4px 16px rgba(0,0,0,0.35)` | segment tracks, Backup/Restore group, Close button |
-| `sheet` | `0 -8px 40px rgba(0,0,0,0.6)` | the Options sheet (negative Y — casts upward) |
+| `sheet` | `0 -24px 60px rgba(0,0,0,0.6)` | the Options sheet (negative Y — casts upward) |
 | `pill` | `0 4px 14px rgba(0,0,0,0.55)` | the selected segment pill |
+
+`sheet` was `0 -8px 40px .6` and looked like a hard-edged box on the real
+device despite having real blur — not a clipping bug (verified: the node is
+`overflow: visible` and nothing upstream clips it). A single box-shadow's
+near-edge darkness is capped by how far past the blur's midpoint the offset
+carries it; an 8px offset against a 40px blur left that midpoint sitting right
+at the object's own edge, so the strip that most needed to look "grounded"
+instead looked like the shadow just stopped. Raising the offset to a real
+fraction of the blur radius (24 of 60) fixed it — confirmed by sampling actual
+rendered pixel values in the browser preview at several y-coordinates, not
+by re-checking the arithmetic. See trap 11. `raised` and `pill` were not
+touched: no complaint exists against them and they render fine in both themes
+in the current screenshots, so per section on unverified changes, leave
+settled values alone without a reason.
 
 Built by `makeShadow()`, which emits **`boxShadow` on web and `shadow*` on
 iOS from one set of numbers**, so the two cannot drift apart. See trap 3.
@@ -183,9 +211,13 @@ downloads in the background, so the user must close and reopen **twice**.
 
 ## 5. Broken / open
 
-**New Entry screen — diagnosed and fixed in the browser; unconfirmed on
-device.** The four reports were not four bugs. Reproduced in Chromium against a
-cleared Metro cache, and each one checked by screenshot:
+**New Entry screen — fixed and on `main`.** The currency button, person
+picker, due-date picker, and keypad reports were investigated together; only
+two were real bugs. The user has not filed a follow-up complaint about any of
+the four since the OTA went out, which is *weak* evidence they're fine on
+device, not confirmation — nobody has explicitly checked and reported back.
+Reproduced in Chromium against a cleared Metro cache, and each one checked by
+screenshot:
 
 1. **Currency button missing — real, fixed.** The `styles.currency` Pressable
    was rendering, but off screen. `amountRow` is a flex row and the amount
@@ -226,6 +258,13 @@ picker) sit flush against the frame's bottom edge in the preview, because web
 safe-area insets are zeroed by design (`WEB_METRICS` in `app/_layout.tsx`) and
 the overlay host must stay full-screen. On device the sheet's own
 `SafeAreaView edges={['bottom']}` handles it. Cosmetic, preview only.
+
+**Options sheet shadow — fixed on `main`, unconfirmed on device.** The user
+reported it on the real device as looking like a hard-edged box against a
+mockup reference showing a soft, extended glow. See the Shadows subsection
+under section 3 for the fix and why it wasn't the clipping bug it resembled.
+Diagnosed and corrected entirely in the browser preview by sampling actual
+pixel values (trap 11) — nobody has looked at it on the phone yet.
 
 **12-person limit is enforced but there is no way to pay.** At 12 people a
 13th is refused with a message telling the user to delete someone. There is no
@@ -320,6 +359,24 @@ These are not theory. Each one was hit in this project.
     x=884 on an x=821 row. **Any `flex: 1` `TextInput` in a row needs
     `minWidth: 0`.** Measure `getBoundingClientRect()` on the row and its
     children before concluding an element "is not rendering".
+
+11. **A shadow that "looks boxy" is not automatically the clipping bug in trap
+    4.** Before assuming a shadow is being clipped, check whether the node
+    carrying it (and everything above it) actually has `overflow: 'hidden'` —
+    if none does, it isn't clipped, and adding more blur radius alone will not
+    fix it. The real failure mode here was arithmetic: a single upward
+    box-shadow (negative Y offset) can only get as dark as the blur's midpoint
+    right next to the object unless the offset magnitude is a real fraction of
+    the blur radius — an 8px offset against a 40px blur left the darkest
+    visible point sitting at roughly 50% strength exactly where the eye
+    expects it to be near-solid, which reads as "the shadow stops working" at
+    the object's edge, i.e. a hard box. **To actually verify which failure
+    mode you're looking at, sample rendered pixels, don't just read the
+    styles:** `page.evaluate` a vertical strip of `getPixel`-equivalent color
+    values (a canvas draw of the screenshot, or PIL on the saved PNG) from well
+    above the shadow down through it. A smooth monotonic gradient that just
+    never gets very dark is the arithmetic problem; a flat region that cuts to
+    zero in 1-2px is the clipping bug.
 
 **How to do a visual check.** Playwright is not a project dependency and must
 not become one — install it in the scratchpad, *outside* the repo, so

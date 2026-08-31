@@ -275,9 +275,19 @@ export function makeShadow(spec: ShadowSpec): ViewStyle {
 export const shadows = {
   /** Mockup: box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35) */
   raised: makeShadow({ offsetY: 4, opacity: 0.35, radius: 16, elevation: 6 }),
-  /** Mockup: box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.6) — cast upward, so a
-   *  sheet anchored to the bottom edge lifts off the screen behind it. */
-  sheet: makeShadow({ offsetY: -8, opacity: 0.6, radius: 40, elevation: 16 }),
+  /**
+   * Cast upward, so a sheet anchored to the bottom edge lifts off the screen
+   * behind it. The offset magnitude (24) has to be a real fraction of the
+   * blur radius (60), not a token few-pixel nudge: with a single box-shadow,
+   * the visible strip closest to the sheet's own edge can only get as dark as
+   * however far past the blur's midpoint that offset carries it. A small
+   * offset (this was -8) leaves that strip sitting right at the midpoint —
+   * the shadow LOOKS like it stops working exactly where it matters most,
+   * which reads as a hard-edged box rather than a soft one no matter how
+   * large the blur radius is. Confirmed by sampling actual rendered pixels,
+   * not by re-deriving the arithmetic — see PROJECT_STATE.md.
+   */
+  sheet: makeShadow({ offsetY: -24, opacity: 0.6, radius: 60, elevation: 16 }),
   /** Mockup: box-shadow: 0 4px 14px rgba(0, 0, 0, 0.55) */
   pill: makeShadow({ offsetY: 4, opacity: 0.55, radius: 14, elevation: 8 }),
 } as const;
