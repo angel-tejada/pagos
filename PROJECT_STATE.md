@@ -57,9 +57,15 @@ jump against a barely-dimmed background than against a properly-dimmed one.
 to check before assuming anything about JS changes not reaching the phone;
 it does not survive a machine restart or this terminal session ending.
 
-**Exact next action:** confirm the dev-client connection actually reached the
-phone and Fast Refresh is working, since that was set up but never watched
-complete a round-trip. Separately, the shadow rewrite is still sitting in an
+**Exact next action:** the spurious second pill shadow is removed and saved
+while Metro is live, so it should already be on the phone via Fast Refresh —
+confirm the user actually sees the pill's hard edge gone. If the section group
+still shows a rectangle, run the A/B described in the Shadows subsection
+(strip `raised` entirely, look, restore) rather than adjusting its value; no
+source-level cause for the group has been found and guessing has already cost
+three rounds. Note this change is dev-only so far — **it has not been
+committed or shipped as an OTA**, so the `preview` build the user normally
+runs still has the two-shadow pill. Separately, the shadow rewrite is still sitting in an
 OTA (group `95b1d47f-8be6-4082-9277-0776b26e91a9`) with no user confirmation
 on file — ideally checked against `pagos-current.html` opened directly in a
 browser, since that's now an actual available reference. **Four** separate
@@ -164,7 +170,7 @@ than assuming a similarly-named one in the repo is the same thing.
 |---|---|---|
 | `raised` | `0 4px 16px rgba(0,0,0,0.35)` | segment tracks, Backup/Restore group, Close button |
 | `sheet` | `0 -8px 40px rgba(0,0,0,0.6)` | the Options sheet (negative Y — casts upward) |
-| `pill` | `0 4px 14px rgba(0,0,0,0.55), 0 1px 3px rgba(0,0,0,0.4)` | the selected segment pill (two stacked shadows) |
+| `pill` | `0 4px 14px rgba(0,0,0,0.55)` | the selected segment pill (ONE shadow — see below) |
 
 **These are the mockup's exact literal numbers, unmodified.** Two prior
 rounds moved all three away from these values while trying to fix a "boxy"
@@ -207,6 +213,62 @@ real contributor on its own: a shadow has to cover a much bigger brightness
 gap, in the same blur distance, against a barely-dimmed light-mode background
 than against a properly-dimmed one — which can make an objectively-correct
 shadow read as harsher/boxier specifically in light mode.
+
+### The hard-edged rectangle: a structural audit, not a values problem
+
+After three rounds of value changes failed, the user demanded a full
+structural audit and forbade touching values until a cause was named. Result,
+with what was actually checked:
+
+1. **Borders/outlines on the pill, segment track, section group, Close
+   button, and their wrappers — CLEAN.** None of the four carries any
+   `borderWidth`/`borderColor`/`outline`. (The mockup actually *does* put
+   `border:1px solid var(--sheetline)` on `.seg`, `.mgrp` and `.close`; commit
+   `c9228a3` deliberately removed all three. That is a divergence from the
+   mockup, but it removes an edge rather than drawing one.)
+2. **Wrapper `backgroundColor` — CLEAN.** `segmentWrap` is
+   `{ marginBottom: 24 }` only. `rowBorder` is correctly skipped on the last
+   row via the `last` prop. No stray filled View behind any of them.
+3. **`boxShadow` support on iOS — CONFIRMED WORKING, not a fallback.** RN
+   0.86.3 / Expo 57. `RCTViewComponentView.mm` builds real `CALayer`s per
+   shadow entry (`RCTGetBoxShadowLayer`), passing the view's true corner radii
+   (`RCTCornerRadiiFromBorderRadii`), so radii are honoured and it does not
+   degrade to a rect. Colours given as CSS strings are fine —
+   `processBoxShadow` runs them through `processColor` before they reach
+   native. **Important conversion detail:** `RCTBoxShadow.mm` sets
+   `CALayer.shadowRadius = blurRadius / 2`, deliberately, to match web.
+4. **Leftover legacy `shadow*` props — CLEAN.** Nothing outside `makeShadow`
+   sets `shadowColor`/`shadowOffset`/`shadowOpacity`/`shadowRadius` anywhere
+   in `src/` or `app/`.
+5. **The pill's double shadow — THIS WAS THE BUG, for the pill.** A previous
+   round copied `box-shadow: 0 4px 14px .55, 0 1px 3px .4` from the mockup's
+   `.seg button.on`. But the mockup ships `<body class="anim-slide">`, and
+   `.anim-slide .seg button.on` sets **`box-shadow: none`**, relocating the
+   shadow to the sliding `.slider` element with **only the first of the two**.
+   This app implements the sliding pill, so `.slider` is the governing rule.
+   The spurious second layer (`0 1px 3px rgba(0,0,0,.4)`) becomes, after RN's
+   halving, a **1.5pt blur at 40% black offset 1pt** — not a shadow, a dark
+   outline traced around the pill's shape. Removed; `pill` is now a single
+   `makeShadow` call matching `.slider`.
+
+**Still unexplained: the section group.** The user reported the same
+straight-edged rectangle around the section group and the segment track, and
+those carry `raised`, a single shadow that now matches the mockup's `.mgrp`
+CSS exactly. Items 1-4 above rule out borders, wrapper fills, an unsupported
+prop, and stray legacy styling for those elements too. **No source-level cause
+has been found for the group.** Do not invent one by changing its value. The
+live dev-client workflow (section 4) makes an A/B test take seconds — delete
+`...shadows.raised` from `segment`/`group`/`buttonSheet`, have the user look,
+and that settles whether the shadow is even involved before anything else is
+touched.
+
+*(Caveat on evidence quality: this machine's `node_modules/react-native`
+contains 9 instances of syntactically invalid ObjC (`for (Type *x = nullptr in
+collection)`) that could not compile, so the local copy has been mangled by
+something and is not a perfect proxy for what EAS actually built. The specific
+files quoted above — `RCTBoxShadow.mm`, `processBoxShadow.js` — are clean and
+internally consistent, but re-verify against a fresh install before betting
+anything large on a subtle reading of that source.)*
 
 **Do not retune any of these three values again without a number taken
 directly from `pagos-current.html` or from the user.** If this still looks

@@ -297,19 +297,23 @@ export const shadows = {
    *  behind it. */
   sheet: makeShadow({ offsetY: -8, opacity: 0.6, radius: 40, elevation: 16 }),
   /**
-   * Mockup: `.seg button.on` — TWO stacked shadows, a soft one plus a tight
-   * contact shadow grounding the pill against the track:
-   *   box-shadow: 0 4px 14px rgba(0,0,0,.55), 0 1px 3px rgba(0,0,0,.4)
-   * `makeShadow()` only builds one layer, so this is written out directly —
-   * the array form is exactly what a second `boxShadow` entry looks like.
+   * Mockup: `.anim-slide .slider` — `box-shadow: 0 4px 14px rgba(0,0,0,.55)`.
+   * ONE shadow, not two.
+   *
+   * The mockup's `.seg button.on` rule does list two
+   * (`0 4px 14px .55, 0 1px 3px .4`), and a previous round copied that pair
+   * here. That was wrong: the mockup ships `<body class="anim-slide">`, and
+   * `.anim-slide .seg button.on` sets `box-shadow: none`, moving the shadow
+   * onto the sliding `.slider` element with only the first of the two. This
+   * app implements the sliding pill, so `.slider` is the rule that applies.
+   *
+   * The spurious second layer is why the pill had a hard edge on device. RN's
+   * iOS renderer maps CSS `blurRadius` to `CALayer.shadowRadius` at half
+   * value (`RCTBoxShadow.mm`), so `3` became a 1.5pt blur — at 40% black,
+   * offset 1pt, that is not a shadow, it is a dark outline traced around the
+   * pill's shape. Do not reintroduce it.
    */
-  pill: {
-    boxShadow: [
-      { offsetX: 0, offsetY: 4, blurRadius: 14, color: 'rgba(0, 0, 0, 0.55)' },
-      { offsetX: 0, offsetY: 1, blurRadius: 3, color: 'rgba(0, 0, 0, 0.4)' },
-    ],
-    elevation: 8,
-  } as ViewStyle,
+  pill: makeShadow({ offsetY: 4, opacity: 0.55, radius: 14, elevation: 8 }),
 } as const;
 
 /** Segment pill slide and theme crossfade, per the approved mockup. */
