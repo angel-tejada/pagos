@@ -35,8 +35,18 @@ const ISLAND_TOP = 11;
 const HOME_W = 139;
 const HOME_H = 5;
 const HOME_BOTTOM = 8;
-/** Matches the frame's `.content` bottom: home inset plus its own clearance. */
-const CONTENT_BOTTOM = HOME_BOTTOM + HOME_H + 8; // 21
+/**
+ * iOS's real bottom safe-area inset on every Dynamic Island iPhone, including
+ * the 16 Pro this frame draws, is 34pt — not the home indicator's own visual
+ * footprint (`HOME_BOTTOM + HOME_H`, 13pt). `WEB_METRICS` in `app/_layout.tsx`
+ * zeroes React Navigation's own insets on web, so this constant is the ONLY
+ * thing standing in for the real inset; getting it wrong means every
+ * `SafeAreaView edges={['bottom']}` in the app sits 21pt closer to the bottom
+ * edge in the preview than it will on the device. (It was 21 here for a
+ * while — an eyeballed "indicator plus some clearance" value, not the actual
+ * inset. Confirmed against Apple's published safe-area figures.)
+ */
+const CONTENT_BOTTOM = 34;
 
 /**
  * What the frame reserves for its own chrome. `content` already sits inside

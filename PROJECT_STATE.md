@@ -4,8 +4,9 @@
 It is the handoff snapshot between sessions. It is not a diary: replace stale
 statements rather than appending to them.
 
-Last updated: 2026-08-30 · HEAD `d6eaaf6` on `main`, pushed to `origin` ·
-worktree clean.
+Last updated: 2026-08-30 · HEAD `83b6600` on `main`, pushed to `origin` ·
+worktree has two uncommitted files (`src/components/DeviceFrame.tsx`,
+`app/entry.tsx`) plus this file — a preview-fidelity audit, see section 8.
 
 ---
 
@@ -29,13 +30,19 @@ negative offset cannot get dark right next to the object it's shadowing, no
 matter how large the blur radius is, so the values in place since commit
 `e635c5d` were structurally incapable of producing a soft-but-grounded look.
 
-**Exact next action:** the shadow fix is published as an OTA
-(group `87fb7401-2959-44fb-8890-c4b12cdd69c0`) at the matching runtime. Get the
-user to confirm it on the phone against their reference — this is the second
-round of OTA verification in a row for the New Entry / shadow work, and
-nothing in either has actually been confirmed on real hardware yet, only in
-the browser preview. After that, the next open item is the dead end in
-section 5 — the 12-person limit with no way to pay.
+The user then asked for a full audit of where the browser preview diverges
+from the real device, since they make design decisions in the browser. Done —
+see section 8, rewritten from a 6-line "these are native-only" list into a
+verified, evidence-backed map. Found and fixed two more real gaps in the
+process (bottom safe-area inset off by 13px; the `Switch` control rendering
+at roughly half its real iOS size) — both preview-only, zero behavior change
+on iOS, so no OTA is needed for them.
+
+**Exact next action:** commit and push the two fidelity fixes plus this file.
+Separately, the shadow-fix OTA (group `87fb7401-2959-44fb-8890-c4b12cdd69c0`)
+is still unconfirmed on the phone — get the user to check it against their
+reference. After that, the next open item is the dead end in section 5 — the
+12-person limit with no way to pay.
 
 ---
 
@@ -400,15 +407,122 @@ then inconsistent with every file you did not touch. Read and write
 
 ---
 
-## 8. Browser preview limitations — not bugs
+## 8. Browser preview fidelity — what you can trust for design decisions
 
-Do not chase these in the browser; they are native-only capabilities.
+An explicit audit, done because two rounds of shadow work were verified only
+in the browser and were wrong on the phone both times. Everything below is
+backed by something checkable — reading react-native-web's own source,
+searching for Apple's published numbers, or measuring real rendered pixels in
+this app's own preview — not general framework folklore. Three fixed today,
+the rest is an honest map of what a browser screenshot can and cannot tell you.
 
-- Backup / Restore (file system + document picker)
-- Send balance, Share PDF (native share sheet, `expo-print`)
-- Contacts import
-- Due-date reminders (local notifications)
-- The native date/time picker (`@expo/ui`) renders nothing on web
+### Fixed today, because they were measurably wrong
+
+- **Bottom safe-area inset was 21px, real iPhone 16 Pro is 34px.**
+  `DeviceFrame.tsx`'s `CONTENT_BOTTOM` stood in for the safe area on web (since
+  `WEB_METRICS` in `app/_layout.tsx` zeroes React Navigation's real insets
+  there) and was an eyeballed "home-indicator height plus some clearance," not
+  the actual inset. Every bottom-anchored control — the New Entry dock button,
+  the Options sheet's Cerrar — sat 13px closer to the bottom edge in preview
+  than it will on the device. Fixed to the real value. Top inset (`STATUS_H`,
+  62) was already exactly right — confirmed against the same source.
+- **The `Switch` rendered at 40x20; real iOS is a fixed 51x31.**
+  react-native-web draws its own switch from scratch and defaults to
+  `height:20px, width:height*2` when no size is given (`Switch/index.js` in
+  `node_modules`); the real `UISwitch` is a native control with a fixed,
+  non-configurable size. Gave it an explicit `height:31` (web-only, via
+  `Platform.OS === 'web'`, so this touches nothing on iOS). RNW hard-codes
+  `width = max(styleWidth, height*2)`, so width still comes out to 62, not 51
+  — that residual gap cannot be closed without patching the library. See
+  below for what still doesn't match even after this fix.
+- **The Options sheet shadow** (section 3) — the actual math, not a rendering
+  gap, but it's the reason this whole audit happened.
+
+### Verified identical — trust the browser here
+
+- **Font files.** `@expo-google-fonts/inter` `require()`s the same `.ttf` per
+  weight regardless of platform (checked `node_modules/@expo-google-fonts/
+  inter/index.js`); `expo-font`'s `useFonts` loads that exact file on both.
+  Not "similar fonts" — the same bytes.
+- **Every spacing/radius/gap constant.** `theme.ts`'s `spacing`, `radius`,
+  `layout` values are plain numbers fed straight into both Yoga (native) and
+  RNW's CSS translation with no unit conversion in between. A 20px padding is
+  20px on both.
+- **`numberOfLines` truncation.** Tested directly: added a 51-character name
+  and measured real DOM rects on the Home card, the Person-detail header, and
+  the New Entry person field. All three truncate correctly with an ellipsis
+  and never push a sibling off-screen. This is NOT the same bug class as the
+  currency-button one (trap 10) — RNW's ellipsis implementation sets
+  `overflow: hidden` on the text node itself, and CSS's automatic-minimum-size
+  rule (the thing that caused trap 10) only applies when `overflow: visible`.
+  An `overflow:hidden` text node's auto min-width is 0, so it always shrinks
+  correctly. **The only elements actually at risk of trap 10 are raw
+  `TextInput`s (`<input>`/`<textarea>`) sitting at `flex:1` in a row** — I
+  re-audited every `TextInput` in the app; the amount field was the only one
+  with a sibling to push, and it's fixed.
+- **Shadow *values*.** Per the CSS spec, `box-shadow`'s blur radius is defined
+  as a Gaussian blur with standard deviation = radius/2, spec-mandated within
+  5%. The same `offsetY`/`opacity`/`radius` numbers feed both `boxShadow`
+  (web) and `shadowOffset`/`shadowOpacity`/`shadowRadius` (iOS) from
+  `makeShadow()`. **Caveat, not a green light:** Apple does not publicly
+  document `CALayer.shadowRadius` using the identical sigma formula — the
+  equivalence is a reasonable inference from matching parameter names, not a
+  proven identity. Trust the ARITHMETIC (offset-vs-blur ratio, whether
+  anything clips it) in the browser; verify the RESULT on the phone once per
+  meaningfully-different value, the way today's fix should have been checked
+  before the first OTA.
+- **The segment pill's slide (280ms, `cubic-bezier(.32,.72,0,1)`).** Same
+  numbers on both platforms (`ui.tsx`). Only the animation *driver* differs —
+  `useNativeDriver: Platform.OS !== 'web'`, so iOS runs it off the JS thread
+  and web runs it on it. The motion curve is identical; only frame-timing
+  smoothness under heavy load could differ, and it won't be visible in normal
+  use.
+
+### Cannot be closed — always check these on the device
+
+- **Text rendering itself.** Same TTF, different rasterizer: Chromium's text
+  shaper on your Windows machine is not CoreText. Expect the same words to
+  look marginally different in weight, hinting, and anti-aliasing, especially
+  at small sizes (13-15px captions) or the ExtraBold face. No code fixes this
+  — it's the OS's font renderer, not this app.
+- **Pixel density.** A real iPhone 16 Pro is 3x (460ppi). Your monitor is
+  almost certainly 1x or 2x. Hairline borders, small radii, and thin strokes
+  will look crisper on the device than anything you screenshot from the
+  browser, independent of any value in this codebase.
+- **The `Switch` control, even after today's fix.** Same reasoning as above:
+  it's a from-scratch CSS control on web (a styled `<input type="checkbox">`),
+  not a `UISwitch`. No native spring-overshoot on toggle, width still off by
+  11px (62 vs 51), and the exact thumb/track chrome is RNW's approximation,
+  not Apple's rendering. Judge switch **behavior** (does it flip the value)
+  in the browser; judge its **look and feel** on the phone.
+- **Anything absent, not merely different, on web** — unchanged from before,
+  still the full list: Backup / Restore (file system + document picker), Send
+  balance / Share PDF (native share sheet, `expo-print`), Contacts import,
+  due-date reminders (local notifications), the native date/time picker
+  (`@expo/ui`, renders nothing on web). Zero design signal from the browser
+  on any of these — there's nothing there to look at.
+- **Modal presentation and gesture feel.** New Entry is
+  `presentation:'modal', animation:'slide_from_bottom'`. On iOS that's a real
+  native modal with the system's own swipe-to-dismiss gesture and backdrop
+  physics. On web, expo-router fakes the slide with a CSS transition and there
+  is no swipe gesture at all. The animation's timing numbers are worth judging
+  in the browser; the gesture feel is not there to judge.
+- **Keyboard-driven layout.** `entry.tsx`'s keyboard-avoidance
+  (`Keyboard.addListener('keyboardWillChangeFrame', ...)`) only fires from a
+  real OS keyboard. The browser has no on-screen keyboard, so `keyboardHeight`
+  never leaves 0 and that entire code path never runs in preview. Any change
+  here is invisible until checked on the phone.
+- **Display characteristics.** Hex colors are interpreted the same way
+  (sRGB) on both, but a real iPhone's OLED panel produces true blacks with no
+  backlight bleed; most monitors are LCD and cannot. Dark mode's mood and
+  contrast will read differently by hardware alone, regardless of what this
+  app does with color values.
+- **Line-wrapping at exact boundary widths**, for the few genuinely
+  multi-line texts (the note field, empty-state body copy). Chromium and
+  CoreText are independent implementations of similar-but-not-identical
+  line-breaking rules; an exact width where a paragraph wraps to 2 vs 3 lines
+  can differ by platform. Not specifically tested this session — if wrapping
+  ever looks off on device relative to the browser, this is why.
 - One console warning is expected and is not ours:
   `[expo-notifications] Listening to push token changes is not yet fully
   supported on web.`
@@ -417,14 +531,15 @@ Do not chase these in the browser; they are native-only capabilities.
 
 ## 9. Verification status
 
-As of HEAD `d6eaaf6` on `main`, pushed to `origin`:
+As of the pending commit on top of `83b6600` on `main`:
 
 - `npx tsc --noEmit` — passes
 - `npx expo export --platform ios` — passes
 - `npx expo export --platform web` — passes
-- Fingerprint — re-generated immediately before this OTA and still
-  `142551e9e769e7f380858105207a96ada4f12e46`, so it matches the installed
-  build and the update will reach the phone
+- The two fidelity fixes (safe-area inset, Switch size) touch only
+  `DeviceFrame.tsx` (web-only file) and one `Platform.OS === 'web'`-gated
+  style line in `entry.tsx` — zero behavior change on iOS by construction, so
+  no fingerprint check or OTA is needed for them.
 - New Entry confirmed by browser screenshot: currency button on screen, its
   picker opens clear of the island, USD → MXN round-trips back to the amount
   row with the typed amount intact, person picker creates and selects a
@@ -433,10 +548,17 @@ As of HEAD `d6eaaf6` on `main`, pushed to `origin`:
   rendered pixel color values along a vertical strip above the sheet, in both
   themes — this is a stronger check than the screenshot-only verification
   used earlier in this file, and should be the bar for any future shadow work
-- **Two OTAs are published and neither has been confirmed on the device.** The
-  app uses its cached bundle on launch and downloads in the background, so
-  each takes two close-and-reopen cycles to appear. Nothing in this file about
-  New Entry or the Options sheet shadow should be treated as done until the
-  user has actually looked at the phone.
+- Section 8's fidelity claims are backed by: reading react-native-web's own
+  source for `Switch` and the ellipsis/`fontVariant` CSS translation,
+  confirming the real iPhone 16 Pro's safe-area figures against an external
+  source, and measuring real DOM rects for a 51-character name on three
+  screens. Not verified: whether Core Animation's shadow blur is pixel-
+  identical to Chromium's at the specific radius now in use — flagged
+  explicitly in section 8 as an inference, not a proven identity.
+- **Two OTAs are published (New Entry, Options sheet shadow) and neither has
+  been confirmed on the device.** The app uses its cached bundle on launch and
+  downloads in the background, so each takes two close-and-reopen cycles to
+  appear. Nothing in this file about New Entry or the Options sheet shadow
+  should be treated as done until the user has actually looked at the phone.
 - No automated test suite exists
 - No iOS simulator is available (Windows-only machine, no Mac)

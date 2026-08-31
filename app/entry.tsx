@@ -4,6 +4,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Keyboard,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -472,7 +473,13 @@ const makeStyles = (c: Palette) =>
       backgroundColor: c.card,
     },
     toggleText: { color: c.ink, fontFamily: font.semibold, fontSize: type.bodyLarge, letterSpacing: -0.18 },
-    switch: { alignSelf: 'center' },
+    // Web-only: react-native-web builds its own Switch from scratch and
+    // defaults to 40x20 when no size is given, versus the real UISwitch's
+    // fixed 51x31. iOS ignores style dimensions on this control (it is the
+    // real native switch, not a shape RNW draws), so this line is a no-op
+    // there and must stay scoped to web — see PROJECT_STATE for what still
+    // doesn't match even with this set.
+    switch: { alignSelf: 'center', ...(Platform.OS === 'web' ? { height: 31 } : null) },
     pickerRow: { marginTop: 12, alignItems: 'flex-start' },
     picker: { width: 260, height: 40 },
 
