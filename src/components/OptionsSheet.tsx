@@ -87,9 +87,6 @@ export function OptionsSheet({ visible, onClose }: { visible: boolean; onClose: 
               <ActionRow glyph="↑" title={t.mRestore} detail={t.mRestoreD} onPress={runRestore} last />
             </View>
 
-            {/* The reassurance stays — losing the ledger is the top complaint in
-                this category — but as one quiet line, not a boxed card. */}
-            <Text style={styles.localNote}>{t.localOnlyBody}</Text>
 
             <Button label={t.close} tone="sheet" onPress={onClose} />
           </ScrollView>
@@ -140,13 +137,19 @@ const makeStyles = (c: Palette) =>
       borderTopLeftRadius: radius.sheet,
       borderTopRightRadius: radius.sheet,
       paddingTop: spacing.sm,
-      paddingBottom: spacing.xl,
       // A hairline along the top edge separates the sheet from the screen.
       borderTopWidth: 1,
       borderTopColor: c.edge,
       ...shadows.sheet,
     },
-    scrollContent: { paddingHorizontal: layout.screenPadding },
+    // Bottom padding is INSIDE the scroller for the same reason as the
+    // horizontal padding: an iOS ScrollView clips to its bounds, so with the
+    // padding on the sheet the Close button sat flush against the clip and
+    // its shadow was cut off in a hard line along the bottom.
+    scrollContent: {
+      paddingHorizontal: layout.screenPadding,
+      paddingBottom: spacing.xl,
+    },
     grabber: { width: 40, height: 5, borderRadius: 3, backgroundColor: c.chip, alignSelf: 'center', marginBottom: spacing.xl },
     title: { color: c.ink, fontFamily: font.extrabold, fontSize: type.sheetTitle, letterSpacing: -0.6, marginBottom: 22 },
     caption: { color: c.ink, fontFamily: font.bold, fontSize: type.caption, letterSpacing: 1.2, marginBottom: 10 },
@@ -183,13 +186,5 @@ const makeStyles = (c: Palette) =>
     rowDetail: { color: c.mute, fontFamily: font.regular, fontSize: type.label, marginTop: 2 },
     chevron: { color: c.mute, fontSize: 22, fontFamily: font.regular },
 
-    localNote: {
-      color: c.mute,
-      fontFamily: font.regular,
-      fontSize: type.label,
-      lineHeight: 20,
-      paddingHorizontal: 4,
-      marginBottom: spacing.xl,
-    },
     pressed: { opacity: 0.7 },
   });
