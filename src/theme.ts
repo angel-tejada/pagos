@@ -290,37 +290,47 @@ export function makeShadow(spec: ShadowSpec): ViewStyle {
  * value taken directly from that file or from the user.
  */
 /**
- * ============================ TEMPORARY A/B ============================
- * Flip to `false` to restore every shadow. While `true`, `raised` and `pill`
- * emit NOTHING — the segment track, the section group, the Close button and
- * the sliding pill get no shadow at all.
+ * ======================== TEMPORARY DIAGNOSTIC =========================
+ * `SHADOW_MODE` decides what `raised` and `pill` emit. `sheet` is never
+ * affected — it is a different element and acts as an untouched control.
  *
- * Why: the user reports a hard, straight-edged rectangle around the segment
- * pills and the section group on a real iPhone. A full structural audit
- * (PROJECT_STATE section 3) cleared every other candidate — no borders, no
- * wrapper fills, no leftover legacy `shadow*` props, and `boxShadow` is
- * genuinely supported on iOS in RN 0.86.3 rather than degrading to a rect.
- * One real cause was found and removed (a spurious second pill shadow), but
- * it does not explain the section group, and three rounds of guessing at
- * values have already failed.
+ *   'mockup'  — the real values from `pagos-current.html`. THE END STATE.
+ *   'off'     — emit nothing. Already run: both rectangles disappeared,
+ *                which confirmed the shadow is the source of the hard edge.
+ *   'maxblur' — zero offset, very large blur, moderate opacity. Running now.
  *
- * So this is a binary test, not a fix. With shadows gone entirely:
- *   - both rectangles gone  -> the shadow really is the source; work there.
- *   - group gone, pill left -> the pill has a second, separate cause.
- *   - both still there      -> NOT the shadow. Stop touching shadow values
- *                              and look at fills/compositing instead.
- * `sheet` is deliberately left alone: it is a different element and is not
- * part of the report.
+ * Why 'maxblur': a hard-edged rectangle appeared under BOTH the legacy
+ * `shadow*` props and the `boxShadow` prop, and the same CSS numbers render
+ * softly in a real browser. Rather than guess at values a fourth time, this
+ * isolates one variable — blur — with the offset removed entirely. A
+ * 0-offset 40pt blur cannot produce a straight edge if iOS is blurring at
+ * all, so the result is unambiguous:
+ *
+ *   soft grey halo, no edges  -> iOS blur works. The bug is in how offset /
+ *                                opacity interact, not the blur, and the
+ *                                mockup values can be reintroduced and tuned
+ *                                against a known-good blur.
+ *   still a hard rectangle    -> iOS is not blurring these at all. Stop using
+ *                                RN's shadow props for this and render the
+ *                                shadow another way.
+ *
+ * Flip back to 'mockup' before anything ships.
  * ======================================================================
  */
-const STRIP_SHADOWS_FOR_AB = true;
-const NO_SHADOW: ViewStyle = {};
+type ShadowMode = 'mockup' | 'off' | 'maxblur';
+const SHADOW_MODE: ShadowMode = 'maxblur';
+
+function diagnostic(spec: ShadowSpec): ViewStyle {
+  if (SHADOW_MODE === 'off') return {};
+  if (SHADOW_MODE === 'maxblur') {
+    return makeShadow({ offsetY: 0, opacity: 0.45, radius: 40, elevation: spec.elevation });
+  }
+  return makeShadow(spec);
+}
 
 export const shadows = {
   /** Mockup: `.seg`, `.mgrp`, `.close` — `box-shadow: 0 4px 16px rgba(0,0,0,.35)` */
-  raised: STRIP_SHADOWS_FOR_AB
-    ? NO_SHADOW
-    : makeShadow({ offsetY: 4, opacity: 0.35, radius: 16, elevation: 6 }),
+  raised: diagnostic({ offsetY: 4, opacity: 0.35, radius: 16, elevation: 6 }),
   /** Mockup: `.sheet`, `.psheet` — `box-shadow: 0 -8px 40px rgba(0,0,0,.6)`,
    *  cast upward so a sheet anchored to the bottom edge lifts off the screen
    *  behind it. */
@@ -342,9 +352,7 @@ export const shadows = {
    * offset 1pt, that is not a shadow, it is a dark outline traced around the
    * pill's shape. Do not reintroduce it.
    */
-  pill: STRIP_SHADOWS_FOR_AB
-    ? NO_SHADOW
-    : makeShadow({ offsetY: 4, opacity: 0.55, radius: 14, elevation: 8 }),
+  pill: diagnostic({ offsetY: 4, opacity: 0.55, radius: 14, elevation: 8 }),
 } as const;
 
 /** Segment pill slide and theme crossfade, per the approved mockup. */

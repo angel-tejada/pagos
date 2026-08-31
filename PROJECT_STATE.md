@@ -61,29 +61,37 @@ the QR never appears where they can scan it.
 to check before assuming anything about JS changes not reaching the phone;
 it does not survive a machine restart or this terminal session ending.
 
-**Exact next action:** a **temporary A/B diagnostic is currently ACTIVE in
-the code** — `STRIP_SHADOWS_FOR_AB = true` in `src/theme.ts` makes `raised`
-and `pill` emit no shadow at all. This is not a fix and must not be left in.
-The user deleted every Pagos app from their phone, so they are reinstalling
-the dev client (build `61bede33`, valid until 2026-09-13, fingerprint still
-matching — no rebuild needed) and reconnecting via the QR flow in section 4.
+**A/B RESULT (2026-08-31, confirmed on device by the user): with `raised`
+and `pill` emitting nothing, BOTH rectangles disappeared.** The hard edge is
+genuinely produced by the shadow, not by a border, a wrapper fill, or layer
+compositing. That closes the structural hunt in section 3 — do not re-audit
+borders and fills again.
 
-Once they look, the answer is binary and decides everything downstream:
-- **Both rectangles gone** → the shadow is genuinely the source. Flip the
-  flag back and work on how the shadow renders on iOS, not on its numbers.
-- **Group clean, pill still boxed** → the pill has a second, separate cause.
-- **Both still there** → it was never the shadow. Stop touching shadow
-  values entirely and investigate fills / layer compositing.
+**Exact next action:** a second diagnostic is now live — `SHADOW_MODE` in
+`src/theme.ts` is `'maxblur'`, giving `raised` and `pill` a 0-offset, 40pt,
+45%-opacity shadow. `sheet` is untouched as a control. The point is to
+isolate blur from offset, because a 0-offset 40pt blur *cannot* produce a
+straight edge if iOS is blurring at all. Ask the user which they see:
 
-Whatever the answer, **flip `STRIP_SHADOWS_FOR_AB` back to `false`** before
-anything ships. Nothing about this A/B has been OTA'd; the `preview` build the
-user normally runs is untouched by it.
+- **Soft grey halo, no edges** → iOS blur works. The hard edge comes from how
+  offset and opacity interact at these sizes, so reintroduce the mockup values
+  (`SHADOW_MODE = 'mockup'`) and adjust from a known-good blur.
+- **Still a hard rectangle** → iOS is not blurring these at all, under either
+  shadow API. Stop using RN's shadow props for this element and render the
+  shadow another way entirely.
 
-Still open and unconfirmed regardless: four separate pieces of New Entry /
-shadow work sit in published OTAs with no explicit "yes this is right" from
-the user — the currency button fix and three rounds of shadow changes. Treat
-each as open until they say so. After that, the next item is the dead end in
-section 5 — the 12-person limit with no way to pay.
+**`SHADOW_MODE` must be back to `'mockup'` before anything ships.** Nothing
+from either diagnostic has been OTA'd; the `preview` build is untouched.
+
+Context that still matters: both the legacy `shadow*` quartet AND the
+`boxShadow` prop produced the same hard edge, and the mockup's identical CSS
+renders softly in a real browser. Whatever the cause is, it is not the
+numbers — three rounds of retuning them failed, which is what forced these
+diagnostics.
+
+Still open regardless: four pieces of New Entry / shadow work sit in published
+OTAs with no explicit user confirmation. After the shadow work, the next item
+is the dead end in section 5 — the 12-person limit with no way to pay.
 
 ---
 
@@ -280,10 +288,13 @@ files quoted above — `RCTBoxShadow.mm`, `processBoxShadow.js` — are clean an
 internally consistent, but re-verify against a fresh install before betting
 anything large on a subtle reading of that source.)*
 
-> **CURRENTLY OVERRIDDEN.** `STRIP_SHADOWS_FOR_AB` in `src/theme.ts` is
-> `true`, so `raised` and `pill` emit nothing regardless of the values in the
-> table above. That is the A/B described in section 1. Flip it to `false` to
-> restore them.
+> **CURRENTLY OVERRIDDEN.** `SHADOW_MODE` in `src/theme.ts` is `'maxblur'`,
+> so `raised` and `pill` ignore the values in the table above and emit a
+> 0-offset 40pt 45% shadow instead. That is the diagnostic described in
+> section 1. Set it to `'mockup'` to restore the real values.
+>
+> The earlier `'off'` run already returned its answer: **both rectangles
+> vanished, so the shadow is confirmed as the source of the hard edge.**
 
 **Do not retune any of these three values again without a number taken
 directly from `pagos-current.html` or from the user.** If this still looks
