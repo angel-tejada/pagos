@@ -133,7 +133,13 @@ const makeStyles = (c: Palette) =>
     backdrop: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, backgroundColor: c.scrim },
     sheet: {
       maxHeight: '86%',
-      backgroundColor: c.sheet,
+      // ================== TEMPORARY DELIVERY PROOF ==================
+      // Deliberately, unmissably wrong. The user reported seeing no change
+      // at all after a Fast Refresh push, so this establishes whether code
+      // is reaching the device before any more time goes into the shadow.
+      // REVERT TO `c.sheet` THE MOMENT IT IS CONFIRMED.
+      // ==============================================================
+      backgroundColor: '#FF0000',
       borderTopLeftRadius: radius.sheet,
       borderTopRightRadius: radius.sheet,
       paddingHorizontal: layout.screenPadding,

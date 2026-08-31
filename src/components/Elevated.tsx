@@ -1,4 +1,4 @@
-import { useMemo, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { radius as radii } from '../theme';
@@ -74,7 +74,14 @@ export function Elevated({
   style?: StyleProp<ViewStyle>;
   children: ReactNode;
 }) {
-  const layers = useMemo(() => {
+  // NOT useMemo, deliberately. React Fast Refresh preserves hook state for a
+  // component whose hook signature has not changed, so a useMemo whose deps
+  // are unchanged keeps handing back the value computed by the OLD code after
+  // an edit. That is exactly what happened here: the layer maths was rewritten
+  // and the device kept rendering the previous version's layers, which looked
+  // to the user like the push had never arrived. Building 32 plain objects per
+  // render is far cheaper than that class of ghost bug.
+  const layers = (() => {
     const sigma = sigmaFor(blur);
     const out: ViewStyle[] = [];
 
@@ -109,7 +116,7 @@ export function Elevated({
       });
     }
     return out;
-  }, [radius, blur, offsetY, opacity]);
+  })();
 
   return (
     <View style={style}>

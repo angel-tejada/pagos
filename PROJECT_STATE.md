@@ -107,22 +107,40 @@ component, now fixed:
 across the whole ramp), not by eye — worth repeating for any future change
 here, since the failure mode is invisible in source.
 
-**Exact next action:** the user is looking at v2 on device via Fast Refresh.
-If banding persists, raise `LAYERS` — the alpha step scales as 1/LAYERS —
-rather than touching opacity. Once confirmed this needs an OTA; it is a real
-fix, nothing is left flagged off.
+**TWO delivery faults found after the user reported "nothing changed on my
+phone", both real, and neither of them about the shadow:**
 
-Two follow-ups deliberately left undone, ask before doing either:
-- The **sliding pill** has no shadow at all now. It is solid ink on a light
-  track so it reads as raised anyway, and it is absolutely positioned and
-  transform-animated, which `<Elevated>` cannot wrap cleanly.
-- The **Options sheet's own** drop shadow still uses the RN prop. If it turns
-  out to have the same hard edge, move it to `<Elevated>` rather than
-  adjusting its numbers.
+1. **The device silently disconnected from Metro.** `curl
+   http://localhost:8081/json/list` listed one live runtime
+   (`com.angeltejada.pagos (iPhone)`) and, a minute later, returned `[]` —
+   while Metro itself still answered HTTP 200 on `/status`. A healthy Metro
+   proves nothing about whether the phone is attached. **Always check
+   `/json/list` before concluding anything from "I see no change".** iOS
+   suspending a backgrounded app is enough to drop the socket; reopening the
+   app reconnects and pulls a fresh bundle.
+2. **`useMemo` survives Fast Refresh.** `<Elevated>` computed its layers in a
+   `useMemo` keyed on `[radius, blur, offsetY, opacity]`. Those deps do not
+   change when the *maths inside* is rewritten, and Fast Refresh preserves
+   hook state for a component whose hook signature is unchanged — so the
+   device would have kept rendering the OLD layers even on a live connection.
+   Now computed inline; building 32 plain objects per render is far cheaper
+   than that class of ghost bug. **Never memoise something whose body is
+   still being iterated on against a live device.**
 
-Still open: four pieces of New Entry / shadow work sit in published OTAs with
-no explicit user confirmation. After this, the next item is the dead end in
-section 5 — the 12-person limit with no way to pay.
+Either fault alone produces "your change did not arrive" with no error
+anywhere, which is why an unmissable proof was needed rather than more
+reasoning.
+
+**Exact next action:** `OptionsSheet`'s sheet background is currently
+**`#FF0000`**, a deliberate delivery proof. Ask the user to reopen the app and
+confirm the sheet is bright red.
+- **Red visible** → delivery works; the earlier "no change" was the dropped
+  socket plus the memo cache. **Revert `backgroundColor` to `c.sheet`
+  immediately**, then judge the v2 shadow, which will now actually be running.
+- **No red after a reopen** → delivery is broken at a level not yet
+  identified. Do not touch the shadow again until it is.
+
+`#FF0000` must not survive into any commit that ships or any OTA.
 
 ---
 
