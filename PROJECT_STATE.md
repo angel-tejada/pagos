@@ -107,40 +107,66 @@ component, now fixed:
 across the whole ramp), not by eye — worth repeating for any future change
 here, since the failure mode is invisible in source.
 
-**TWO delivery faults found after the user reported "nothing changed on my
-phone", both real, and neither of them about the shadow:**
+**Reset to plain box-shadow with the mockup's literal values, plus the
+borders the app had been missing (2026-08-31).** `<Elevated>` and every
+layer-stacking approach are deleted; the temporary red background is
+reverted. Source files restored from `c89a65c`, the last state with no
+diagnostics in it.
 
-1. **The device silently disconnected from Metro.** `curl
-   http://localhost:8081/json/list` listed one live runtime
-   (`com.angeltejada.pagos (iPhone)`) and, a minute later, returned `[]` —
-   while Metro itself still answered HTTP 200 on `/status`. A healthy Metro
-   proves nothing about whether the phone is attached. **Always check
-   `/json/list` before concluding anything from "I see no change".** iOS
-   suspending a backgrounded app is enough to drop the socket; reopening the
-   app reconnects and pulls a fresh bundle.
-2. **`useMemo` survives Fast Refresh.** `<Elevated>` computed its layers in a
-   `useMemo` keyed on `[radius, blur, offsetY, opacity]`. Those deps do not
-   change when the *maths inside* is rewritten, and Fast Refresh preserves
-   hook state for a component whose hook signature is unchanged — so the
-   device would have kept rendering the OLD layers even on a live connection.
-   Now computed inline; building 32 plain objects per render is far cheaper
-   than that class of ghost bug. **Never memoise something whose body is
-   still being iterated on against a live device.**
+**The missing borders.** Rendering `pagos-current.html` in a real browser and
+comparing it side by side against the app's own browser preview showed the
+actual gap: the mockup puts `border:1px solid var(--sheetline)` on `.seg`,
+`.mgrp` AND `.close`, and the app had removed all three (commit `c9228a3`),
+leaving those boxes leaning on the shadow alone for their entire definition.
+Restored, using `sheetDivider` (`#DCDAD4`) which is exactly the mockup's
+light-mode `--sheetline`; the app's `sheetLine` is `#8C8474`, darkened for
+input contrast, and is far too heavy here. `.mgrp`'s `overflow:hidden` was
+deliberately NOT restored (trap 4 — it would clip the view's own shadow on
+iOS, and nothing inside needs clipping).
 
-Either fault alone produces "your change did not arrive" with no error
-anywhere, which is why an unmissable proof was needed rather than more
-reasoning.
+**Render the mockup instead of reasoning about it.** `pagos-current.html`
+opens in Chromium directly (`file:///...`), and the app's own preview can run
+on a spare port (`npx expo start --web --port 8082`) without touching the
+Metro the phone is attached to on 8081. Two screenshots side by side settled
+in one pass what four rounds of reasoning had not. Do this before asking the
+user to look at anything.
 
-**Exact next action:** `OptionsSheet`'s sheet background is currently
-**`#FF0000`**, a deliberate delivery proof. Ask the user to reopen the app and
-confirm the sheet is bright red.
-- **Red visible** → delivery works; the earlier "no change" was the dropped
-  socket plus the memo cache. **Revert `backgroundColor` to `c.sheet`
-  immediately**, then judge the v2 shadow, which will now actually be running.
-- **No red after a reopen** → delivery is broken at a level not yet
-  identified. Do not touch the shadow again until it is.
+### Two delivery faults that make "I see no change" untrustworthy
 
-`#FF0000` must not survive into any commit that ships or any OTA.
+1. **The device silently disconnects from Metro.** `/json/list` listed a live
+   runtime and, a minute later, returned `[]`, while `/status` still answered
+   HTTP 200 throughout. **A healthy Metro proves nothing about whether the
+   phone is attached.** Require a non-empty `/json/list` BEFORE asking the
+   user to look.
+2. **`useMemo` survives Fast Refresh.** Deps that do not change when the maths
+   inside is rewritten mean the device keeps rendering the old output over a
+   live connection. Never memoise something still being iterated on.
+
+### Which earlier results survive
+
+- **`'off'` (shadows removed)** — the user reported the rectangles
+  *disappeared*. An observed change can only come from code that arrived.
+- **`'maxblur'` (0-offset, 40pt)** — the user reported them *coming back*. Had
+  it not arrived the device would still have shown `'off'`, i.e. nothing. So
+  it landed.
+- **`<Elevated>` v1 (8 layers)** — the user counted exactly eight bands.
+- **`<Elevated>` v2 (32 layers)** — "zero difference": never arrived.
+
+So "iOS does not blur these boxes" rests on `'maxblur'`, which does carry
+delivery evidence and is not disproven. But it was reached in a session where
+delivery was demonstrably unreliable, and the user does not accept it.
+**Re-establish or overturn it from the clean state; do not defend it.**
+
+**Exact next action:** the phone is **NOT attached** (`/json/list` returns
+`[]`). Do not ask the user to judge anything until it returns a runtime. When
+it does, have them reopen Options. If the boxes now read as crisp bordered
+cards with a soft shadow, this is done and needs an OTA. If the shadows still
+show a hard straight edge on a confirmed-attached device, the `'maxblur'`
+finding stands and only the shadow — not the borders — needs another approach.
+
+Still open: four pieces of New Entry / shadow work sit in published OTAs with
+no explicit user confirmation. Nothing from this session's diagnostics is
+OTA'd.
 
 ---
 

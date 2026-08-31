@@ -6,7 +6,6 @@ import { useData } from '../data/store';
 import { useLang } from '../i18n';
 import { font, layout, radius, shadows, spacing, type, useStyles, useThemeControl, type Palette } from '../theme';
 import { showAlert } from './dialogs';
-import { Elevated, RAISED, RAISED_RADIUS } from './Elevated';
 import { Sheet } from './Sheet';
 import { Button, Segment } from './ui';
 
@@ -52,7 +51,7 @@ export function OptionsSheet({ visible, onClose }: { visible: boolean; onClose: 
             <Text style={styles.title}>{t.options}</Text>
 
             <Text style={styles.caption}>{t.language}</Text>
-            <Elevated {...RAISED} radius={RAISED_RADIUS.segment} style={styles.segmentWrap}>
+            <View style={styles.segmentWrap}>
               <Segment
                 options={[
                   { value: 'es' as const, label: 'Español' },
@@ -61,10 +60,10 @@ export function OptionsSheet({ visible, onClose }: { visible: boolean; onClose: 
                 value={lang}
                 onChange={setLang}
               />
-            </Elevated>
+            </View>
 
             <Text style={styles.caption}>{t.appearance}</Text>
-            <Elevated {...RAISED} radius={RAISED_RADIUS.segment} style={styles.segmentWrap}>
+            <View style={styles.segmentWrap}>
               <Segment
                 options={[
                   { value: 'light' as const, label: t.themeLight },
@@ -73,22 +72,18 @@ export function OptionsSheet({ visible, onClose }: { visible: boolean; onClose: 
                 value={scheme}
                 onChange={setScheme}
               />
-            </Elevated>
+            </View>
 
-            <Elevated {...RAISED} radius={RAISED_RADIUS.group} style={styles.groupWrap}>
-              <View style={styles.group}>
-                <ActionRow glyph="↓" title={t.mBackup} detail={t.mBackupD} onPress={runBackup} />
-                <ActionRow glyph="↑" title={t.mRestore} detail={t.mRestoreD} onPress={runRestore} last />
-              </View>
-            </Elevated>
+            <View style={styles.group}>
+              <ActionRow glyph="↓" title={t.mBackup} detail={t.mBackupD} onPress={runBackup} />
+              <ActionRow glyph="↑" title={t.mRestore} detail={t.mRestoreD} onPress={runRestore} last />
+            </View>
 
             {/* The reassurance stays — losing the ledger is the top complaint in
                 this category — but as one quiet line, not a boxed card. */}
             <Text style={styles.localNote}>{t.localOnlyBody}</Text>
 
-            <Elevated {...RAISED} radius={RAISED_RADIUS.button}>
-              <Button label={t.close} tone="sheet" onPress={onClose} />
-            </Elevated>
+            <Button label={t.close} tone="sheet" onPress={onClose} />
           </ScrollView>
         </SafeAreaView>
       </View>
@@ -133,13 +128,7 @@ const makeStyles = (c: Palette) =>
     backdrop: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, backgroundColor: c.scrim },
     sheet: {
       maxHeight: '86%',
-      // ================== TEMPORARY DELIVERY PROOF ==================
-      // Deliberately, unmissably wrong. The user reported seeing no change
-      // at all after a Fast Refresh push, so this establishes whether code
-      // is reaching the device before any more time goes into the shadow.
-      // REVERT TO `c.sheet` THE MOMENT IT IS CONFIRMED.
-      // ==============================================================
-      backgroundColor: '#FF0000',
+      backgroundColor: c.sheet,
       borderTopLeftRadius: radius.sheet,
       borderTopRightRadius: radius.sheet,
       paddingHorizontal: layout.screenPadding,
@@ -165,10 +154,17 @@ const makeStyles = (c: Palette) =>
     // No border either: the shadow (and, in dark mode, the raised fill)
     // separates this from the sheet behind it. The line between the two
     // rows inside stays — that divides two rows, it does not outline a box.
-    groupWrap: { marginBottom: spacing.sm },
+    // Mockup `.mgrp`: border:1px solid var(--sheetline), radius 16,
+    // margin-bottom 20, + the raised shadow. No overflow:'hidden' though —
+    // the mockup has it, but on iOS clipsToBounds would clip this view's own
+    // shadow (trap 4), and nothing inside needs clipping.
     group: {
       backgroundColor: c.sheetCardRaised,
       borderRadius: radius.xl,
+      borderWidth: 1,
+      borderColor: c.sheetDivider,
+      marginBottom: spacing.xl,
+      ...shadows.raised,
     },
     row: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 18, minHeight: layout.minTapTarget + 20 },
     rowBorder: { borderBottomWidth: 1, borderBottomColor: c.sheetDivider },
