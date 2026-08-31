@@ -28,10 +28,17 @@ export function OptionsSheet({ visible, onClose }: { visible: boolean; onClose: 
    * confirmed.
    */
   const [debugHeights, setDebugHeights] = useState({ lang: 0, appearance: 0 });
-  const onLangLayout = (e: LayoutChangeEvent) =>
-    setDebugHeights((d) => ({ ...d, lang: Math.round(e.nativeEvent.layout.height) }));
-  const onAppearanceLayout = (e: LayoutChangeEvent) =>
-    setDebugHeights((d) => ({ ...d, appearance: Math.round(e.nativeEvent.layout.height) }));
+  // Guarded: a layout event replayed across a Fast Refresh reload arrived
+  // with a null nativeEvent and crashed the whole screen on device. This
+  // scratch diagnostic is not worth chasing that down for — bail out safely.
+  const onLangLayout = (e: LayoutChangeEvent) => {
+    const height = e?.nativeEvent?.layout?.height;
+    if (height != null) setDebugHeights((d) => ({ ...d, lang: Math.round(height) }));
+  };
+  const onAppearanceLayout = (e: LayoutChangeEvent) => {
+    const height = e?.nativeEvent?.layout?.height;
+    if (height != null) setDebugHeights((d) => ({ ...d, appearance: Math.round(height) }));
+  };
 
   const runBackup = () => {
     void shareBackup(data).then(markBackupComplete).catch(() => showAlert(t.backupFailed));
