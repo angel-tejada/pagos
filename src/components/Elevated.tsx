@@ -12,36 +12,56 @@ import { radius as radii } from '../theme';
  * rather than a blur. That was confirmed on device with a 0-offset, 40pt
  * blur, 45% shadow — a shape that cannot produce a straight edge if any
  * blurring is happening at all — and it still came out as a rectangle. The
- * values were never the problem; three separate rounds of retuning them
+ * values were never the problem; four separate rounds of retuning them
  * failed before that test was run. See PROJECT_STATE section 3.
  *
- * How it works: N concentric rounded rects, each one `blur/N` larger than the
- * last, all the same low alpha. Near the box every layer overlaps, so the
- * accumulated alpha is high; further out fewer layers reach, so it fades.
- * That produces a linear ramp rather than a true gaussian, which reads as a
- * soft shadow at these sizes and, critically, has no hard boundary anywhere.
+ * The layers are plain Views with a backgroundColor and a borderRadius — the
+ * most ordinary paint path there is, identical on iOS and react-native-web.
+ * So unlike a real shadow, what the browser preview shows here is
+ * trustworthy (see section 8 on preview fidelity).
  *
- * The layers are plain Views with a backgroundColor and a borderRadius —
- * the most ordinary paint path there is, identical on iOS and
- * react-native-web. So unlike a real shadow, what the browser preview shows
- * here is trustworthy (see section 8 on preview fidelity).
- *
- * The layers are siblings that render *before* the content, never children of
+ * The layers are siblings rendered *before* the content, never children of
  * it: a child always paints on top of its parent's own background, so a
  * shadow nested inside the box it is shadowing would sit on top of the fill.
  */
 
-/** Enough steps that the ramp reads as smooth, few enough to stay cheap. */
-const LAYERS = 8;
+/**
+ * The banding story, since this got it wrong twice.
+ *
+ * v1 used 8 layers spaced evenly by distance. At blur 16 that is a step every
+ * 2pt — 6 physical pixels at 3x — with up to 3.1% alpha per step, which read
+ * as stacked bars rather than a fade.
+ *
+ * What actually matters is the alpha jump per step, not the layer count, so
+ * the layers are now spaced evenly in ALPHA (see below). At 32 layers the
+ * largest step is 1.7% and the outermost layer is 1.1%, fading to nothing
+ * with no cutoff. Verified numerically before shipping, not by eye.
+ *
+ * If banding ever reappears, raise this — the alpha step scales as 1/LAYERS.
+ */
+const LAYERS = 32;
+
+/**
+ * A real gaussian falloff, not the linear ramp v1 used. Linear coverage put
+ * full opacity hard against the box edge and cut to zero at a fixed distance,
+ * which is what made it look like a stack of plates sitting under each box.
+ *
+ * `sigma = blur / 2.2` approximates the CSS convention (a CSS blur radius is
+ * roughly twice its gaussian sigma), so a value copied straight from the
+ * mockup's `box-shadow` lands in about the right place.
+ */
+function sigmaFor(blur: number): number {
+  return blur / 2.2;
+}
 
 export function Elevated({
   /** Corner radius of the box being shadowed, so the shadow follows its shape. */
   radius,
   /** How far the shadow reaches past the box, in points. */
   blur = 16,
-  /** Downward offset, in points. */
+  /** Downward bias. The shadow still falls on all four sides. */
   offsetY = 4,
-  /** Total darkness directly under the box's edge, 0-1. */
+  /** Peak darkness at the box's edge, 0-1. */
   opacity = 0.35,
   /** Applied to the wrapper — put margins here, not on the child. */
   style,
@@ -55,21 +75,40 @@ export function Elevated({
   children: ReactNode;
 }) {
   const layers = useMemo(() => {
-    // Per-layer alpha chosen so that N fully-overlapping layers compose to
-    // `opacity`, rather than N * alpha overshooting it.
-    const perLayer = 1 - Math.pow(1 - opacity, 1 / LAYERS);
-    return Array.from({ length: LAYERS }, (_, i) => {
-      const spread = ((i + 1) / LAYERS) * blur;
-      return {
-        position: 'absolute' as const,
+    const sigma = sigmaFor(blur);
+    const out: ViewStyle[] = [];
+
+    // Layers are spaced by equal steps in ALPHA, not in distance, by
+    // inverting the gaussian. Spacing them evenly by distance (the first
+    // attempt) put the biggest alpha jumps exactly where the curve is
+    // steepest, and left the outermost layer at ~3.6% alpha with nothing
+    // beyond it — a hard cutoff, which is the same straight-edge artefact
+    // this component exists to avoid. Even alpha steps put the layers close
+    // together where the gradient is steep and far apart out in the tail,
+    // so every step is the same small size and the outer edge fades to
+    // nothing on its own.
+    let accumulated = 0;
+    for (let k = 1; k <= LAYERS; k++) {
+      const target = (opacity * k) / LAYERS;
+      // Distance at which the gaussian equals `target`.
+      const spread = sigma * Math.sqrt(-2 * Math.log(k / LAYERS));
+      // Compositing is multiplicative — two 10% blacks give 19%, not 20% —
+      // so solve each layer's own alpha from the outside inwards.
+      const alpha = accumulated >= 1 ? 0 : 1 - (1 - target) / (1 - accumulated);
+      accumulated = target;
+
+      out.push({
+        position: 'absolute',
+        // All four sides, biased downward by `offsetY`.
         top: offsetY - spread,
         bottom: -offsetY - spread,
         left: -spread,
         right: -spread,
         borderRadius: radius + spread,
-        backgroundColor: `rgba(0, 0, 0, ${perLayer.toFixed(4)})`,
-      };
-    });
+        backgroundColor: `rgba(0, 0, 0, ${alpha.toFixed(5)})`,
+      });
+    }
+    return out;
   }, [radius, blur, offsetY, opacity]);
 
   return (

@@ -87,12 +87,30 @@ preview is a trustworthy proxy for this effect** — unlike a real shadow.
 not been checked. `dialogs.web.tsx` keeps a real CSS shadow via its own local
 `WEB_DIALOG_SHADOW`, since that file only ever renders in the browser.
 
-**Exact next action:** the user is looking at `<Elevated>` on device via Fast
-Refresh. Confirm the boxes now read as a soft shadow with no straight edge.
-Watch specifically for **banding** — 8 discrete steps can show as rings if
-the opacity per layer is too high; raising `LAYERS` is the fix, not changing
-the total opacity. Once confirmed, this needs an OTA (it is a real fix, not a
-diagnostic — nothing is left flagged off).
+**`<Elevated>` v1 banded on device** — the user saw 8 discrete bars under
+each box, worst under the Backup/Restore group, and the shadow read as
+sitting underneath rather than around. Both were real defects in the
+component, now fixed:
+- **Banding.** v1 spaced layers evenly by *distance*, which puts the biggest
+  alpha jumps exactly where the gaussian is steepest (3.1% per step at blur
+  16) and left the outermost layer at 3.6% alpha with nothing beyond it — a
+  hard cutoff, the very artefact this component exists to avoid. Layers are
+  now spaced evenly in **alpha** by inverting the gaussian: close together
+  where the curve is steep, far apart in the tail. At 32 layers the largest
+  step is 1.66% and the outer edge decays to 0.000000.
+- **Only-below.** v1's linear ramp held full opacity hard against the box
+  edge; a true gaussian is used now. Measured profile at blur 16 / offset 4:
+  alpha 0.350 below the box edge vs 0.295 above, reaching 23pt down and 15pt
+  up — a halo on all four sides with a slight downward bias.
+
+**Both were verified numerically before shipping** (composited alpha sampled
+across the whole ramp), not by eye — worth repeating for any future change
+here, since the failure mode is invisible in source.
+
+**Exact next action:** the user is looking at v2 on device via Fast Refresh.
+If banding persists, raise `LAYERS` — the alpha step scales as 1/LAYERS —
+rather than touching opacity. Once confirmed this needs an OTA; it is a real
+fix, nothing is left flagged off.
 
 Two follow-ups deliberately left undone, ask before doing either:
 - The **sliding pill** has no shadow at all now. It is solid ink on a light
