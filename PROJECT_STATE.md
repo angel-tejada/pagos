@@ -4,9 +4,8 @@
 It is the handoff snapshot between sessions. It is not a diary: replace stale
 statements rather than appending to them.
 
-Last updated: 2026-08-30 · HEAD `60b9e6a` on `main`, pushed to `origin` ·
-worktree has one uncommitted file (`src/theme.ts`, the Options-sheet shadow
-fix below).
+Last updated: 2026-08-30 · HEAD `d6eaaf6` on `main`, pushed to `origin` ·
+worktree clean.
 
 ---
 
@@ -30,12 +29,13 @@ negative offset cannot get dark right next to the object it's shadowing, no
 matter how large the blur radius is, so the values in place since commit
 `e635c5d` were structurally incapable of producing a soft-but-grounded look.
 
-**Exact next action:** publish an OTA with the shadow fix (fingerprint already
-re-checked and matching) and get the user to confirm it on the phone — this is
-the second round of OTA verification in a row for the New Entry / shadow work,
-and nothing in either has been confirmed on real hardware yet. After that,
-the next open item is the dead end in section 5 — the 12-person limit with no
-way to pay.
+**Exact next action:** the shadow fix is published as an OTA
+(group `87fb7401-2959-44fb-8890-c4b12cdd69c0`) at the matching runtime. Get the
+user to confirm it on the phone against their reference — this is the second
+round of OTA verification in a row for the New Entry / shadow work, and
+nothing in either has actually been confirmed on real hardware yet, only in
+the browser preview. After that, the next open item is the dead end in
+section 5 — the 12-person limit with no way to pay.
 
 ---
 
@@ -178,7 +178,8 @@ reads as "pressed", not "on". No checkmarks.
 | Its runtime | `142551e9e769e7f380858105207a96ada4f12e46` |
 | Channel → branch | `preview` → `preview` |
 | Dev-client build | `61bede33-2d9a-4575-abd9-2dfc9745ca04` (may not be installed) |
-| Latest OTA | group `d3cd8a9c-4eee-4b59-9817-44fe8038a8da`, iOS update `01a05521-7ff7-72d5-b969-8af9fd1853df`, from commit `984316f` |
+| Latest OTA | group `87fb7401-2959-44fb-8890-c4b12cdd69c0`, iOS update `01a05536-5244-79df-a47c-f2f116acaa9f`, from commit `d6eaaf6` (shadow fix) |
+| Prior OTA | group `d3cd8a9c-4eee-4b59-9817-44fe8038a8da`, from commit `984316f` (New Entry fix) |
 
 **Publish an OTA:**
 ```
@@ -416,26 +417,26 @@ Do not chase these in the browser; they are native-only capabilities.
 
 ## 9. Verification status
 
-As of HEAD `984316f` on `fix/new-entry-currency-button`:
+As of HEAD `d6eaaf6` on `main`, pushed to `origin`:
 
 - `npx tsc --noEmit` — passes
 - `npx expo export --platform ios` — passes
 - `npx expo export --platform web` — passes
-- Fingerprint — re-generated after the change and still
+- Fingerprint — re-generated immediately before this OTA and still
   `142551e9e769e7f380858105207a96ada4f12e46`, so it matches the installed
-  build and an OTA will reach the phone
-- Shadows confirmed visible in both themes by browser screenshot
+  build and the update will reach the phone
 - New Entry confirmed by browser screenshot: currency button on screen, its
   picker opens clear of the island, USD → MXN round-trips back to the amount
-  row with the typed amount intact, person picker creates and selects a person,
-  due-date switch flips the row to the date
-- **OTA published** to `preview` at runtime
-  `142551e9e769e7f380858105207a96ada4f12e46`, which matches the installed
-  build, so it will reach the phone. The app uses its cached bundle on launch
-  and downloads in the background, so it takes **two** close-and-reopen cycles
-  to appear.
-- **Nothing has been confirmed on the device.** Published is not verified: no
-  screenshot or user confirmation from the phone exists yet for any of the New
-  Entry changes.
+  row with the typed amount intact, person picker creates and selects a
+  person, due-date switch flips the row to the date
+- Options sheet shadow confirmed by browser screenshot AND by sampling actual
+  rendered pixel color values along a vertical strip above the sheet, in both
+  themes — this is a stronger check than the screenshot-only verification
+  used earlier in this file, and should be the bar for any future shadow work
+- **Two OTAs are published and neither has been confirmed on the device.** The
+  app uses its cached bundle on launch and downloads in the background, so
+  each takes two close-and-reopen cycles to appear. Nothing in this file about
+  New Entry or the Options sheet shadow should be treated as done until the
+  user has actually looked at the phone.
 - No automated test suite exists
 - No iOS simulator is available (Windows-only machine, no Mac)
