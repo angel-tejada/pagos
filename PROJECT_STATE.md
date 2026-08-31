@@ -4,8 +4,7 @@
 It is the handoff snapshot between sessions. It is not a diary: replace stale
 statements rather than appending to them.
 
-Last updated: 2026-08-30 · HEAD `861a924` on `main`, pushed to `origin` ·
-worktree clean.
+Last updated: 2026-08-31 · HEAD `c60aa54` on `main` · worktree clean.
 
 ---
 
@@ -51,31 +50,40 @@ PROJECT_STATE entry ever justified `.35`, so it was an oversight, and a
 plausible real contributor — a shadow has to cover a much bigger brightness
 jump against a barely-dimmed background than against a properly-dimmed one.
 
-**A live dev-client Metro session is now the active workflow** — see
+**Metro is deliberately NOT running right now.** Port 8081 is left free on
+purpose so the user can start it themselves and get the QR in their own
+terminal. Do not background a Metro process for them; it takes the port and
+the QR never appears where they can scan it.
+
+**The dev-client workflow is the active one** — see
 "Live dev-client workflow" under section 4. Started this session, LAN IP
 `10.0.0.100` at the time. If it's not still running, that's the first thing
 to check before assuming anything about JS changes not reaching the phone;
 it does not survive a machine restart or this terminal session ending.
 
-**Exact next action:** the spurious second pill shadow is removed and saved
-while Metro is live, so it should already be on the phone via Fast Refresh —
-confirm the user actually sees the pill's hard edge gone. If the section group
-still shows a rectangle, run the A/B described in the Shadows subsection
-(strip `raised` entirely, look, restore) rather than adjusting its value; no
-source-level cause for the group has been found and guessing has already cost
-three rounds. The pill fix is committed (`45c0d43`) but
-**deliberately not shipped as an OTA yet** — the dev client shows it
-instantly, and holding off avoids adding a fourth unconfirmed OTA while the
-group is still open. OTA it once the user confirms. Until then the `preview`
-build the user normally runs still has the two-shadow pill. Separately, the shadow rewrite is still sitting in an
-OTA (group `95b1d47f-8be6-4082-9277-0776b26e91a9`) with no user confirmation
-on file — ideally checked against `pagos-current.html` opened directly in a
-browser, since that's now an actual available reference. **Four** separate
-pieces of New Entry/shadow work are sitting in OTAs with no explicit "yes
-this is right" from the user: the currency button fix, and three rounds of
-shadow changes. Treat every one as open until the user says so. After that,
-the next item is the dead end in section 5 — the 12-person limit with no
-way to pay.
+**Exact next action:** a **temporary A/B diagnostic is currently ACTIVE in
+the code** — `STRIP_SHADOWS_FOR_AB = true` in `src/theme.ts` makes `raised`
+and `pill` emit no shadow at all. This is not a fix and must not be left in.
+The user deleted every Pagos app from their phone, so they are reinstalling
+the dev client (build `61bede33`, valid until 2026-09-13, fingerprint still
+matching — no rebuild needed) and reconnecting via the QR flow in section 4.
+
+Once they look, the answer is binary and decides everything downstream:
+- **Both rectangles gone** → the shadow is genuinely the source. Flip the
+  flag back and work on how the shadow renders on iOS, not on its numbers.
+- **Group clean, pill still boxed** → the pill has a second, separate cause.
+- **Both still there** → it was never the shadow. Stop touching shadow
+  values entirely and investigate fills / layer compositing.
+
+Whatever the answer, **flip `STRIP_SHADOWS_FOR_AB` back to `false`** before
+anything ships. Nothing about this A/B has been OTA'd; the `preview` build the
+user normally runs is untouched by it.
+
+Still open and unconfirmed regardless: four separate pieces of New Entry /
+shadow work sit in published OTAs with no explicit "yes this is right" from
+the user — the currency button fix and three rounds of shadow changes. Treat
+each as open until they say so. After that, the next item is the dead end in
+section 5 — the 12-person limit with no way to pay.
 
 ---
 
@@ -272,6 +280,11 @@ files quoted above — `RCTBoxShadow.mm`, `processBoxShadow.js` — are clean an
 internally consistent, but re-verify against a fresh install before betting
 anything large on a subtle reading of that source.)*
 
+> **CURRENTLY OVERRIDDEN.** `STRIP_SHADOWS_FOR_AB` in `src/theme.ts` is
+> `true`, so `raised` and `pill` emit nothing regardless of the values in the
+> table above. That is the A/B described in section 1. Flip it to `false` to
+> restore them.
+
 **Do not retune any of these three values again without a number taken
 directly from `pagos-current.html` or from the user.** If this still looks
 wrong on device after this round, the next thing to question is not the
@@ -383,9 +396,21 @@ mode ever fails to reach the phone (different networks, VPN, router
 isolation), that memory's guidance still applies — fall back to OTA rather
 than fighting the tunnel.
 
-**If the dev-client app is no longer on the phone**, no rebuild is needed
-(the fingerprint still matches) — reinstall the exact same build via its
-still-valid manifest link (expires 2026-09-13, well past today):
+**QR flow (what the user actually wants).** Leave port 8081 FREE and let the
+user run `npx expo start --dev-client` in their own terminal — the QR only
+appears in the terminal that owns the process, so starting Metro from a tool
+call defeats the whole point. They scan it with the iPhone Camera app; it
+opens the dev client via the `pagos` scheme and connects with Fast Refresh.
+The dev client must already be installed for the scan to resolve, so install
+first, scan second.
+
+**The user deleted every Pagos app from the phone on 2026-08-31**, so both
+the dev client and the `preview` build are gone and will need reinstalling
+before anything can be checked on device again.
+
+**Reinstalling the dev client** needs no rebuild (the fingerprint still
+matches) — use the exact same build's still-valid manifest link (expires
+2026-09-13):
 ```
 itms-services://?action=download-manifest&url=https://api.expo.dev/v2/projects/21c5fe80-6999-45e5-bd3d-ac38995042bd/builds/61bede33-2d9a-4575-abd9-2dfc9745ca04/manifest.plist
 ```

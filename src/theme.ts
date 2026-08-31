@@ -289,9 +289,38 @@ export function makeShadow(spec: ShadowSpec): ViewStyle {
  * trying to fix a boxy on-device look — do not retune them again without a
  * value taken directly from that file or from the user.
  */
+/**
+ * ============================ TEMPORARY A/B ============================
+ * Flip to `false` to restore every shadow. While `true`, `raised` and `pill`
+ * emit NOTHING — the segment track, the section group, the Close button and
+ * the sliding pill get no shadow at all.
+ *
+ * Why: the user reports a hard, straight-edged rectangle around the segment
+ * pills and the section group on a real iPhone. A full structural audit
+ * (PROJECT_STATE section 3) cleared every other candidate — no borders, no
+ * wrapper fills, no leftover legacy `shadow*` props, and `boxShadow` is
+ * genuinely supported on iOS in RN 0.86.3 rather than degrading to a rect.
+ * One real cause was found and removed (a spurious second pill shadow), but
+ * it does not explain the section group, and three rounds of guessing at
+ * values have already failed.
+ *
+ * So this is a binary test, not a fix. With shadows gone entirely:
+ *   - both rectangles gone  -> the shadow really is the source; work there.
+ *   - group gone, pill left -> the pill has a second, separate cause.
+ *   - both still there      -> NOT the shadow. Stop touching shadow values
+ *                              and look at fills/compositing instead.
+ * `sheet` is deliberately left alone: it is a different element and is not
+ * part of the report.
+ * ======================================================================
+ */
+const STRIP_SHADOWS_FOR_AB = true;
+const NO_SHADOW: ViewStyle = {};
+
 export const shadows = {
   /** Mockup: `.seg`, `.mgrp`, `.close` — `box-shadow: 0 4px 16px rgba(0,0,0,.35)` */
-  raised: makeShadow({ offsetY: 4, opacity: 0.35, radius: 16, elevation: 6 }),
+  raised: STRIP_SHADOWS_FOR_AB
+    ? NO_SHADOW
+    : makeShadow({ offsetY: 4, opacity: 0.35, radius: 16, elevation: 6 }),
   /** Mockup: `.sheet`, `.psheet` — `box-shadow: 0 -8px 40px rgba(0,0,0,.6)`,
    *  cast upward so a sheet anchored to the bottom edge lifts off the screen
    *  behind it. */
@@ -313,7 +342,9 @@ export const shadows = {
    * offset 1pt, that is not a shadow, it is a dark outline traced around the
    * pill's shape. Do not reintroduce it.
    */
-  pill: makeShadow({ offsetY: 4, opacity: 0.55, radius: 14, elevation: 8 }),
+  pill: STRIP_SHADOWS_FOR_AB
+    ? NO_SHADOW
+    : makeShadow({ offsetY: 4, opacity: 0.55, radius: 14, elevation: 8 }),
 } as const;
 
 /** Segment pill slide and theme crossfade, per the approved mockup. */
