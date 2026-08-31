@@ -19,19 +19,16 @@ The app runs on a real iPhone and in a browser preview. The v1 feature list in
 `CLAUDE.md` is largely implemented. The current work is a **design pass
 converging the app onto the approved mockup**.
 
-The four New Entry reports have been diagnosed and the two real defects are
-fixed and shipped as an OTA — see sections 5 and 4. One of the four (the
-missing keypad) was resolved by an interpretation, not by evidence, and the
-user has not yet confirmed which of the two readings they meant.
+All four New Entry reports are resolved and shipped as an OTA — see sections 5
+and 4.
 
 **Exact next action:** the user is checking the OTA on the phone. Confirm with
-them (a) the currency button is on screen next to the amount, (b) the due-date
-picker, which renders nothing on web by design, is alive on device, and (c)
-**which keypad they meant** — the answer decides whether the `autoFocus` on the
-amount field is the fix or whether the mockup's *drawn* keypad has to be built.
-Building it would reverse a settled decision to use the native iOS keypad
-(section 3, "Words over icons. Native iOS feel."), so do not start it without
-an explicit instruction.
+them that (a) the currency button is on screen next to the amount, (b) the
+native keypad is up the moment New Entry opens, and (c) the due-date picker,
+which renders nothing on web by design, is alive on device. If all three hold,
+the New Entry work is done and `fix/new-entry-currency-button` can go to
+`main`; the next open item is then the dead end in section 5 — the 12-person
+limit with no way to pay.
 
 ---
 
@@ -206,15 +203,14 @@ cleared Metro cache, and each one checked by screenshot:
    label updates to the date. `@expo/ui/community/datetime-picker` is native,
    so on web its container renders at height 0 and there is nothing to drag.
    Section 8. Still unconfirmed on device.
-4. **No keypad — interpretation, not a diagnosis.** A browser has no on-screen
-   keypad; you type with the physical keyboard, and `keyboardType="decimal-pad"`
-   does reach the DOM correctly (`inputmode="decimal"`). On device the real
-   cause was that nothing was focused on arrival, so the keypad only appeared
-   after a tap. The amount field is now `autoFocus`, so the keypad is up
-   immediately. **This is a guess at what the user meant.** The mockup drew its
-   own keypad; this app deliberately uses the native iOS one instead, so a
-   drawn keypad would be a design reversal and was not built. Confirm with the
-   user.
+4. **No keypad — real, fixed.** A browser has no on-screen keypad at all; you
+   type with the physical keyboard, and `keyboardType="decimal-pad"` does reach
+   the DOM correctly (`inputmode="decimal"`). On device the cause was that
+   nothing was focused on arrival, so the keypad only appeared after a tap. The
+   amount field is now `autoFocus` and the keypad is up immediately.
+   **The user confirmed this was what they meant**, and explicitly *not* the
+   mockup's drawn keypad — so the settled decision stands: Pagos uses the
+   native iOS keypad, and a drawn one is not to be built.
 
 **Also fixed, revealed by fix 1:** the currency picker's title rendered under
 the Dynamic Island in the preview. The web `Sheet` mounts into `DeviceFrame`'s
